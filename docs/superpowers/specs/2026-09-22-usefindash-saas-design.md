@@ -239,13 +239,13 @@ Recharts.
 ## 13. Ordem de execução
 
 1. Setup Next.js 14 + TS + Tailwind + shadcn/ui — ✅ feito (plano de fundação)
-2. Repositório GitHub conectado + push inicial — em andamento (bloqueado por permissão do token)
-3. Projeto Vercel conectado ao GitHub com deploy automático em push para main — pendente
-4. Variáveis de ambiente configuradas na Vercel — pendente
+2. Repositório GitHub conectado + push inicial — ✅ feito (`saasownerbr/useFindash`, branch `master`)
+3. Projeto Vercel conectado ao GitHub com deploy automático em push para main — ✅ feito (projeto `singlehub/usefindash`, conectado automaticamente ao criar via `vercel link`)
+4. Variáveis de ambiente configuradas na Vercel — ✅ feito (todas as 6: Supabase URL/anon/service-role, Resend, APP_URL, CRON_SECRET — ambiente Production)
 5. Schema Supabase: migrations + RLS — ✅ feito (aplicado no projeto real)
-6. Autenticação (magic link + Resend) — ✅ feito (plano de fundação); SMTP customizado com domínio Resend pendente (usuário ainda sem domínio próprio)
+6. Autenticação (magic link + Resend) — ✅ feito (plano de fundação); SMTP customizado com domínio Resend pendente (usuário ainda sem domínio próprio — Supabase usa SMTP padrão por enquanto)
 7. Layout base (sidebar, shell autenticado) — ✅ feito (plano de fundação)
-8. Primeiro deploy funcional na Vercel (login + dashboard vazio) — pendente, depende dos passos 2–4
+8. Primeiro deploy funcional na Vercel (login + dashboard vazio) — ✅ feito, **https://usefindash.vercel.app** está no ar
 9. Estoque (entrada de novos e seminovos, sem lookup de IMEI) + deploy
 10. Checkup (cálculo de grade + preço sugerido, pesos da seção 5) + deploy
 11. Vendas (wizard em 5 passos) + deploy
