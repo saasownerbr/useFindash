@@ -11,6 +11,14 @@ describe("resolveAuthRedirect", () => {
     expect(resolveAuthRedirect("/login", false, null)).toBeNull();
   });
 
+  it("lets unauthenticated users reach /signup", () => {
+    expect(resolveAuthRedirect("/signup", false, null)).toBeNull();
+  });
+
+  it("sends authenticated users with a store away from /signup to /dashboard", () => {
+    expect(resolveAuthRedirect("/signup", true, true)).toBe("/dashboard");
+  });
+
   it("sends authenticated users without a store from /dashboard to /onboarding", () => {
     expect(resolveAuthRedirect("/dashboard", true, false)).toBe("/onboarding");
   });

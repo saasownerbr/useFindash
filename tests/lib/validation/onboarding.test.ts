@@ -20,4 +20,26 @@ describe("onboardingSchema", () => {
     const result = onboardingSchema.safeParse({ storeName: "iStore", monthlyRevenueGoal: "1000" });
     expect(result.success).toBe(true);
   });
+
+  it("accepts a missing CNPJ", () => {
+    const result = onboardingSchema.safeParse({ storeName: "iStore", monthlyRevenueGoal: 0 });
+    expect(result.success).toBe(true);
+  });
+
+  it("normalizes a masked CNPJ when present", () => {
+    const result = onboardingSchema.safeParse({
+      storeName: "iStore",
+      monthlyRevenueGoal: 0,
+      cnpj: "12.345.678/0001-95",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cnpj).toBe("12345678000195");
+    }
+  });
+
+  it("rejects a CNPJ with fewer than 14 digits", () => {
+    const result = onboardingSchema.safeParse({ storeName: "iStore", monthlyRevenueGoal: 0, cnpj: "123" });
+    expect(result.success).toBe(false);
+  });
 });

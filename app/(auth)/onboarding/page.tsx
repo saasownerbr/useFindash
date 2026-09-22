@@ -37,6 +37,7 @@ export default function OnboardingPage() {
       store_name: data.storeName,
       owner_name: user.email ?? "Owner",
       monthly_goal: data.monthlyRevenueGoal,
+      store_cnpj: data.cnpj,
     });
 
     if (error) {
@@ -60,6 +61,11 @@ export default function OnboardingPage() {
             <Label htmlFor="storeName">Nome da loja</Label>
             <Input id="storeName" placeholder="Ex: iStore Centro" {...register("storeName")} />
             {errors.storeName && <span className="text-xs text-danger">{errors.storeName.message}</span>}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="cnpj">CNPJ (opcional)</Label>
+            <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+            {errors.cnpj && <span className="text-xs text-danger">{errors.cnpj.message}</span>}
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="monthlyRevenueGoal">Meta de faturamento mensal (R$)</Label>
