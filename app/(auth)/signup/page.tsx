@@ -23,22 +23,35 @@ export default function SignupPage() {
   async function onSubmit(data: SignupInput) {
     const supabase = createClient();
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-    });
+    // A retry after a partial failure (e.g. store creation failed but the
+    // auth account was already created) leaves an active session in the
+    // browser. Reuse it instead of calling signUp again, which would fail
+    // with "already registered" and dead-end the user.
+    const {
+      data: { session: existingSession },
+    } = await supabase.auth.getSession();
 
-    if (signUpError) {
-      setError("root", { message: "Não foi possível criar a conta. Tente novamente." });
-      return;
-    }
-
-    if (!signUpData.session) {
-      setError("root", {
-        message: "Cadastro criado, mas o login automático falhou. Tente entrar novamente.",
+    if (!existingSession) {
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
       });
-      router.replace("/login");
-      return;
+
+      if (signUpError) {
+        const message = signUpError.message.toLowerCase().includes("already registered")
+          ? "Este email já tem uma conta. Entre pela tela de login."
+          : "Não foi possível criar a conta. Tente novamente.";
+        setError("root", { message });
+        return;
+      }
+
+      if (!signUpData.session) {
+        setError("root", {
+          message: "Cadastro criado, mas o login automático falhou. Tente entrar novamente.",
+        });
+        router.replace("/login");
+        return;
+      }
     }
 
     const { error: storeError } = await supabase.rpc("create_store_with_owner", {
