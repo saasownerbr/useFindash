@@ -89,42 +89,57 @@ um lote, `custo_unitário = Σ(quantity × unit_cost das entradas do modelo) / (
 (`stores.upgrade_alert_months`, configurável por loja) → alerta no dashboard +
 email semanal (seção 8).
 
-**Grade do checkup**: cada item do checkup tem peso fixo; a soma pondera para
-uma pontuação 0–100 que mapeia para grade:
+**Grade do checkup**: score 0–100 mapeia para grade:
 - 90–100 → A+, 75–89 → A, 55–74 → B, 35–54 → C, <35 → sucata
-- Se iCloud ativo/bloqueado → `status = blocked`ou equivalente, aparelho não pode ser vendido até resolução, independente da pontuação.
+- iCloud com conta ativa → produto **bloqueado**, não pode entrar no estoque disponível até a conta ser removida (checkup reavaliado), independente da pontuação.
 
-Pesos propostos (default, editável depois em Configurações — resolve o ponto
-em aberto do spec original):
-| Item | Peso |
-|---|---|
-| Saúde da bateria | 30% |
-| Tela | 20% |
-| Câmeras | 15% |
-| Estrutura (chassi/tampa) | 15% |
-| Histórico de serviço | 10% |
-| Biometria (Face ID/Touch ID) | 10% |
+Pesos e pontuação exatos (fornecidos pelo usuário em 2026-09-22, substituem os
+pesos-default provisórios da primeira versão deste documento):
+
+| Categoria | Peso máx. | Opções e pontos |
+|---|---|---|
+| Tela | 30 | Genuína impecável 30 · genuína c/ arranhões leves 22 · genuína c/ arranhões visíveis 15 · paralela funcional 12 · paralela c/ problema de cor/toque 6 · trincada sem afetar uso 5 · trincada afetando uso 0 |
+| Bateria | 25 | Genuína >90% 25 · genuína 85–90% 20 · genuína 80–85% 14 · trocada peça boa >85% 12 · <80% qualquer origem 4 |
+| Biometria | 20 | Funcionando normalmente 20 · falhas ocasionais 8 · não funciona 0 |
+| Câmeras | 12 | Todas funcionando 12 · arranhão na lente sem afetar qualidade 9 · problema de qualidade/foco 4 · não funciona 0 |
+| Estrutura | 8 | Intacta sem marcas 8 · arranhões imperceptíveis 6 · arranhões visíveis 4 · amassado leve 2 · amassado grave 0 |
+| iCloud | bloqueante | Conta removida → liberado · conta ativa → bloqueia o produto (ver acima) |
+| Histórico de serviço | modificador | Original ou peça Apple → sem desconto · peça terceiro → **-5 pontos no score final** |
+
+Soma das 5 categorias pontuáveis = até 95; o modificador de histórico de
+serviço (peça terceiro, -5) é aplicado depois, podendo levar o score a até
+100 só quando não há desconto. Todo o resultado do formulário (respostas +
+score + grade) é salvo integralmente em `products.checkup_data` (jsonb).
 
 **Preço sugerido**: busca `base_price` em `price_reference` para
 model+storage da loja, aplica o `grade_multiplier_*` correspondente à grade
 calculada.
 
-**Comissão** (não detalhado no spec original — assumido): `commission_amount = sale_price × store_users.commission_rate` do vendedor daquela venda, calculado e gravado no momento do insert de `sales`.
+**Comissão**: `commission_amount = sale_price × store_users.commission_rate` do
+vendedor daquela venda (`seller_id`), calculado e gravado no momento do
+insert de `sales`. Confirmado pelo usuário em 2026-09-22 (coincide com o que
+já estava assumido nesta versão do spec).
 
 ## 6. Módulos e rotas (App Router)
 
 ```
-/app/(auth)/login                          — magic link
-/app/(auth)/onboarding                     — criação da store (nome, meta de faturamento)
-/app/(dashboard)/                          — KPIs, gráficos, alertas (upgrade/aniversário)
-/app/(dashboard)/estoque                   — aparelhos + acessórios (tabs)
-/app/(dashboard)/estoque/checkup/[id]      — checkup de seminovo
-/app/(dashboard)/vendas/nova               — wizard de venda em steps
-/app/(dashboard)/clientes                  — CRM (lista + perfil)
-/app/(dashboard)/financeiro                — DRE + lançamentos
-/app/(dashboard)/rankings                  — vendedores, produtos, canais
-/app/(dashboard)/configuracoes             — loja, vendedores, tabela de referência, alertas
+/app/(auth)/login                            — magic link
+/app/(auth)/onboarding                       — criação da store (nome, meta de faturamento)
+/app/(dashboard)/dashboard                   — KPIs, gráficos, alertas, barra de meta
+/app/(dashboard)/estoque                     — aparelhos + acessórios (tabs)
+/app/(dashboard)/estoque/checkup/[productId] — checkup de seminovo
+/app/(dashboard)/vendas/nova                 — wizard de venda em 5 passos
+/app/(dashboard)/clientes                    — CRM (lista + perfil)
+/app/(dashboard)/financeiro                  — DRE + lançamentos
+/app/(dashboard)/rankings                    — vendedores, produtos, canais
+/app/(dashboard)/configuracoes               — loja, vendedores, tabela de referência, alertas
 ```
+
+Nota de implementação: `(dashboard)` é um *route group* do Next.js App
+Router — não adiciona segmento à URL. A página de dashboard precisa viver em
+`app/(dashboard)/dashboard/page.tsx` (não em `app/(dashboard)/page.tsx`, que
+colidiria com a rota raiz `/`). Já implementado corretamente no plano de
+fundação (ver `docs/superpowers/plans/2026-09-22-foundation-auth-layout.md`).
 
 Toda rota sob `(dashboard)` é protegida por middleware que verifica sessão
 Supabase + resolve a store ativa do usuário (redireciona para onboarding se
@@ -142,11 +157,11 @@ escopo até haver um provedor real confirmado.
 
 ## 8. Emails (Resend) e jobs periódicos (Vercel Cron)
 
-Emails:
-- Magic link de autenticação (via Resend, substituindo SMTP padrão do Supabase)
-- Boas-vindas ao criar conta
-- Alerta semanal de clientes em janela de upgrade: nome, modelo comprado, data da compra, WhatsApp
-- Alerta de aniversários dos próximos 7 dias
+Emails (assuntos exatos fornecidos pelo usuário em 2026-09-22):
+- Magic link de autenticação — subject "Seu acesso ao useFindash", template clean com botão de acesso (via Resend, substituindo SMTP padrão do Supabase)
+- Boas-vindas após onboarding — subject "Bem-vindo ao useFindash", com nome da loja e link para o dashboard
+- Alerta semanal de clientes em janela de upgrade — toda segunda 8h, lista com nome, modelo comprado, data da compra, WhatsApp
+- Alerta diário de aniversários dos próximos 7 dias — todo dia 7h
 
 Cron jobs (`vercel.json`):
 ```json
@@ -161,13 +176,19 @@ Cron jobs (`vercel.json`):
 `update-stock-days` recalcula `products.days_in_stock` para todo produto com
 `status = 'available'` (hoje − `purchase_date`).
 
+**Segurança dos crons**: cada rota `/api/cron/*` valida o header
+`Authorization` contra um secret guardado em `CRON_SECRET` (nova variável de
+ambiente) antes de executar — rejeita qualquer chamada sem o header correto,
+evitando disparo por terceiros que descubram a URL.
+
 ## 9. Pontos do spec original resolvidos nesta sessão
 
 | Ponto em aberto | Decisão |
 |---|---|
 | Lookup de IMEI via `consultaimei.net` | Removido do v1 — cadastro manual apenas (seção 7) |
-| Pesos do checkup não numerados | Pesos default propostos na seção 5, ajustáveis depois |
-| Provisionar Supabase real agora? | Não — apenas código + migrations; conexão a um projeto real fica a cargo do usuário |
+| Pesos do checkup não numerados | Resolvido — pesos e pontuação exatos fornecidos pelo usuário em 2026-09-22, documentados na seção 5 (substituem os defaults provisórios usados até então) |
+| Provisionar Supabase real agora? | Não inicialmente — depois revertido: projeto Supabase real (`useFindash`, `crfmlimzjcztzlvylrpf`) foi provisionado e o schema completo + RLS já estão aplicados nele |
+| Cobrança / plano pago | Fora de escopo até segunda ordem. Registro é 100% aberto: qualquer pessoa cria conta só com email, sem verificação de pagamento, sem plano, sem bloqueio de funcionalidade. Nenhuma lógica de billing/assinatura deve ser criada agora — integração com Asaas é uma fase futura de refinamento, explicitamente fora deste spec |
 
 ## 10. Design system
 
@@ -188,31 +209,50 @@ Recharts.
 
 - `vercel.json` com os 3 crons da seção 8
 - `supabase/migrations/*.sql` com o schema completo, em ordem de dependência
-- `.env.example` (sem valores): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `NEXT_PUBLIC_APP_URL`
+- `.env.example` (sem valores): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`
 - `.gitignore` incluindo `.env.local`, `node_modules`
 - `README.md`: descrição, setup local, variáveis de ambiente, comandos de migration, configuração de Resend e Vercel
-- Sem provisionamento real de Supabase/Vercel/GitHub nesta sessão — só os artefatos de configuração
+
+**Atualizado em 2026-09-22 — provisionamento real confirmado pelo usuário:**
+- Repositório GitHub (`saasownerbr/useFindash`) conectado como remote; push
+  depende de um token com permissão de escrita (`Contents: Read and write`
+  no fine-grained PAT).
+- Projeto Vercel conectado ao repositório GitHub, com **deploy automático a
+  cada push na branch `main`/`master`**. Variáveis de ambiente configuradas
+  no projeto Vercel (mesmas do `.env.local`, mais `CRON_SECRET`).
+- **Deploy incremental**: primeiro deploy funcional assim que login +
+  dashboard vazio estiverem prontos (fim do plano de fundação), mesmo sem os
+  módulos de negócio. Cada módulo subsequente concluído gera um novo deploy,
+  para que o produto seja testável em produção incrementalmente — não
+  esperar o sistema "completo" para publicar.
 
 ## 12. Fora de escopo do v1
 
 - Integração real de lookup de IMEI (seção 7)
-- Billing/cobrança do plano
+- **Billing/cobrança/planos**: registro é 100% aberto — qualquer pessoa cria
+  conta só com email, sem verificação de pagamento, sem plano, sem bloqueio
+  de funcionalidade. Nenhuma lógica de assinatura/cobrança deve ser
+  construída agora. Integração com Asaas é uma fase de refinamento futura,
+  explicitamente fora deste spec até novo pedido.
 - Auditoria/histórico de alterações e permissões granulares além de owner/admin/seller
-- Deploy real na Vercel e criação de repositório remoto no GitHub (feito sob pedido explícito futuro)
 
 ## 13. Ordem de execução
 
-1. Setup Next.js 14 + TS + Tailwind + shadcn/ui
-2. Schema Supabase: migrations + RLS
-3. Autenticação (magic link + Resend)
-4. Layout base (sidebar, shell autenticado)
-5. Estoque (entrada de novos e seminovos, sem lookup de IMEI)
-6. Checkup (cálculo de grade + preço sugerido)
-7. Vendas (wizard em steps)
-8. CRM de clientes (lista + perfil)
-9. Financeiro (DRE + lançamentos)
-10. Dashboard (KPIs + gráficos)
-11. Rankings
-12. Configurações
-13. Cron jobs de alertas
-14. Artefatos de deployment (vercel.json, README, .env.example, .gitignore)
+1. Setup Next.js 14 + TS + Tailwind + shadcn/ui — ✅ feito (plano de fundação)
+2. Repositório GitHub conectado + push inicial — em andamento (bloqueado por permissão do token)
+3. Projeto Vercel conectado ao GitHub com deploy automático em push para main — pendente
+4. Variáveis de ambiente configuradas na Vercel — pendente
+5. Schema Supabase: migrations + RLS — ✅ feito (aplicado no projeto real)
+6. Autenticação (magic link + Resend) — ✅ feito (plano de fundação); SMTP customizado com domínio Resend pendente (usuário ainda sem domínio próprio)
+7. Layout base (sidebar, shell autenticado) — ✅ feito (plano de fundação)
+8. Primeiro deploy funcional na Vercel (login + dashboard vazio) — pendente, depende dos passos 2–4
+9. Estoque (entrada de novos e seminovos, sem lookup de IMEI) + deploy
+10. Checkup (cálculo de grade + preço sugerido, pesos da seção 5) + deploy
+11. Vendas (wizard em 5 passos) + deploy
+12. CRM de clientes (lista + perfil) + deploy
+13. Financeiro (DRE + lançamentos) + deploy
+14. Dashboard (KPIs + gráficos) + deploy
+15. Rankings + deploy
+16. Configurações + deploy
+17. Cron jobs de alertas (com validação `CRON_SECRET`) + deploy
+18. Refinamento futuro (fora deste spec): domínio Resend próprio, integração de pagamento Asaas
