@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema, type LoginInput } from "@/lib/validation/auth";
+
+function ExpiredLinkNotice() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  if (error !== "expired_link") {
+    return null;
+  }
+
+  return (
+    <p className="mt-4 text-sm text-danger">
+      Esse link expirou ou já foi usado. Peça um novo abaixo.
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
@@ -36,6 +52,10 @@ export default function LoginPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Enviamos um link de acesso para o seu email.
         </p>
+
+        <Suspense fallback={null}>
+          <ExpiredLinkNotice />
+        </Suspense>
 
         {status === "sent" ? (
           <p className="mt-6 text-sm text-success">Link enviado! Confira sua caixa de entrada.</p>
