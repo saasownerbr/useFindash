@@ -1,3 +1,9 @@
 {
-  "regions": ["gru1"]
+  "framework": "nextjs",
+  "regions": ["gru1"],
+  "crons": [
+    { "path": "/api/cron/upgrade-alerts", "schedule": "0 8 * * 1" },
+    { "path": "/api/cron/birthday-alerts", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/update-stock-days", "schedule": "0 6 * * *" }
+  ]
 }

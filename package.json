@@ -2,6 +2,7 @@
   "name": "usefindash",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://usefindash.vercel.app",
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/generate-favicon.js",
