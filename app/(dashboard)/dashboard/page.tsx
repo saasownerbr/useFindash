@@ -1,8 +1,208 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { AlertsPanel } from "@/components/dashboard/alerts-panel";
+import { ChannelBarChart } from "@/components/dashboard/channel-bar-chart";
+import { GoalProgress } from "@/components/dashboard/goal-progress";
+import { KpiCards } from "@/components/dashboard/kpi-cards";
+import { MetricCards } from "@/components/dashboard/metric-cards";
+import { RevenueLineChart } from "@/components/dashboard/revenue-line-chart";
+import { createClient } from "@/lib/supabase/client";
+import { getActiveStoreId } from "@/lib/supabase/store";
+import { buildDRE, type DRE } from "@/lib/dre";
+import { calculateCAC, calculateRetentionRate } from "@/lib/finance";
+import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
+import { SALE_CHANNELS } from "@/lib/validation/sale";
+
+function monthKey(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthStart(monthStr: string) {
+  return `${monthStr}-01`;
+}
+
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [goal, setGoal] = useState(0);
+  const [dre, setDre] = useState<DRE | null>(null);
+  const [revenueByMonth, setRevenueByMonth] = useState<{ month: string; revenue: number }[]>([]);
+  const [channelData, setChannelData] = useState<{ channel: string; total: number }[]>([]);
+  const [avgLtv, setAvgLtv] = useState(0);
+  const [cacByChannel, setCacByChannel] = useState<{ channel: string; cac: number }[]>([]);
+  const [retentionRate, setRetentionRate] = useState(0);
+  const [upgradeWindowCount, setUpgradeWindowCount] = useState(0);
+  const [birthdaysCount, setBirthdaysCount] = useState(0);
+  const [staleStockCount, setStaleStockCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const storeId = await getActiveStoreId(supabase, user.id);
+      if (!storeId || cancelled) {
+        setLoading(false);
+        return;
+      }
+
+      const now = new Date();
+      const currentMonth = monthKey(now);
+      const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+
+      const [storeRes, sixMonthSalesRes, costEntriesRes, customersRes, monthlyInputRes, productsRes] = await Promise.all([
+        supabase.from("stores").select("*").eq("id", storeId).single(),
+        supabase
+          .from("sales")
+          .select("sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id")
+          .eq("store_id", storeId)
+          .gte("sold_at", sixMonthsAgo.toISOString()),
+        supabase.from("cost_entries").select("type, amount, month").eq("store_id", storeId).eq("month", monthStart(currentMonth)),
+        supabase.from("customers").select("id, ltv, birthdate").eq("store_id", storeId),
+        supabase.from("monthly_inputs").select("*").eq("store_id", storeId).eq("month", monthStart(currentMonth)).maybeSingle(),
+        supabase.from("products").select("id, days_in_stock, status").eq("store_id", storeId).eq("status", "available"),
+      ]);
+
+      if (cancelled) return;
+
+      if (storeRes.error || sixMonthSalesRes.error || costEntriesRes.error) {
+        setError("Não foi possível carregar os dados do dashboard.");
+        setLoading(false);
+        return;
+      }
+
+      const store = storeRes.data;
+      const allSales = sixMonthSalesRes.data ?? [];
+      const currentMonthSales = allSales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
+
+      setGoal(store?.monthly_revenue_goal ?? 0);
+      setDre(
+        buildDRE(
+          currentMonthSales,
+          (costEntriesRes.data ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[]
+        )
+      );
+
+      const months: string[] = [];
+      for (let i = 5; i >= 0; i--) {
+        months.push(monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))));
+      }
+      setRevenueByMonth(
+        months.map((m) => {
+          const salesInMonth = allSales.filter((s) => monthKey(new Date(s.sold_at)) === m);
+          const revenue = salesInMonth.reduce(
+            (sum, s) => sum + Number(s.sale_price),
+            0
+          );
+          return { month: m, revenue };
+        })
+      );
+
+      setChannelData(
+        SALE_CHANNELS.map((channel) => ({
+          channel,
+          total: currentMonthSales.filter((s) => s.sale_channel === channel).length,
+        }))
+      );
+
+      const customers = customersRes.data ?? [];
+      const avgLtvValue = customers.length > 0 ? customers.reduce((sum, c) => sum + Number(c.ltv), 0) / customers.length : 0;
+      setAvgLtv(avgLtvValue);
+
+      const paidTrafficSalesCount = currentMonthSales.filter((s) => s.sale_channel === "paid_traffic").length;
+      const paidTrafficInvestment = monthlyInputRes.data?.paid_traffic_investment ?? 0;
+      setCacByChannel(
+        SALE_CHANNELS.map((channel) => ({
+          channel,
+          cac: channel === "paid_traffic" ? calculateCAC(paidTrafficInvestment, paidTrafficSalesCount) : 0,
+        }))
+      );
+
+      const salesCountByCustomer = new Map<string, number>();
+      for (const sale of currentMonthSales) {
+        salesCountByCustomer.set(sale.customer_id, (salesCountByCustomer.get(sale.customer_id) ?? 0) + 1);
+      }
+      setRetentionRate(
+        calculateRetentionRate(Array.from(salesCountByCustomer.values()).map((count) => ({ salesCountInPeriod: count })))
+      );
+
+      const lastSaleByCustomer = new Map<string, string>();
+      for (const sale of [...allSales].sort((a, b) => (a.sold_at < b.sold_at ? 1 : -1))) {
+        if (!lastSaleByCustomer.has(sale.customer_id)) lastSaleByCustomer.set(sale.customer_id, sale.sold_at);
+      }
+      const upgradeAlertMonths = store?.upgrade_alert_months ?? 20;
+      setUpgradeWindowCount(
+        customers.filter((c) => isInUpgradeWindow(lastSaleByCustomer.get(c.id) ?? null, upgradeAlertMonths)).length
+      );
+      setBirthdaysCount(customers.filter((c) => isBirthdayWithinDays(c.birthdate, 7)).length);
+
+      const stockAlertDays = store?.stock_alert_days ?? 30;
+      setStaleStockCount((productsRes.data ?? []).filter((p) => p.days_in_stock > stockAlertDays).length);
+
+      setLoading(false);
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-md bg-card" />
+          ))}
+        </div>
+        <div className="h-64 animate-pulse rounded-md bg-card" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <p className="text-sm text-danger">{error}</p>;
+  }
+
+  if (!dre) {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        Configure sua loja para ver os indicadores aqui.
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Os indicadores da loja aparecerão aqui.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Visão geral do desempenho da loja.</p>
+      </div>
+
+      <KpiCards dre={dre} />
+      <GoalProgress currentRevenue={dre.revenue} goal={goal} />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <RevenueLineChart data={revenueByMonth} />
+        <ChannelBarChart data={channelData} />
+      </div>
+
+      <MetricCards avgLtv={avgLtv} cacByChannel={cacByChannel} retentionRate={retentionRate} />
+
+      <AlertsPanel
+        upgradeWindowCount={upgradeWindowCount}
+        birthdaysCount={birthdaysCount}
+        staleStockCount={staleStockCount}
+      />
     </div>
   );
 }
