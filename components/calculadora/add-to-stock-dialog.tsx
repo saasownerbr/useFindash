@@ -102,11 +102,25 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
         <DialogHeader>
           <DialogTitle>Adicionar ao estoque</DialogTitle>
           <DialogDescription>
-            {props.model} {props.storage} · Seminovo · Grade {props.grade === "sucata" ? "Sucata" : props.grade}
+            Confira os dados e informe quanto você pagou pelo aparelho.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="col-span-2 flex flex-col gap-2 sm:col-span-1">
+              <Label htmlFor="stock-model">Modelo</Label>
+              <Input id="stock-model" readOnly value={`${props.model} ${props.storage}`} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-type">Tipo</Label>
+              <Input id="stock-type" readOnly value="Seminovo" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-grade">Grade</Label>
+              <Input id="stock-grade" readOnly value={props.grade === "sucata" ? "Sucata" : props.grade} />
+            </div>
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="stock-imei">IMEI</Label>
             <Input

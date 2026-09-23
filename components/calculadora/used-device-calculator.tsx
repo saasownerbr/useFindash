@@ -135,7 +135,8 @@ export function UsedDeviceCalculator() {
       return;
     }
     if (!storeId) return;
-    const { data } = await createClient()
+    const supabase = createClient();
+    const { data } = await supabase
       .from("products")
       .select("model, storage, status")
       .eq("store_id", storeId)
@@ -144,6 +145,20 @@ export function UsedDeviceCalculator() {
       .limit(1)
       .maybeSingle();
     if (!data) {
+      // The first 8 digits (TAC) identify the model, so a device the store bought before tells us what this one is.
+      const { data: sameModel } = await supabase
+        .from("products")
+        .select("model")
+        .eq("store_id", storeId)
+        .like("imei", `${digits.slice(0, 8)}%`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (sameModel) {
+        selectDevice(sameModel.model, "");
+        setImeiNote({ tone: "info", text: `Modelo identificado pelo IMEI: ${sameModel.model}. Selecione o armazenamento.` });
+        return;
+      }
       setImeiNote({ tone: "info", text: "IMEI válido. Selecione o modelo e o armazenamento abaixo." });
       return;
     }
