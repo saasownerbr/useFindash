@@ -27,5 +27,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Cron routes authenticate via the CRON_SECRET header, not a Supabase
+  // session — Vercel's scheduler never has a logged-in user, so this
+  // middleware must not redirect it to /login before the route handler's
+  // own verifyCronSecret() check ever runs.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
