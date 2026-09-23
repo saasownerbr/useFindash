@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AccessoryList } from "@/components/estoque/accessory-list";
 import { ProductList } from "@/components/estoque/product-list";
+import { PageContainer } from "@/components/ui/page-container";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -17,7 +18,8 @@ export default function EstoquePage() {
   const [tab, setTab] = useState<TabKey>("aparelhos");
 
   return (
-    <div>
+    <PageContainer>
+      <div>
       <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
       <p className="mt-1 text-sm text-muted-foreground">Gerencie aparelhos e acessórios da loja.</p>
 
@@ -38,6 +40,7 @@ export default function EstoquePage() {
       </div>
 
       <div className="mt-6">{tab === "aparelhos" ? <ProductList /> : <AccessoryList />}</div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

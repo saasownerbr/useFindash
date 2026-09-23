@@ -6,6 +6,7 @@ import { PriceReferenceList } from "@/components/configuracoes/price-reference-l
 import { SellerList } from "@/components/configuracoes/seller-list";
 import { SupportForm } from "@/components/configuracoes/support-form";
 import { StoreSettingsForm } from "@/components/configuracoes/store-settings-form";
+import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { cn } from "@/lib/utils";
@@ -41,9 +42,10 @@ export default function ConfiguracoesPage() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Dados da loja, vendedores, tabela de preços e alertas.</p>
+    <PageContainer>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Dados da loja, vendedores, tabela de preços e alertas.</p>
 
       <div className="mt-6 flex gap-1 border-b border-border">
         {TABS.map((t) => (
@@ -67,6 +69,7 @@ export default function ConfiguracoesPage() {
         {tab === "precos" && <PriceReferenceList storeId={storeId} />}
         {tab === "suporte" && <SupportForm />}
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

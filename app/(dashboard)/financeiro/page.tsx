@@ -8,6 +8,7 @@ import { DrePanel } from "@/components/financeiro/dre-panel";
 import { MonthlyInputForm } from "@/components/financeiro/monthly-input-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { cn } from "@/lib/utils";
@@ -44,9 +45,10 @@ export default function FinanceiroPage() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-      <p className="mt-1 text-sm text-muted-foreground">DRE mensal, lançamentos de custos e dados de tráfego pago.</p>
+    <PageContainer>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
+        <p className="mt-1 text-sm text-muted-foreground">DRE mensal, lançamentos de custos e dados de tráfego pago.</p>
 
       <div className="mt-6 flex gap-1 border-b border-border">
         {TABS.map((t) => (
@@ -84,6 +86,7 @@ export default function FinanceiroPage() {
         )}
         {tab === "trafego" && <MonthlyInputForm storeId={storeId} />}
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

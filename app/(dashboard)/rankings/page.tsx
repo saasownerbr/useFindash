@@ -7,6 +7,7 @@ import { ProductRanking } from "@/components/rankings/product-ranking";
 import { SellerRanking } from "@/components/rankings/seller-ranking";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { rankChannels, rankProducts, rankSellers, type ChannelRankRow, type ProductRankRow, type SellerRankRow } from "@/lib/rankings";
@@ -104,11 +105,12 @@ export default function RankingsPage() {
   }, [month]);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Rankings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Desempenho de vendedores, produtos e canais.</p>
-      </div>
+    <PageContainer>
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Rankings</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Desempenho de vendedores, produtos e canais.</p>
+        </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="rankings-month">Mês</Label>
@@ -139,6 +141,7 @@ export default function RankingsPage() {
           </section>
         </>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 }

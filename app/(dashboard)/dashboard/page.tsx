@@ -10,6 +10,7 @@ import { MetricCards } from "@/components/dashboard/metric-cards";
 import { RevenueLineChart } from "@/components/dashboard/revenue-line-chart";
 import { PaymentMethodsChart } from "@/components/dashboard/payment-methods-chart";
 import { PeriodSelector } from "@/components/period-selector";
+import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { sumAccessorySales } from "@/lib/accessory-sales";
@@ -214,14 +215,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Visão geral do desempenho da loja.</p>
+    <PageContainer>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Visão geral do desempenho da loja.</p>
+          </div>
+          <PeriodSelector />
         </div>
-        <PeriodSelector />
-      </div>
 
       <KpiCards dre={dre} />
       <GoalProgress currentRevenue={dre.revenue} goal={goal} />
@@ -240,6 +242,7 @@ export default function DashboardPage() {
         birthdaysCount={birthdaysCount}
         staleStockCount={staleStockCount}
       />
-    </div>
+      </div>
+    </PageContainer>
   );
 }
