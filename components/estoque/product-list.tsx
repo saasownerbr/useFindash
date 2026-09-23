@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ProductFormDialog } from "@/components/estoque/product-form-dialog";
@@ -34,6 +34,7 @@ const TYPE_LABELS: Record<string, string> = {
 export function ProductList() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
+  const [storeResolved, setStoreResolved] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
@@ -42,27 +43,54 @@ export function ProductList() {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const loadGenerationRef = useRef(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resolve the active store once on mount (or when the user changes), rather
+  // than on every filter-driven reload.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveStore() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || cancelled) return;
+
+      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      if (cancelled) return;
+
+      setStoreId(activeStoreId);
+      setStoreResolved(true);
+    }
+
+    resolveStore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadProducts = useCallback(async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    if (!storeResolved) return;
 
-    if (!user) return;
+    const generation = ++loadGenerationRef.current;
 
-    const activeStoreId = await getActiveStoreId(supabase, user.id);
-    setStoreId(activeStoreId);
-
-    if (!activeStoreId) {
+    if (!storeId) {
       setProducts([]);
       return;
     }
 
+    const supabase = createClient();
+
     let query = supabase
       .from("products")
       .select("*")
-      .eq("store_id", activeStoreId)
+      .eq("store_id", storeId)
       .order("created_at", { ascending: false });
 
     if (statusFilter) query = query.eq("status", statusFilter);
@@ -70,6 +98,10 @@ export function ProductList() {
     if (modelFilter) query = query.ilike("model", `%${modelFilter}%`);
 
     const { data, error: fetchError } = await query;
+
+    // A newer request has started since this one was fired; discard this
+    // response so it can't overwrite fresher data.
+    if (generation !== loadGenerationRef.current) return;
 
     if (fetchError) {
       setError("Não foi possível carregar o estoque. Tente novamente.");
@@ -79,21 +111,39 @@ export function ProductList() {
 
     setError(null);
     setProducts(data ?? []);
-  }, [statusFilter, typeFilter, modelFilter]);
+  }, [storeId, storeResolved, statusFilter, typeFilter, modelFilter]);
 
   useEffect(() => {
-    loadProducts();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      loadProducts();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [loadProducts]);
 
   async function handleDelete() {
     if (!deletingProduct) return;
     setIsDeleting(true);
+    setDeleteError(null);
     const supabase = createClient();
-    const { error: deleteError } = await supabase.from("products").delete().eq("id", deletingProduct.id);
+    const { data, error: deleteError } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", deletingProduct.id)
+      .select("id");
     setIsDeleting(false);
 
     if (deleteError) {
-      setError("Não foi possível excluir o aparelho. Tente novamente.");
+      setDeleteError("Não foi possível excluir o aparelho. Tente novamente.");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setDeleteError("Você não tem permissão para excluir aparelhos.");
       return;
     }
 
@@ -224,7 +274,14 @@ export function ProductList() {
                         Editar
                       </Button>
                       {product.status !== "sold" && (
-                        <Button variant="ghost" size="sm" onClick={() => setDeletingProduct(product)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeletingProduct(product);
+                          }}
+                        >
                           Excluir
                         </Button>
                       )}
@@ -247,12 +304,18 @@ export function ProductList() {
 
       <ConfirmDialog
         open={!!deletingProduct}
-        onOpenChange={(open) => !open && setDeletingProduct(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingProduct(null);
+            setDeleteError(null);
+          }
+        }}
         title="Excluir aparelho"
         description={`Tem certeza que deseja excluir ${deletingProduct?.model ?? "este aparelho"}? Essa ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         onConfirm={handleDelete}
         isConfirming={isDeleting}
+        error={deleteError ?? undefined}
       />
     </div>
   );

@@ -5,10 +5,11 @@ import { getActiveStoreId } from "@/lib/supabase/store";
 function createSupabaseStub(result: { data: { store_id: string } | null; error: unknown }) {
   const maybeSingle = vi.fn().mockResolvedValue(result);
   const limit = vi.fn().mockReturnValue({ maybeSingle });
-  const eq = vi.fn().mockReturnValue({ limit });
+  const order = vi.fn().mockReturnValue({ limit });
+  const eq = vi.fn().mockReturnValue({ order });
   const select = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ select });
-  return { from } as unknown as Parameters<typeof getActiveStoreId>[0];
+  return { from, order } as unknown as Parameters<typeof getActiveStoreId>[0] & { order: typeof order };
 }
 
 describe("getActiveStoreId", () => {
@@ -25,5 +26,11 @@ describe("getActiveStoreId", () => {
   it("returns null on error", async () => {
     const supabase = createSupabaseStub({ data: null, error: new Error("boom") });
     await expect(getActiveStoreId(supabase, "user-1")).resolves.toBeNull();
+  });
+
+  it("orders by created_at ascending to deterministically pick the earliest store membership", async () => {
+    const supabase = createSupabaseStub({ data: { store_id: "store-1" }, error: null });
+    await getActiveStoreId(supabase, "user-1");
+    expect(supabase.order).toHaveBeenCalledWith("created_at", { ascending: true });
   });
 });

@@ -10,6 +10,7 @@ export async function getActiveStoreId(
     .from("store_users")
     .select("store_id")
     .eq("user_id", userId)
+    .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 

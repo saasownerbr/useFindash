@@ -202,7 +202,9 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="acquisitionCost">Custo de aquisição (R$)</Label>
+              <Label htmlFor="acquisitionCost">
+                {type === "new" ? "Custo de aquisição por unidade (R$)" : "Custo de aquisição (R$)"}
+              </Label>
               <Input id="acquisitionCost" type="number" min={0} step="0.01" {...register("acquisitionCost")} />
               {errors.acquisitionCost && (
                 <span className="text-xs text-danger">{errors.acquisitionCost.message}</span>

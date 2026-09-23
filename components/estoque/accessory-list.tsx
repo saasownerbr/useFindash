@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AccessoryFormDialog } from "@/components/estoque/accessory-form-dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -15,38 +15,70 @@ type Accessory = Tables<"accessories">;
 export function AccessoryList() {
   const [accessories, setAccessories] = useState<Accessory[] | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
+  const [storeResolved, setStoreResolved] = useState(false);
   const [nameFilter, setNameFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccessory, setEditingAccessory] = useState<Accessory | null>(null);
   const [deletingAccessory, setDeletingAccessory] = useState<Accessory | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const loadGenerationRef = useRef(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resolve the active store once on mount (or when the user changes), rather
+  // than on every filter-driven reload.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveStore() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || cancelled) return;
+
+      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      if (cancelled) return;
+
+      setStoreId(activeStoreId);
+      setStoreResolved(true);
+    }
+
+    resolveStore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadAccessories = useCallback(async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    if (!storeResolved) return;
 
-    if (!user) return;
+    const generation = ++loadGenerationRef.current;
 
-    const activeStoreId = await getActiveStoreId(supabase, user.id);
-    setStoreId(activeStoreId);
-
-    if (!activeStoreId) {
+    if (!storeId) {
       setAccessories([]);
       return;
     }
 
+    const supabase = createClient();
+
     let query = supabase
       .from("accessories")
       .select("*")
-      .eq("store_id", activeStoreId)
+      .eq("store_id", storeId)
       .order("created_at", { ascending: false });
 
     if (nameFilter) query = query.ilike("name", `%${nameFilter}%`);
 
     const { data, error: fetchError } = await query;
+
+    // A newer request has started since this one was fired; discard this
+    // response so it can't overwrite fresher data.
+    if (generation !== loadGenerationRef.current) return;
 
     if (fetchError) {
       setError("Não foi possível carregar os acessórios. Tente novamente.");
@@ -56,21 +88,39 @@ export function AccessoryList() {
 
     setError(null);
     setAccessories(data ?? []);
-  }, [nameFilter]);
+  }, [storeId, storeResolved, nameFilter]);
 
   useEffect(() => {
-    loadAccessories();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      loadAccessories();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [loadAccessories]);
 
   async function handleDelete() {
     if (!deletingAccessory) return;
     setIsDeleting(true);
+    setDeleteError(null);
     const supabase = createClient();
-    const { error: deleteError } = await supabase.from("accessories").delete().eq("id", deletingAccessory.id);
+    const { data, error: deleteError } = await supabase
+      .from("accessories")
+      .delete()
+      .eq("id", deletingAccessory.id)
+      .select("id");
     setIsDeleting(false);
 
     if (deleteError) {
-      setError("Não foi possível excluir o acessório. Tente novamente.");
+      setDeleteError("Não foi possível excluir o acessório. Tente novamente.");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setDeleteError("Você não tem permissão para excluir acessórios.");
       return;
     }
 
@@ -149,7 +199,14 @@ export function AccessoryList() {
                       >
                         Editar
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeletingAccessory(accessory)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeletingAccessory(accessory);
+                        }}
+                      >
                         Excluir
                       </Button>
                     </div>
@@ -171,12 +228,18 @@ export function AccessoryList() {
 
       <ConfirmDialog
         open={!!deletingAccessory}
-        onOpenChange={(open) => !open && setDeletingAccessory(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingAccessory(null);
+            setDeleteError(null);
+          }
+        }}
         title="Excluir acessório"
         description={`Tem certeza que deseja excluir ${deletingAccessory?.name ?? "este acessório"}? Essa ação não pode ser desfeita.`}
         confirmLabel="Excluir"
         onConfirm={handleDelete}
         isConfirming={isDeleting}
+        error={deleteError ?? undefined}
       />
     </div>
   );
