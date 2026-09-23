@@ -7,6 +7,7 @@ import { useState } from "react";
 import { isActiveRoute, NAV_ITEMS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import {
   BarChart3,
   Package,
@@ -77,7 +78,10 @@ export function MobileNav() {
       {/* Drawer for secondary items */}
       {menuOpen && secondaryItems.length > 0 && (
         <div className="fixed inset-0 top-0 z-50 bg-black/50" onClick={() => setMenuOpen(false)}>
-          <div className="absolute left-0 right-0 top-0 flex max-h-96 flex-col gap-2 border-b border-border bg-card p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-0 right-0 top-0 flex max-h-96 flex-col gap-4 border-b border-border bg-card p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-center">
+              <Logo size="sm" />
+            </div>
             {secondaryItems.map((item) => {
               const active = isActiveRoute(pathname, item.href);
               return (

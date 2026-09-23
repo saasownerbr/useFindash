@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema, type SignupInput } from "@/lib/validation/auth";
 
@@ -75,8 +76,10 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8">
-        <h1 className="text-xl font-semibold text-foreground">Criar conta no useFindash</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Cadastre sua empresa para começar.</p>
+        <div className="mb-8 flex justify-center">
+          <Logo size="lg" />
+        </div>
+        <p className="text-center text-sm text-muted-foreground">Cadastre sua empresa para começar.</p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-2">
