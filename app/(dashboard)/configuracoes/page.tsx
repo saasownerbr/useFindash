@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { PriceReferenceList } from "@/components/configuracoes/price-reference-list";
 import { SellerList } from "@/components/configuracoes/seller-list";
+import { SupportForm } from "@/components/configuracoes/support-form";
 import { StoreSettingsForm } from "@/components/configuracoes/store-settings-form";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
@@ -13,6 +14,7 @@ const TABS = [
   { key: "loja", label: "Loja" },
   { key: "vendedores", label: "Vendedores" },
   { key: "precos", label: "Tabela de preços" },
+  { key: "suporte", label: "Suporte" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -63,6 +65,7 @@ export default function ConfiguracoesPage() {
         {tab === "loja" && <StoreSettingsForm storeId={storeId} />}
         {tab === "vendedores" && <SellerList storeId={storeId} />}
         {tab === "precos" && <PriceReferenceList storeId={storeId} />}
+        {tab === "suporte" && <SupportForm />}
       </div>
     </div>
   );

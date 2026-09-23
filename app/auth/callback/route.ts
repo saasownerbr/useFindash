@@ -11,7 +11,10 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      return NextResponse.redirect(`${origin}/login?error=expired_link`);
+      // Set an HttpOnly cookie to communicate the error state instead of URL params
+      const response = NextResponse.redirect(`${origin}/login`);
+      response.cookies.set("auth_error", "expired_link", { maxAge: 10 });
+      return response;
     }
   }
 

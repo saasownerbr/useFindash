@@ -8,6 +8,8 @@ import { GoalProgress } from "@/components/dashboard/goal-progress";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MetricCards } from "@/components/dashboard/metric-cards";
 import { RevenueLineChart } from "@/components/dashboard/revenue-line-chart";
+import { PaymentMethodsChart } from "@/components/dashboard/payment-methods-chart";
+import { PeriodSelector } from "@/components/period-selector";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { sumAccessorySales } from "@/lib/accessory-sales";
@@ -15,6 +17,7 @@ import { buildDRE, type DRE } from "@/lib/dre";
 import { calculateCAC, calculateRetentionRate } from "@/lib/finance";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { SALE_CHANNELS } from "@/lib/validation/sale";
+import { usePeriodFilterStore } from "@/lib/period-filter-store";
 
 function monthKey(date: Date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -37,6 +40,9 @@ export default function DashboardPage() {
   const [upgradeWindowCount, setUpgradeWindowCount] = useState(0);
   const [birthdaysCount, setBirthdaysCount] = useState(0);
   const [staleStockCount, setStaleStockCount] = useState(0);
+  const [paymentMethods, setPaymentMethods] = useState({ pix: 0, debit: 0, credit: 0 });
+
+  const { startDate, endDate } = usePeriodFilterStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -58,13 +64,23 @@ export default function DashboardPage() {
       const currentMonth = monthKey(now);
       const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
 
-      const [storeRes, sixMonthSalesRes, costEntriesRes, customersRes, monthlyInputRes, productsRes] = await Promise.all([
+      // Use period filter dates if set
+      const periodStart = startDate || sixMonthsAgo;
+      const periodEnd = endDate || now;
+
+      const [storeRes, sixMonthSalesRes, periodSalesRes, costEntriesRes, customersRes, monthlyInputRes, productsRes] = await Promise.all([
         supabase.from("stores").select("*").eq("id", storeId).single(),
         supabase
           .from("sales")
-          .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id")
+          .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id, payment_method")
           .eq("store_id", storeId)
           .gte("sold_at", sixMonthsAgo.toISOString()),
+        supabase
+          .from("sales")
+          .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id, payment_method")
+          .eq("store_id", storeId)
+          .gte("sold_at", periodStart.toISOString())
+          .lte("sold_at", periodEnd.toISOString()),
         supabase.from("cost_entries").select("type, amount, month").eq("store_id", storeId).eq("month", monthStart(currentMonth)),
         supabase.from("customers").select("id, ltv, birthdate").eq("store_id", storeId),
         supabase.from("monthly_inputs").select("*").eq("store_id", storeId).eq("month", monthStart(currentMonth)).maybeSingle(),
@@ -73,7 +89,7 @@ export default function DashboardPage() {
 
       if (cancelled) return;
 
-      if (storeRes.error || sixMonthSalesRes.error || costEntriesRes.error) {
+      if (storeRes.error || sixMonthSalesRes.error || periodSalesRes.error || costEntriesRes.error) {
         setError("Não foi possível carregar os dados do dashboard.");
         setLoading(false);
         return;
@@ -81,6 +97,7 @@ export default function DashboardPage() {
 
       const store = storeRes.data;
       const allSales = sixMonthSalesRes.data ?? [];
+      const periodSales = periodSalesRes.data ?? [];
       const currentMonthSales = allSales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
 
       const accessorySales = await sumAccessorySales(supabase, currentMonthSales.map((s) => s.id));
@@ -151,6 +168,16 @@ export default function DashboardPage() {
       const stockAlertDays = store?.stock_alert_days ?? 30;
       setStaleStockCount((productsRes.data ?? []).filter((p) => p.days_in_stock > stockAlertDays).length);
 
+      // Calculate payment methods from period sales
+      const paymentMethodsData = { pix: 0, debit: 0, credit: 0 };
+      for (const sale of periodSales) {
+        const method = sale.payment_method?.toLowerCase() || "pix";
+        if (method.includes("pix")) paymentMethodsData.pix += Number(sale.sale_price);
+        else if (method.includes("débito") || method.includes("debit")) paymentMethodsData.debit += Number(sale.sale_price);
+        else if (method.includes("crédito") || method.includes("credit")) paymentMethodsData.credit += Number(sale.sale_price);
+      }
+      setPaymentMethods(paymentMethodsData);
+
       setLoading(false);
     }
 
@@ -159,7 +186,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (
@@ -188,13 +215,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Visão geral do desempenho da loja.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Visão geral do desempenho da loja.</p>
+        </div>
+        <PeriodSelector />
       </div>
 
       <KpiCards dre={dre} />
       <GoalProgress currentRevenue={dre.revenue} goal={goal} />
+
+      <PaymentMethodsChart data={paymentMethods} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <RevenueLineChart data={revenueByMonth} />

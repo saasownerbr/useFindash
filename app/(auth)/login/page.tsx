@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,16 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+
+  useEffect(() => {
+    // Check for auth error cookie (from callback)
+    const cookies = document.cookie.split(";");
+    const authErrorCookie = cookies.find((c) => c.trim().startsWith("auth_error="));
+    if (authErrorCookie) {
+      setAuthError("Link de login expirado. Tente fazer login novamente.");
+      document.cookie = "auth_error=; max-age=0";
+    }
+  }, []);
 
   async function onSubmit(data: LoginInput) {
     setAuthError(null);
