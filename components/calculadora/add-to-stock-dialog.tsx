@@ -1,0 +1,177 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import type { Json } from "@/lib/supabase/types";
+import { toast } from "@/lib/toast";
+import type { Grade } from "@/lib/used-device-calculator";
+
+function today() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+export interface AddToStockDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  storeId: string | null;
+  imei: string;
+  model: string;
+  storage: string;
+  grade: Grade;
+  repairTotal: number;
+  offerPrice: string;
+  suggestedPrice: number;
+  checkupData: Json;
+}
+
+export function AddToStockDialog(props: AddToStockDialogProps) {
+  const router = useRouter();
+  const [imei, setImei] = useState("");
+  const [acquisitionCost, setAcquisitionCost] = useState("");
+  const [repairCost, setRepairCost] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [purchaseDate, setPurchaseDate] = useState(today());
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const { open, imei: initialImei, offerPrice, repairTotal } = props;
+  useEffect(() => {
+    if (!open) return;
+    setImei(initialImei);
+    setAcquisitionCost(offerPrice);
+    setRepairCost(String(Math.round(repairTotal * 100) / 100));
+    setSupplier("");
+    setPurchaseDate(today());
+    setError(null);
+  }, [open, initialImei, offerPrice, repairTotal]);
+
+  async function handleConfirm() {
+    const cost = Number(acquisitionCost);
+    const repair = Number(repairCost || 0);
+    if (!/^\d{15}$/.test(imei)) return setError("IMEI precisa ter 15 dígitos numéricos.");
+    if (!(cost > 0)) return setError("Informe quanto você pagou pelo aparelho.");
+    if (!(repair >= 0)) return setError("Custo de reparo não pode ser negativo.");
+    if (!props.storeId) return setError("Não foi possível identificar a loja. Recarregue a página.");
+
+    setSaving(true);
+    setError(null);
+    const { data, error: insertError } = await createClient()
+      .from("products")
+      .insert({
+        store_id: props.storeId,
+        type: "semi_novo",
+        imei,
+        model: props.model,
+        storage: props.storage,
+        acquisition_cost: cost,
+        repair_cost: repair,
+        grade: props.grade,
+        suggested_price: Math.round(props.suggestedPrice * 100) / 100,
+        supplier: supplier.trim() || null,
+        purchase_date: purchaseDate || null,
+        checkup_data: props.checkupData,
+      })
+      .select("id")
+      .single();
+    setSaving(false);
+
+    if (insertError || !data) {
+      setError(
+        insertError?.code === "23505"
+          ? "Esse IMEI já está cadastrado no estoque."
+          : "Não foi possível adicionar ao estoque. Tente novamente."
+      );
+      return;
+    }
+
+    toast.success(`${props.model} ${props.storage} adicionado ao estoque`);
+    props.onOpenChange(false);
+    router.push(`/estoque?novo=${data.id}`);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={props.onOpenChange}>
+      <DialogContent className="rounded-xl border-[#2A2A2A] bg-[#1A1A1A]">
+        <DialogHeader>
+          <DialogTitle>Adicionar ao estoque</DialogTitle>
+          <DialogDescription>
+            {props.model} {props.storage} · Seminovo · Grade {props.grade === "sucata" ? "Sucata" : props.grade}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="stock-imei">IMEI</Label>
+            <Input
+              id="stock-imei"
+              inputMode="numeric"
+              maxLength={15}
+              value={imei}
+              onChange={(e) => setImei(e.target.value.replace(/\D/g, ""))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-cost">Custo de aquisição (R$)</Label>
+              <Input
+                id="stock-cost"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                placeholder="Quanto você pagou"
+                value={acquisitionCost}
+                onChange={(e) => setAcquisitionCost(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-repair">Custo de reparo (R$)</Label>
+              <Input
+                id="stock-repair"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={repairCost}
+                onChange={(e) => setRepairCost(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-supplier">Fornecedor ou origem</Label>
+              <Input
+                id="stock-supplier"
+                placeholder="Ex: cliente balcão, trade-in"
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-date">Data de compra</Label>
+              <Input id="stock-date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
+            </div>
+          </div>
+
+          {error && <p className="text-xs text-danger">{error}</p>}
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => props.onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleConfirm} disabled={saving}>
+              {saving ? "Adicionando..." : "Adicionar ao estoque"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

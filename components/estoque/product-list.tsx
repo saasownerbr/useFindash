@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
+import { cn } from "@/lib/utils";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
@@ -44,6 +45,24 @@ export function ProductList() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // /estoque?novo=<id> comes from the used-device calculator after adding a product.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("novo");
+    if (!id) return;
+    setHighlightId(id);
+    window.history.replaceState(null, "", window.location.pathname);
+    const timer = setTimeout(() => setHighlightId(null), 6000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (highlightId && products) {
+      document.getElementById(`product-${highlightId}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [highlightId, products]);
 
   const loadGenerationRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -232,7 +251,14 @@ export function ProductList() {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product.id} className="border-b border-border last:border-0">
+                <tr
+                  key={product.id}
+                  id={`product-${product.id}`}
+                  className={cn(
+                    "border-b border-border transition-colors duration-700 last:border-0",
+                    product.id === highlightId && "bg-primary/10 outline outline-1 -outline-offset-1 outline-primary"
+                  )}
+                >
                   <td className="px-4 py-3">
                     {product.model} · {product.storage}
                     {product.color ? ` · ${product.color}` : ""}

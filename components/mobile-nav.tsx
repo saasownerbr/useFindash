@@ -8,23 +8,7 @@ import { isActiveRoute, NAV_ITEMS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
-import {
-  BarChart3,
-  Package,
-  ShoppingCart,
-  Users,
-  DollarSign,
-  Menu,
-  X,
-} from "lucide-react";
-
-const icons: { [key: string]: React.ReactNode } = {
-  "/dashboard": <BarChart3 className="h-5 w-5" />,
-  "/estoque": <Package className="h-5 w-5" />,
-  "/vendas/nova": <ShoppingCart className="h-5 w-5" />,
-  "/clientes": <Users className="h-5 w-5" />,
-  "/financeiro": <DollarSign className="h-5 w-5" />,
-};
+import { Menu, X } from "lucide-react";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -51,8 +35,8 @@ export function MobileNav() {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {icons[item.href] || <Menu className="h-5 w-5" />}
-                <span className="hidden">{item.label}</span>
+                <item.icon className="h-5 w-5" aria-hidden />
+                <span className="sr-only">{item.label}</span>
               </Link>
             );
           })}

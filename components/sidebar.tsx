@@ -24,10 +24,11 @@ export function Sidebar() {
             prefetch={true}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
               active && "bg-primary/10 text-primary"
             )}
           >
+            <item.icon className="h-4 w-4 shrink-0" aria-hidden />
             {item.label}
           </Link>
         );

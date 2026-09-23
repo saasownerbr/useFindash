@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { CalculatorSettings } from "@/components/configuracoes/calculator-settings";
 import { PriceReferenceList } from "@/components/configuracoes/price-reference-list";
 import { SellerList } from "@/components/configuracoes/seller-list";
 import { SupportForm } from "@/components/configuracoes/support-form";
@@ -15,6 +16,7 @@ const TABS = [
   { key: "loja", label: "Loja" },
   { key: "vendedores", label: "Vendedores" },
   { key: "precos", label: "Tabela de preços" },
+  { key: "calculadora", label: "Calculadora" },
   { key: "suporte", label: "Suporte" },
 ] as const;
 
@@ -67,6 +69,7 @@ export default function ConfiguracoesPage() {
         {tab === "loja" && <StoreSettingsForm storeId={storeId} />}
         {tab === "vendedores" && <SellerList storeId={storeId} />}
         {tab === "precos" && <PriceReferenceList storeId={storeId} />}
+        {tab === "calculadora" && <CalculatorSettings storeId={storeId} />}
         {tab === "suporte" && <SupportForm />}
       </div>
       </div>
