@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { escapeOrFilterValue } from "@/lib/supabase/filters";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { isInUpgradeWindow } from "@/lib/customer-alerts";
 import { toast } from "@/lib/toast";
@@ -98,7 +99,10 @@ export function CustomerList() {
 
     let query = supabase.from("customers").select("*").eq("store_id", storeId).order("created_at", { ascending: false });
 
-    if (searchTerm) query = query.or(`name.ilike.%${searchTerm}%,whatsapp.ilike.%${searchTerm}%`);
+    if (searchTerm) {
+      const escaped = escapeOrFilterValue(searchTerm);
+      query = query.or(`name.ilike.%${escaped}%,whatsapp.ilike.%${escaped}%`);
+    }
     if (channelFilter) query = query.eq("acquisition_channel", channelFilter);
 
     const { data, error: fetchError } = await query;

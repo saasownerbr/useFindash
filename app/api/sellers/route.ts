@@ -14,6 +14,13 @@ export async function POST(request: NextRequest) {
   if (typeof storeId !== "string") {
     return NextResponse.json({ error: "Loja inválida" }, { status: 400 });
   }
+  // `email` is optional in the shared schema so the edit form (which never
+  // hits this route) can validate with it blank — but inviting a new seller
+  // always requires one.
+  if (!parsed.data.email) {
+    return NextResponse.json({ error: "Informe um email válido" }, { status: 400 });
+  }
+  const email = parsed.data.email;
 
   const supabase = createServerClient();
   const {
@@ -34,7 +41,7 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(parsed.data.email);
+  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email);
   if (inviteError || !invited.user) {
     return NextResponse.json({ error: "Não foi possível convidar este email" }, { status: 400 });
   }

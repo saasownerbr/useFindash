@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { escapeOrFilterValue } from "@/lib/supabase/filters";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -29,11 +30,12 @@ export function StepCustomer({ storeId }: { storeId: string | null }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       const supabase = createClient();
+      const escaped = escapeOrFilterValue(term);
       const { data } = await supabase
         .from("customers")
         .select("*")
         .eq("store_id", storeId)
-        .or(`name.ilike.%${term}%,whatsapp.ilike.%${term}%`)
+        .or(`name.ilike.%${escaped}%,whatsapp.ilike.%${escaped}%`)
         .limit(10);
       setResults(data ?? []);
     }, 300);

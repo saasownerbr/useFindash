@@ -127,18 +127,24 @@ export function PriceReferenceFormDialog({
             <div className="flex flex-col gap-2">
               <Label htmlFor="grade_multiplier_a_plus">Multiplicador A+</Label>
               <Input id="grade_multiplier_a_plus" type="number" min={0} max={1} step="0.01" {...register("grade_multiplier_a_plus")} />
+              {errors.grade_multiplier_a_plus && (
+                <span className="text-xs text-danger">{errors.grade_multiplier_a_plus.message}</span>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="grade_multiplier_a">Multiplicador A</Label>
               <Input id="grade_multiplier_a" type="number" min={0} max={1} step="0.01" {...register("grade_multiplier_a")} />
+              {errors.grade_multiplier_a && <span className="text-xs text-danger">{errors.grade_multiplier_a.message}</span>}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="grade_multiplier_b">Multiplicador B</Label>
               <Input id="grade_multiplier_b" type="number" min={0} max={1} step="0.01" {...register("grade_multiplier_b")} />
+              {errors.grade_multiplier_b && <span className="text-xs text-danger">{errors.grade_multiplier_b.message}</span>}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="grade_multiplier_c">Multiplicador C</Label>
               <Input id="grade_multiplier_c" type="number" min={0} max={1} step="0.01" {...register("grade_multiplier_c")} />
+              {errors.grade_multiplier_c && <span className="text-xs text-danger">{errors.grade_multiplier_c.message}</span>}
             </div>
           </div>
 

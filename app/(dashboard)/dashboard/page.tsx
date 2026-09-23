@@ -10,6 +10,7 @@ import { MetricCards } from "@/components/dashboard/metric-cards";
 import { RevenueLineChart } from "@/components/dashboard/revenue-line-chart";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
+import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE, type DRE } from "@/lib/dre";
 import { calculateCAC, calculateRetentionRate } from "@/lib/finance";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
@@ -61,7 +62,7 @@ export default function DashboardPage() {
         supabase.from("stores").select("*").eq("id", storeId).single(),
         supabase
           .from("sales")
-          .select("sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id")
+          .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id")
           .eq("store_id", storeId)
           .gte("sold_at", sixMonthsAgo.toISOString()),
         supabase.from("cost_entries").select("type, amount, month").eq("store_id", storeId).eq("month", monthStart(currentMonth)),
@@ -82,11 +83,15 @@ export default function DashboardPage() {
       const allSales = sixMonthSalesRes.data ?? [];
       const currentMonthSales = allSales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
 
+      const accessorySales = await sumAccessorySales(supabase, currentMonthSales.map((s) => s.id));
+      if (cancelled) return;
+
       setGoal(store?.monthly_revenue_goal ?? 0);
       setDre(
         buildDRE(
           currentMonthSales,
-          (costEntriesRes.data ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[]
+          (costEntriesRes.data ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[],
+          accessorySales
         )
       );
 

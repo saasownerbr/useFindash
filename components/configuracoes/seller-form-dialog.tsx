@@ -78,6 +78,11 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
       return;
     }
 
+    if (!data.email) {
+      setError("email", { message: "Informe um email válido" });
+      return;
+    }
+
     const response = await fetch("/api/sellers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

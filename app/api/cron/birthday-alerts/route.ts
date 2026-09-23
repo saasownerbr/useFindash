@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isBirthdayWithinDays } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { data: stores } = await admin.from("stores").select("id, name");
+  const emailById = await listAllUserEmails(admin);
   let emailsSent = 0;
 
   for (const store of stores ?? []) {
@@ -26,15 +28,7 @@ export async function GET(request: NextRequest) {
     const upcoming = customers.filter((customer) => isBirthdayWithinDays(customer.birthdate, 7));
     if (upcoming.length === 0) continue;
 
-    const { data: owners } = await admin
-      .from("store_users")
-      .select("user_id")
-      .eq("store_id", store.id)
-      .in("role", ["owner", "admin"]);
-    const { data: authUsers } = await admin.auth.admin.listUsers();
-    const ownerEmails = (owners ?? [])
-      .map((o) => authUsers?.users.find((u) => u.id === o.user_id)?.email)
-      .filter((email): email is string => Boolean(email));
+    const ownerEmails = await getStoreOwnerEmails(admin, store.id, emailById);
     if (ownerEmails.length === 0) continue;
 
     const rows = upcoming

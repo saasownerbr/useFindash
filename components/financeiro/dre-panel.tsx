@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE, type DRE } from "@/lib/dre";
 import { formatCurrencyBRL } from "@/lib/finance";
 
@@ -30,7 +31,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
 
       const { data: sales, error: salesError } = await supabase
         .from("sales")
-        .select("acquisition_cost, repair_cost, gross_margin, commission_amount")
+        .select("id, acquisition_cost, repair_cost, gross_margin, commission_amount")
         .eq("store_id", storeId)
         .gte("sold_at", start)
         .lt("sold_at", end);
@@ -48,11 +49,15 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
         return;
       }
 
+      const accessorySales = await sumAccessorySales(supabase, (sales ?? []).map((s) => s.id));
+      if (cancelled) return;
+
       setError(null);
       setDre(
         buildDRE(
           sales ?? [],
-          (costEntries ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[]
+          (costEntries ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[],
+          accessorySales
         )
       );
     }

@@ -2,6 +2,22 @@ function startOfDayUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
+function daysInMonthUTC(year: number, monthIndex: number): number {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+// Adds `monthOffset` calendar months to (year, monthIndex, day), clamping the
+// day to the target month's real length instead of letting Date.UTC overflow
+// into the following month (e.g. Jan 31 + 1 month must land on Feb 28/29, not
+// March 3).
+function addMonthsClamped(year: number, monthIndex: number, day: number, monthOffset: number): Date {
+  const totalMonths = year * 12 + monthIndex + monthOffset;
+  const targetYear = Math.floor(totalMonths / 12);
+  const targetMonthIndex = ((totalMonths % 12) + 12) % 12;
+  const clampedDay = Math.min(day, daysInMonthUTC(targetYear, targetMonthIndex));
+  return new Date(Date.UTC(targetYear, targetMonthIndex, clampedDay));
+}
+
 export function isInUpgradeWindow(
   lastSaleDate: string | null,
   upgradeAlertMonths: number,
@@ -9,16 +25,20 @@ export function isInUpgradeWindow(
 ): boolean {
   if (!lastSaleDate) return false;
   const last = new Date(lastSaleDate);
-  const threshold = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + upgradeAlertMonths, last.getUTCDate()));
+  const threshold = addMonthsClamped(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate(), upgradeAlertMonths);
   return startOfDayUTC(now) >= threshold;
 }
 
 export function nextBirthday(birthdate: string, now: Date = new Date()): Date {
   const birth = new Date(birthdate);
   const today = startOfDayUTC(now);
-  let next = new Date(Date.UTC(today.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
+  const candidateForYear = (year: number) => {
+    const day = Math.min(birth.getUTCDate(), daysInMonthUTC(year, birth.getUTCMonth()));
+    return new Date(Date.UTC(year, birth.getUTCMonth(), day));
+  };
+  let next = candidateForYear(today.getUTCFullYear());
   if (next < today) {
-    next = new Date(Date.UTC(today.getUTCFullYear() + 1, birth.getUTCMonth(), birth.getUTCDate()));
+    next = candidateForYear(today.getUTCFullYear() + 1);
   }
   return next;
 }

@@ -62,11 +62,15 @@ export const useSaleWizardStore = create<SaleWizardState>((set) => ({
   setProduct: (product) => set({ product, productSkipped: false, salePrice: product?.finalPrice ?? product?.suggestedPrice ?? 0 }),
   skipProduct: () => set({ product: null, productSkipped: true }),
   addAccessory: (accessory) =>
-    set((state) => ({
-      accessories: state.accessories.some((a) => a.accessoryId === accessory.accessoryId)
-        ? state.accessories
-        : [...state.accessories, accessory],
-    })),
+    set((state) => {
+      const existingIndex = state.accessories.findIndex((a) => a.accessoryId === accessory.accessoryId);
+      if (existingIndex === -1) {
+        return { accessories: [...state.accessories, accessory] };
+      }
+      const updated = [...state.accessories];
+      updated[existingIndex] = accessory;
+      return { accessories: updated };
+    }),
   updateAccessoryQuantity: (accessoryId, quantity) =>
     set((state) => ({
       accessories: state.accessories.map((a) => (a.accessoryId === accessoryId ? { ...a, quantity } : a)),

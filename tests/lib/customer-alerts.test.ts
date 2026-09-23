@@ -14,6 +14,11 @@ describe("isInUpgradeWindow", () => {
   it("is false when there is no last sale (no purchases yet)", () => {
     expect(isInUpgradeWindow(null, 20)).toBe(false);
   });
+  it("clamps a month-end last sale date instead of overflowing into the next month", () => {
+    // Jan 31 + 1 month must resolve to Feb 28 (2026 is not a leap year), not "Feb 31" -> March 3.
+    const now = new Date("2026-03-01T00:00:00Z");
+    expect(isInUpgradeWindow("2026-01-31", 1, now)).toBe(true);
+  });
 });
 
 describe("nextBirthday", () => {
@@ -24,6 +29,10 @@ describe("nextBirthday", () => {
   it("returns next year's date when it already passed", () => {
     const now = new Date("2026-09-23T00:00:00Z");
     expect(nextBirthday("1990-01-01", now).toISOString().slice(0, 10)).toBe("2027-01-01");
+  });
+  it("clamps a Feb 29 birthdate to Feb 28 in a non-leap year", () => {
+    const now = new Date("2026-09-23T00:00:00Z");
+    expect(nextBirthday("1992-02-29", now).toISOString().slice(0, 10)).toBe("2027-02-28");
   });
 });
 
