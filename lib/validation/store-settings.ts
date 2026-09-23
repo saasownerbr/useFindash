@@ -8,7 +8,7 @@ export const storeSettingsSchema = z.object({
     .url("Informe uma URL válida")
     .optional()
     .or(z.literal("")),
-  monthly_revenue_goal: z.coerce.number().nonnegative(),
+  monthly_revenue_goal: z.coerce.number().positive("Meta mensal deve ser maior que zero"),
   stock_alert_days: z.coerce.number().int().positive("Deve ser maior que zero"),
   upgrade_alert_months: z.coerce.number().int().positive("Deve ser maior que zero"),
 });
