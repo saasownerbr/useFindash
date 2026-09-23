@@ -1,7 +1,5 @@
 "use client";
 
-import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PaymentMethodData {
@@ -17,78 +15,78 @@ interface PaymentMethodsChartProps {
 const COLORS = {
   pix: "#10B981",
   debit: "#3B82F6",
-  credit: "#F59E0B",
+  credit: "#8B5CF6",
 };
 
 export function PaymentMethodsChart({ data }: PaymentMethodsChartProps) {
   const total = data.pix + data.debit + data.credit;
-  const chartData = [
-    {
-      name: "Métodos",
-      PIX: data.pix,
-      "Débito": data.debit,
-      "Crédito": data.credit,
-    },
-  ];
 
   const getPercentage = (value: number) => {
     if (total === 0) return "0%";
     return `${((value / total) * 100).toFixed(0)}%`;
   };
 
+  const pixPercent = total === 0 ? 0 : (data.pix / total) * 100;
+  const debitPercent = total === 0 ? 0 : (data.debit / total) * 100;
+  const creditPercent = total === 0 ? 0 : (data.credit / total) * 100;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Métodos de Pagamento</CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Métodos de Pagamento
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ResponsiveContainer width="100%" height={120}>
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          >
-            <XAxis type="number" hide />
-            <YAxis dataKey="name" type="category" hide />
-            <Tooltip
-              formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-              labelStyle={{ color: "#F8F8F8" }}
-              contentStyle={{ backgroundColor: "#1A1A1A", border: "1px solid #2A2A2A" }}
+      <CardContent className="space-y-3">
+        {/* Stacked bar */}
+        <div className="flex h-2 overflow-hidden rounded-full bg-card/50" style={{ backgroundColor: "#2A2A2A" }}>
+          {pixPercent > 0 && (
+            <div
+              className="transition-all"
+              style={{
+                width: `${pixPercent}%`,
+                backgroundColor: COLORS.pix,
+                borderRadius: pixPercent === 100 ? "999px" : debitPercent === 0 && creditPercent === 0 ? "0 999px 999px 0" : "0",
+              }}
             />
-            <Bar dataKey="PIX" stackId="a" fill={COLORS.pix} />
-            <Bar dataKey="Débito" stackId="a" fill={COLORS.debit} />
-            <Bar dataKey="Crédito" stackId="a" fill={COLORS.credit} />
-          </BarChart>
-        </ResponsiveContainer>
+          )}
+          {debitPercent > 0 && (
+            <div
+              className="transition-all"
+              style={{
+                width: `${debitPercent}%`,
+                backgroundColor: COLORS.debit,
+              }}
+            />
+          )}
+          {creditPercent > 0 && (
+            <div
+              className="transition-all"
+              style={{
+                width: `${creditPercent}%`,
+                backgroundColor: COLORS.credit,
+                borderRadius: creditPercent === 100 ? "999px" : "0 999px 999px 0",
+              }}
+            />
+          )}
+        </div>
 
-        <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-md bg-secondary/30 p-2">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.pix }} />
-              <span className="font-medium text-foreground">PIX</span>
+        {/* Legend */}
+        <div className="flex items-center justify-start gap-4">
+          {[
+            { key: "pix", label: "PIX", value: data.pix, percent: pixPercent },
+            { key: "debit", label: "Débito", value: data.debit, percent: debitPercent },
+            { key: "credit", label: "Crédito", value: data.credit, percent: creditPercent },
+          ].map((item) => (
+            <div key={item.key} className="flex items-center gap-2">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: COLORS[item.key as keyof typeof COLORS] }}
+              />
+              <span className="text-xs text-muted-foreground">{item.label}</span>
+              <span className="text-xs font-semibold text-foreground">{getPercentage(item.value)}</span>
             </div>
-            <div className="text-muted-foreground">
-              {getPercentage(data.pix)}
-            </div>
-          </div>
-          <div className="rounded-md bg-secondary/30 p-2">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.debit }} />
-              <span className="font-medium text-foreground">Débito</span>
-            </div>
-            <div className="text-muted-foreground">
-              {getPercentage(data.debit)}
-            </div>
-          </div>
-          <div className="rounded-md bg-secondary/30 p-2">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS.credit }} />
-              <span className="font-medium text-foreground">Crédito</span>
-            </div>
-            <div className="text-muted-foreground">
-              {getPercentage(data.credit)}
-            </div>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>
