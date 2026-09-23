@@ -4,6 +4,16 @@ import { resolveAuthRedirect } from "@/lib/auth/resolve-redirect";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  // Supabase email links land on the Site URL with ?code=; route them to the
+  // callback so the code is exchanged server-side and never stays in the URL.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && request.nextUrl.pathname !== "/auth/callback") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    url.search = `?code=${encodeURIComponent(code)}`;
+    return NextResponse.redirect(url);
+  }
+
   const { response, user, supabase } = await updateSession(request);
 
   let hasStore: boolean | null = null;
@@ -20,6 +30,7 @@ export async function middleware(request: NextRequest) {
   if (redirectTo) {
     const url = request.nextUrl.clone();
     url.pathname = redirectTo;
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
