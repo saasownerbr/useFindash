@@ -494,6 +494,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_sale: {
+        Args: {
+          p_accessories: Json
+          p_acquisition_cost: number
+          p_customer_id: string
+          p_installments: number
+          p_payment_method: string
+          p_product_id: string | null
+          p_repair_cost: number
+          p_sale_channel: string
+          p_sale_price: number
+          p_seller_id: string
+          p_store_id: string
+        }
+        Returns: string
+      }
       create_store_with_owner: {
         Args: {
           monthly_goal?: number
