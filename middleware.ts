@@ -4,6 +4,17 @@ import { resolveAuthRedirect } from "@/lib/auth/resolve-redirect";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  // Preview deployment URLs redirect to the fixed production URL.
+  const host = request.headers.get("host") ?? "";
+  const isPreviewer = host.includes("singlehub.vercel.app") && host !== "usefindash.vercel.app";
+
+  if (isPreviewer) {
+    const url = request.nextUrl.clone();
+    url.host = "usefindash.vercel.app";
+    url.port = "";
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
   const { response, user, supabase } = await updateSession(request);
 
   let hasStore: boolean | null = null;
