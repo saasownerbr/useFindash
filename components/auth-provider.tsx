@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
 
 interface AuthProviderProps {
@@ -53,12 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       >
         {/* Logo */}
         <div style={{ marginBottom: "32px" }}>
-          <span style={{ fontSize: "24px", fontWeight: 300, color: "#9CA3AF" }}>
-            use
-          </span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "#F8F8F8" }}>
-            Findash
-          </span>
+          <Logo size="lg" />
         </div>
 
         {/* Spinner */}
