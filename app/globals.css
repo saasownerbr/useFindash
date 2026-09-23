@@ -27,3 +27,49 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* Global form styles */
+input,
+select,
+textarea {
+  background-color: #1A1A1A !important;
+  border: 1px solid #2A2A2A !important;
+  border-radius: 8px !important;
+  color: #F8F8F8 !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+}
+
+textarea {
+  height: auto !important;
+  padding: 8px 12px !important;
+  min-height: 100px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6B7280 !important;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #3D3D3D !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #3B82F6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+}
+
+select {
+  appearance: none !important;
+  background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%236B7280%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3e%3cpolyline points=%226 9 12 15 18 9%3e%3c/polyline%3e%3c/svg%3e') !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 20px !important;
+  padding-right: 40px !important;
+}

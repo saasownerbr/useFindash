@@ -4,63 +4,22 @@ interface LogoProps {
 }
 
 const SIZES = {
-  sm: { width: 120, height: 40, fontSize: 12 },
-  md: { width: 180, height: 60, fontSize: 16 },
-  lg: { width: 240, height: 80, fontSize: 20 },
+  sm: { fontSize: 14, lineHeight: 1.2 },
+  md: { fontSize: 18, lineHeight: 1.2 },
+  lg: { fontSize: 24, lineHeight: 1.2 },
 };
 
 export function Logo({ size = "md", className = "" }: LogoProps) {
-  const dimensions = SIZES[size];
+  const dims = SIZES[size];
 
   return (
-    <svg
-      viewBox="0 0 240 80"
-      width={dimensions.width}
-      height={dimensions.height}
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Icon circle */}
-      <circle cx="30" cy="40" r="20" fill="none" stroke="#3B82F6" strokeWidth="2" />
-
-      {/* Icon - stylized chart/find symbol */}
-      <path
-        d="M 20 45 L 25 38 L 30 42 L 35 35 L 40 40"
-        stroke="#3B82F6"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Magnifying glass indicator */}
-      <circle cx="38" cy="32" r="3" fill="#10B981" />
-
-      {/* Brand text - useFindash */}
-      <text
-        x="55"
-        y="48"
-        fontSize={dimensions.fontSize}
-        fontWeight="700"
-        fill="#F8F8F8"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        letterSpacing="-0.5"
-      >
-        useFindash
-      </text>
-
-      {/* Tagline */}
-      <text
-        x="55"
-        y="60"
-        fontSize={dimensions.fontSize * 0.6}
-        fontWeight="400"
-        fill="#9CA3AF"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        opacity="0.8"
-      >
-        Gestão Inteligente
-      </text>
-    </svg>
+    <div className={className} style={{ lineHeight: dims.lineHeight }}>
+      <span style={{ fontSize: dims.fontSize, fontWeight: 300, color: "#9CA3AF" }}>
+        use
+      </span>
+      <span style={{ fontSize: dims.fontSize, fontWeight: 700, color: "#F8F8F8" }}>
+        Findash
+      </span>
+    </div>
   );
 }
