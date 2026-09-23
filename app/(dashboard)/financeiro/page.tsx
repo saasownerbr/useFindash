@@ -6,8 +6,8 @@ import { CostEntryForm } from "@/components/financeiro/cost-entry-form";
 import { CostEntryList } from "@/components/financeiro/cost-entry-list";
 import { DrePanel } from "@/components/financeiro/dre-panel";
 import { MonthlyInputForm } from "@/components/financeiro/monthly-input-form";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
@@ -72,13 +72,7 @@ export default function FinanceiroPage() {
           <div className="space-y-6">
             <div className="flex flex-col gap-2">
               <Label htmlFor="lancamentos-month">Mês</Label>
-              <Input
-                id="lancamentos-month"
-                type="month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="w-48"
-              />
+              <MonthPicker id="lancamentos-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
             </div>
             <CostEntryForm storeId={storeId} onSaved={() => setReloadKey((k) => k + 1)} />
             <CostEntryList storeId={storeId} month={month} reloadKey={reloadKey} />

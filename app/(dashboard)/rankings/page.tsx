@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { ChannelRanking } from "@/components/rankings/channel-ranking";
 import { ProductRanking } from "@/components/rankings/product-ranking";
 import { SellerRanking } from "@/components/rankings/seller-ranking";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
 import { getActiveStoreId } from "@/lib/supabase/store";
@@ -114,7 +114,7 @@ export default function RankingsPage() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="rankings-month">Mês</Label>
-        <Input id="rankings-month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-48" />
+        <MonthPicker id="rankings-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}

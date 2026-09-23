@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { createClient } from "@/lib/supabase/client";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE, type DRE } from "@/lib/dre";
@@ -71,7 +71,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <Label htmlFor="dre-month">Mês</Label>
-        <Input id="dre-month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="w-48" />
+        <MonthPicker id="dre-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}

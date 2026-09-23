@@ -2,11 +2,12 @@
 
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { monthlyInputSchema, type MonthlyInputInput } from "@/lib/validation/monthly-input";
@@ -14,6 +15,7 @@ import { monthlyInputSchema, type MonthlyInputInput } from "@/lib/validation/mon
 export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -92,7 +94,11 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
     <form className="grid max-w-xl grid-cols-2 gap-4 rounded-lg border border-border bg-card p-6" onSubmit={handleSubmit(onSubmit)}>
       <div className="col-span-2 flex flex-col gap-2">
         <Label htmlFor="month">Mês</Label>
-        <Input id="month" type="month" {...register("month")} />
+        <Controller
+          control={control}
+          name="month"
+          render={({ field }) => <MonthPicker id="month" value={field.value ?? ""} onChange={field.onChange} className="w-full" />}
+        />
         {errors.month && <span className="text-xs text-danger">{errors.month.message}</span>}
       </div>
       <div className="col-span-2 flex flex-col gap-2">

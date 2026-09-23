@@ -3,33 +3,40 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { usePeriodFilterStore, type PeriodType } from "@/lib/period-filter-store";
 import { Calendar, ChevronDown } from "lucide-react";
 
-function formatDate(date: Date): string {
-  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`;
+function formatMonth(date: Date): string {
+  return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" }).replace(". de ", "/").replace(" de ", "/");
 }
 
-function toISODate(date: Date): string {
-  return date.toISOString().split("T")[0];
+function toMonthValue(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthBounds(value: string) {
+  const [year, month] = value.split("-").map(Number);
+  return { start: new Date(year, month - 1, 1), end: new Date(year, month, 0, 23, 59, 59, 999) };
 }
 
 export function PeriodSelector() {
   const { periodType, startDate, endDate, setPeriod } = usePeriodFilterStore();
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [customStart, setCustomStart] = useState<string>(startDate ? toISODate(startDate) : "");
-  const [customEnd, setCustomEnd] = useState<string>(endDate ? toISODate(endDate) : "");
+  const [customStart, setCustomStart] = useState<string>(startDate ? toMonthValue(startDate) : "");
+  const [customEnd, setCustomEnd] = useState<string>(endDate ? toMonthValue(endDate) : "");
 
   const handlePeriodChange = (type: PeriodType) => {
     setPeriod(type);
     setShowDatePicker(false);
   };
 
+  const rangeValid = customStart !== "" && customEnd !== "" && customStart <= customEnd;
+
   const handleCustomDateApply = () => {
-    if (customStart && customEnd) {
-      setPeriod("custom", new Date(customStart), new Date(customEnd));
-      setShowDatePicker(false);
-    }
+    if (!rangeValid) return;
+    setPeriod("custom", monthBounds(customStart).start, monthBounds(customEnd).end);
+    setShowDatePicker(false);
   };
 
   const periodLabels: { [key in PeriodType]: string } = {
@@ -41,7 +48,7 @@ export function PeriodSelector() {
   };
 
   const displayText = periodType === "custom" && startDate && endDate
-    ? `${formatDate(startDate)} - ${formatDate(endDate)}`
+    ? `${formatMonth(startDate)} – ${formatMonth(endDate)}`
     : periodLabels[periodType];
 
   return (
@@ -75,23 +82,16 @@ export function PeriodSelector() {
             <div className="border-t border-border pt-3">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Período personalizado</p>
               <div className="space-y-2">
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="w-full rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
-                />
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="w-full rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
-                />
+                <MonthPicker value={customStart} onChange={setCustomStart} placeholder="De" className="w-full" />
+                <MonthPicker value={customEnd} onChange={setCustomEnd} placeholder="Até" className="w-full" />
+                {customStart && customEnd && !rangeValid && (
+                  <p className="text-xs text-danger">O mês final precisa ser igual ou posterior ao inicial.</p>
+                )}
                 <Button
                   size="sm"
                   className="w-full"
                   onClick={handleCustomDateApply}
-                  disabled={!customStart || !customEnd}
+                  disabled={!rangeValid}
                 >
                   Aplicar
                 </Button>
