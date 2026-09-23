@@ -181,6 +181,44 @@ export type Database = {
           },
         ]
       }
+      repair_costs: {
+        Row: {
+          battery_cost: number | null
+          camera_cost: number | null
+          id: string
+          model: string
+          screen_cost: number | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          battery_cost?: number | null
+          camera_cost?: number | null
+          id?: string
+          model: string
+          screen_cost?: number | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          battery_cost?: number | null
+          camera_cost?: number | null
+          id?: string
+          model?: string
+          screen_cost?: number | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_costs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_reference: {
         Row: {
           base_price: number
@@ -462,6 +500,7 @@ export type Database = {
           created_at: string
           id: string
           logo_url: string | null
+          min_margin: number
           monthly_revenue_goal: number
           name: string
           stock_alert_days: number
@@ -472,6 +511,7 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          min_margin?: number
           monthly_revenue_goal?: number
           name: string
           stock_alert_days?: number
@@ -482,6 +522,7 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          min_margin?: number
           monthly_revenue_goal?: number
           name?: string
           stock_alert_days?: number
