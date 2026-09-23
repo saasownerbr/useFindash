@@ -1,4 +1,4 @@
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback"];
+const PUBLIC_PATHS = ["/login", "/signup"];
 
 export function resolveAuthRedirect(
   pathname: string,

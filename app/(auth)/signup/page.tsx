@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
+import { AuthCard, authInputClass } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/ui/logo";
-import { magicLinkErrorMessage, magicLinkRedirectUrl } from "@/lib/auth/magic-link";
+import { authErrorMessage } from "@/lib/auth/auth-errors";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema, type SignupInput } from "@/lib/validation/auth";
 
+// Requires "Confirm email" to be OFF in Supabase (Authentication > Sign In / Providers > Email),
+// so signUp returns a session right away. Keep it off until the Asaas payment flow exists.
 export default function SignupPage() {
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -23,84 +25,86 @@ export default function SignupPage() {
   } = useForm<SignupInput>({ resolver: zodResolver(signupSchema) });
 
   async function onSubmit(data: SignupInput) {
-    const supabase = createClient();
-    // The store is created in /onboarding after the link is opened; these
-    // values travel as user metadata so onboarding can prefill them.
-    const { error } = await supabase.auth.signInWithOtp({
+    const { data: result, error } = await createClient().auth.signUp({
       email: data.email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: magicLinkRedirectUrl(),
-        data: { store_name: data.storeName, store_cnpj: data.cnpj },
-      },
+      password: data.password,
     });
 
     if (error) {
-      setError("root", { message: magicLinkErrorMessage(error) });
+      setError("root", { message: authErrorMessage(error) });
       return;
     }
 
-    setSentTo(data.email);
+    // With email confirmation on, Supabase hides duplicates by returning a user with no identities.
+    if (result.user && result.user.identities?.length === 0) {
+      setError("root", { message: "Este email já tem uma conta. Entre pela tela de login." });
+      return;
+    }
+
+    if (!result.session) {
+      setError("root", {
+        message: "Conta criada, mas o login automático não foi liberado. Tente entrar pela tela de login.",
+      });
+      return;
+    }
+
+    router.replace("/onboarding");
+    router.refresh();
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-8">
-        <div className="mb-6 flex justify-center">
-          <Logo size="lg" />
+    <AuthCard subtitle="Crie sua conta para começar">
+      <form className="mt-8 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="voce@loja.com"
+            className={authInputClass}
+            {...register("email")}
+          />
+          {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
         </div>
-
-        {sentTo ? (
-          <div className="text-center" role="status">
-            <p className="font-semibold text-foreground">Link enviado! Verifique sua caixa de entrada.</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Abra o link enviado para <span className="text-foreground">{sentTo}</span> neste mesmo navegador para
-              concluir o cadastro.
-            </p>
-            <button
-              type="button"
-              onClick={() => setSentTo(null)}
-              className="mt-6 text-sm text-primary hover:text-primary/80"
-            >
-              Usar outro email
-            </button>
-          </div>
-        ) : (
-          <>
-            <p className="text-center text-sm text-muted-foreground">Cadastre sua empresa para começar.</p>
-
-            <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="storeName">Nome da empresa</Label>
-                <Input id="storeName" placeholder="Ex: iStore Centro" {...register("storeName")} />
-                {errors.storeName && <span className="text-xs text-danger">{errors.storeName.message}</span>}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="cnpj">CNPJ</Label>
-                <Input id="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" {...register("cnpj")} />
-                {errors.cnpj && <span className="text-xs text-danger">{errors.cnpj.message}</span>}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" autoComplete="email" placeholder="Seu email" {...register("email")} />
-                {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
-              </div>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Enviando..." : "Criar conta com magic link"}
-              </Button>
-              {errors.root && <span className="text-xs text-danger">{errors.root.message}</span>}
-              <p className="text-center text-xs text-muted-foreground">Você receberá um link de acesso no seu email</p>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Já tem conta?{" "}
-              <Link href="/login" className="text-primary hover:text-primary/80">
-                Entrar
-              </Link>
-            </p>
-          </>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="password">Senha</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Mínimo de 6 caracteres"
+            className={authInputClass}
+            {...register("password")}
+          />
+          {errors.password && <span className="text-xs text-danger">{errors.password.message}</span>}
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="confirmPassword">Confirmar senha</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            className={authInputClass}
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && <span className="text-xs text-danger">{errors.confirmPassword.message}</span>}
+        </div>
+        {errors.root && (
+          <p role="alert" className="text-sm text-danger">
+            {errors.root.message}
+          </p>
         )}
-      </div>
-    </div>
+        <Button type="submit" disabled={isSubmitting} className="mt-2 h-11 rounded-lg font-semibold">
+          {isSubmitting ? "Criando conta..." : "Criar conta"}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm">
+        <Link href="/login" className="text-[#6B7280] hover:text-foreground">
+          Já tenho conta
+        </Link>
+      </p>
+    </AuthCard>
   );
 }
