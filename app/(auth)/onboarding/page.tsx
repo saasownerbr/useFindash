@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -17,11 +18,28 @@ export default function OnboardingPage() {
     register,
     handleSubmit,
     setError,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<OnboardingInput>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: { monthlyRevenueGoal: 0 },
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => {
+        const meta = user?.user_metadata ?? {};
+        if (cancelled) return;
+        if (typeof meta.store_name === "string" && !getValues("storeName")) setValue("storeName", meta.store_name);
+        if (typeof meta.store_cnpj === "string" && !getValues("cnpj")) setValue("cnpj", meta.store_cnpj);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [getValues, setValue]);
 
   async function onSubmit(data: OnboardingInput) {
     const supabase = createClient();

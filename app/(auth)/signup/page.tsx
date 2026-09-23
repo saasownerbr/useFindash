@@ -1,19 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
+import { magicLinkErrorMessage, magicLinkRedirectUrl } from "@/lib/auth/magic-link";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema, type SignupInput } from "@/lib/validation/auth";
 
 export default function SignupPage() {
-  const router = useRouter();
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -23,97 +24,82 @@ export default function SignupPage() {
 
   async function onSubmit(data: SignupInput) {
     const supabase = createClient();
-
-    // A retry after a partial failure (e.g. store creation failed but the
-    // auth account was already created) leaves an active session in the
-    // browser. Reuse it instead of calling signUp again, which would fail
-    // with "already registered" and dead-end the user.
-    const {
-      data: { session: existingSession },
-    } = await supabase.auth.getSession();
-
-    if (!existingSession) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (signUpError) {
-        const message = signUpError.message.toLowerCase().includes("already registered")
-          ? "Este email já tem uma conta. Entre pela tela de login."
-          : "Não foi possível criar a conta. Tente novamente.";
-        setError("root", { message });
-        return;
-      }
-
-      if (!signUpData.session) {
-        setError("root", {
-          message: "Cadastro criado, mas o login automático falhou. Tente entrar novamente.",
-        });
-        router.replace("/login");
-        return;
-      }
-    }
-
-    const { error: storeError } = await supabase.rpc("create_store_with_owner", {
-      store_name: data.storeName,
-      owner_name: data.email,
-      monthly_goal: 0,
-      store_cnpj: data.cnpj,
+    // The store is created in /onboarding after the link is opened; these
+    // values travel as user metadata so onboarding can prefill them.
+    const { error } = await supabase.auth.signInWithOtp({
+      email: data.email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: magicLinkRedirectUrl(),
+        data: { store_name: data.storeName, store_cnpj: data.cnpj },
+      },
     });
 
-    if (storeError) {
-      setError("root", {
-        message: "Conta criada, mas não foi possível cadastrar a empresa. Tente novamente.",
-      });
+    if (error) {
+      setError("root", { message: magicLinkErrorMessage(error) });
       return;
     }
 
-    router.replace("/dashboard");
-    router.refresh();
+    setSentTo(data.email);
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8">
-        <div className="mb-8 flex justify-center">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-8">
+        <div className="mb-6 flex justify-center">
           <Logo size="lg" />
         </div>
-        <p className="text-center text-sm text-muted-foreground">Cadastre sua empresa para começar.</p>
 
-        <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="storeName">Nome da empresa</Label>
-            <Input id="storeName" placeholder="Ex: iStore Centro" {...register("storeName")} />
-            {errors.storeName && <span className="text-xs text-danger">{errors.storeName.message}</span>}
+        {sentTo ? (
+          <div className="text-center" role="status">
+            <p className="font-semibold text-foreground">Link enviado! Verifique sua caixa de entrada.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Abra o link enviado para <span className="text-foreground">{sentTo}</span> neste mesmo navegador para
+              concluir o cadastro.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSentTo(null)}
+              className="mt-6 text-sm text-primary hover:text-primary/80"
+            >
+              Usar outro email
+            </button>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="cnpj">CNPJ</Label>
-            <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
-            {errors.cnpj && <span className="text-xs text-danger">{errors.cnpj.message}</span>}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="voce@loja.com" {...register("email")} />
-            {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" {...register("password")} />
-            {errors.password && <span className="text-xs text-danger">{errors.password.message}</span>}
-          </div>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Criando..." : "Criar conta"}
-          </Button>
-          {errors.root && <span className="text-xs text-danger">{errors.root.message}</span>}
-        </form>
+        ) : (
+          <>
+            <p className="text-center text-sm text-muted-foreground">Cadastre sua empresa para começar.</p>
 
-        <p className="mt-6 text-sm text-muted-foreground">
-          Já tem conta?{" "}
-          <Link href="/login" className="text-primary underline">
-            Entrar
-          </Link>
-        </p>
+            <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="storeName">Nome da empresa</Label>
+                <Input id="storeName" placeholder="Ex: iStore Centro" {...register("storeName")} />
+                {errors.storeName && <span className="text-xs text-danger">{errors.storeName.message}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="cnpj">CNPJ</Label>
+                <Input id="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+                {errors.cnpj && <span className="text-xs text-danger">{errors.cnpj.message}</span>}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" autoComplete="email" placeholder="Seu email" {...register("email")} />
+                {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
+              </div>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Enviando..." : "Criar conta com magic link"}
+              </Button>
+              {errors.root && <span className="text-xs text-danger">{errors.root.message}</span>}
+              <p className="text-center text-xs text-muted-foreground">Você receberá um link de acesso no seu email</p>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Já tem conta?{" "}
+              <Link href="/login" className="text-primary hover:text-primary/80">
+                Entrar
+              </Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
