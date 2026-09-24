@@ -137,11 +137,9 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
         </div>
       )}
 
-      <div className="border-t border-border pt-4">
-        <Button type="button" variant="ghost" onClick={skipProduct}>
-          Pular — venda só de acessórios
-        </Button>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        Venda só de acessórios? Use &quot;Pular produto&quot; abaixo.
+      </p>
     </div>
   );
 }

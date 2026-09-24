@@ -85,6 +85,12 @@ select {
   display: none;
 }
 
+/* No double-tap-zoom wait and no gray flash on tap in the bottom nav. */
+.bottom-nav a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Light theme ("Modo claro" in Configurações): the <html> element gets the
    "light" class. Tokens flip here; the rules below remap the neutral hex
    colors that components use directly. */

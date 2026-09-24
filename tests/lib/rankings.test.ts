@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { rankSellers, rankProducts, rankChannels } from "@/lib/rankings";
+import { rankSellers, rankProducts, rankChannels, sellerDisplayName } from "@/lib/rankings";
 
 const sales = [
   {
@@ -39,7 +39,22 @@ const sellers = [
   { id: "s2", name: "Bruno" },
 ];
 
+describe("sellerDisplayName", () => {
+  it("keeps a real name", () => {
+    expect(sellerDisplayName(" Ana Souza ")).toBe("Ana Souza");
+  });
+  it("turns an email into a name", () => {
+    expect(sellerDisplayName("joao.silva@loja.com")).toBe("Joao Silva");
+    expect(sellerDisplayName("MARIA_lima@x.com")).toBe("Maria Lima");
+  });
+});
+
 describe("rankSellers", () => {
+  it("shows the name instead of the email", () => {
+    const result = rankSellers([sales[0]], [{ id: "s1", name: "ana.souza@loja.com" }]);
+    expect(result[0].name).toBe("Ana Souza");
+  });
+
   it("aggregates volume, average ticket, accessories per sale and commission per seller", () => {
     const result = rankSellers(sales, sellers);
     const ana = result.find((r) => r.sellerId === "s1")!;

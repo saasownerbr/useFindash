@@ -1,21 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrencyBRL } from "@/lib/finance";
 
-const CHANNEL_LABELS: Record<string, string> = {
-  instagram: "Instagram",
-  whatsapp: "WhatsApp",
-  pdv: "Loja física",
-  referral: "Indicação",
-  paid_traffic: "Tráfego pago",
-};
-
 export function MetricCards({
   avgLtv,
-  cacByChannel,
+  paidTrafficCac,
   retentionRate,
 }: {
   avgLtv: number;
-  cacByChannel: { channel: string; cac: number }[];
+  paidTrafficCac: number;
   retentionRate: number;
 }) {
   return (
@@ -28,17 +20,9 @@ export function MetricCards({
       </Card>
       <Card>
         <CardContent className="p-4">
-          <p className="mb-2 text-xs text-muted-foreground">CAC por canal</p>
-          <div className="space-y-1">
-            {cacByChannel.map((item) => (
-              <div key={item.channel} className="flex items-center justify-between text-sm">
-                <span className="text-foreground">{CHANNEL_LABELS[item.channel] ?? item.channel}</span>
-                <span className="text-muted-foreground">
-                  {item.cac > 0 ? formatCurrencyBRL(item.cac) : "R$ 0,00 (orgânico)"}
-                </span>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground">CAC · Tráfego pago</p>
+          <p className="text-xl font-bold text-foreground">{formatCurrencyBRL(paidTrafficCac)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Investimento em tráfego pago por cliente adquirido</p>
         </CardContent>
       </Card>
       <Card>

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { ChannelBadge } from "@/components/ui/channel-badge";
 import { formatCurrencyBRL } from "@/lib/finance";
 
 type TimelineSale = {
@@ -6,14 +6,6 @@ type TimelineSale = {
   sold_at: string;
   sale_price: number;
   sale_channel: string;
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  instagram: "Instagram",
-  whatsapp: "WhatsApp",
-  pdv: "Loja física",
-  referral: "Indicação",
-  paid_traffic: "Tráfego pago",
 };
 
 export function CustomerTimeline({ sales }: { sales: TimelineSale[] }) {
@@ -34,7 +26,7 @@ export function CustomerTimeline({ sales }: { sales: TimelineSale[] }) {
               <span className="text-sm font-medium text-foreground">
                 {new Date(sale.sold_at).toLocaleDateString("pt-BR")}
               </span>
-              <Badge variant="primary">{CHANNEL_LABELS[sale.sale_channel] ?? sale.sale_channel}</Badge>
+              <ChannelBadge channel={sale.sale_channel} />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{formatCurrencyBRL(sale.sale_price)}</p>
           </div>

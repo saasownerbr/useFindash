@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
+import { sellerDisplayName } from "@/lib/rankings";
 import { SALE_CHANNELS } from "@/lib/validation/sale";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -46,7 +47,7 @@ export function StepDetails({ storeId }: { storeId: string | null }) {
   }, [storeId]);
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-2">
         <Label htmlFor="sale_channel">Canal de origem</Label>
         <Select
@@ -73,7 +74,7 @@ export function StepDetails({ storeId }: { storeId: string | null }) {
           <option value="">Selecione</option>
           {sellers.map((seller) => (
             <option key={seller.id} value={seller.id}>
-              {seller.name}
+              {sellerDisplayName(seller.name)}
             </option>
           ))}
         </Select>

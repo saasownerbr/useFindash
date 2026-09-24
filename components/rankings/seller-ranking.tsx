@@ -10,6 +10,7 @@ export function SellerRanking({ rows }: { rows: SellerRankRow[] }) {
       name: row.name,
       value: formatCurrencyBRL(row.totalRevenue),
       details: [
+        `${row.salesCount} ${row.salesCount === 1 ? "venda" : "vendas"}`,
         `Ticket médio ${formatCurrencyBRL(row.avgTicket)}`,
         `${row.avgAccessoriesPerSale.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} acessório por venda`,
         `Comissão ${formatCurrencyBRL(row.totalCommission)}`,

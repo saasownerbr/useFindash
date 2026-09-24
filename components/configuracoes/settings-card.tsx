@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** One category of Configurações: title, one-line description, content. */
+/** A titled block (Configurações, Rankings): title, one-line description, content. */
 export function SettingsCard({
   title,
   description,

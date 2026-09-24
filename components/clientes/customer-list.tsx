@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomerFormDialog, CHANNEL_LABELS } from "@/components/clientes/customer-form-dialog";
+import { ChannelBadge } from "@/components/ui/channel-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -244,9 +245,7 @@ export function CustomerList() {
                     <td className="px-4 py-3 font-medium text-foreground">{customer.name}</td>
                     <td className="px-4 py-3">{customer.whatsapp}</td>
                     <td className="px-4 py-3">
-                      <Badge variant="primary">
-                        {CHANNEL_LABELS[customer.acquisition_channel ?? ""] ?? customer.acquisition_channel ?? "—"}
-                      </Badge>
+                      <ChannelBadge channel={customer.acquisition_channel} />
                     </td>
                     <td className="px-4 py-3">
                       {customer.ltv.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}

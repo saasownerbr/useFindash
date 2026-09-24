@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { SettingsCard } from "@/components/configuracoes/settings-card";
 import { ChannelRanking } from "@/components/rankings/channel-ranking";
 import { ProductRanking } from "@/components/rankings/product-ranking";
 import { SellerRanking } from "@/components/rankings/seller-ranking";
@@ -102,26 +103,23 @@ export default function RankingsPage() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {loading ? (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded-md bg-card" />
+            <div key={i} className="h-56 animate-pulse rounded-xl bg-card" />
           ))}
         </div>
       ) : (
-        <>
-          <section>
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Vendedores</h2>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <SettingsCard title="Vendedores" description="Faturamento por vendedor no mês.">
             <SellerRanking rows={sellerRows} />
-          </section>
-          <section>
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Produtos</h2>
+          </SettingsCard>
+          <SettingsCard title="Produtos" description="Modelos mais vendidos no mês.">
             <ProductRanking rows={productRows} />
-          </section>
-          <section>
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Canais</h2>
+          </SettingsCard>
+          <SettingsCard title="Canais" description="Faturamento por canal de venda.">
             <ChannelRanking rows={channelRows} />
-          </section>
-        </>
+          </SettingsCard>
+        </div>
       )}
       </div>
     </PageContainer>

@@ -20,6 +20,20 @@ export type SellerRankRow = {
   totalCommission: number;
 };
 
+/**
+ * Store owners were created with their email as the seller name. Rankings show
+ * a person's name, so an email becomes its local part in title case
+ * ("joao.silva@loja.com" -> "Joao Silva").
+ */
+export function sellerDisplayName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed.includes("@")) return trimmed;
+  const local = trimmed.split("@")[0];
+  const words = local.split(/[._\-+]+/).filter(Boolean);
+  if (words.length === 0) return trimmed;
+  return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
+
 export function rankSellers(sales: SaleForRanking[], sellers: SellerRow[]): SellerRankRow[] {
   const byId = new Map(sellers.map((s) => [s.id, s.name]));
   const groups = new Map<string, SaleForRanking[]>();
@@ -34,7 +48,7 @@ export function rankSellers(sales: SaleForRanking[], sellers: SellerRow[]): Sell
     const totalAccessories = group.reduce((sum, s) => sum + s.accessoryCount, 0);
     return {
       sellerId,
-      name: byId.get(sellerId) ?? "Vendedor removido",
+      name: byId.has(sellerId) ? sellerDisplayName(byId.get(sellerId)!) : "Vendedor removido",
       salesCount: group.length,
       totalRevenue,
       avgTicket: totalRevenue / group.length,

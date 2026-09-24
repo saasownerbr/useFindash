@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { CHANNEL_LABELS } from "@/components/clientes/customer-form-dialog";
 import { CustomerTimeline } from "@/components/clientes/customer-timeline";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ChannelBadge } from "@/components/ui/channel-badge";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
@@ -102,9 +101,7 @@ export default function CustomerProfilePage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-foreground">{customer.name}</h1>
-            <Badge variant="primary">
-              {CHANNEL_LABELS[customer.acquisition_channel ?? ""] ?? customer.acquisition_channel ?? "—"}
-            </Badge>
+            <ChannelBadge channel={customer.acquisition_channel} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{customer.whatsapp}</p>
         </div>

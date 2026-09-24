@@ -1,30 +1,36 @@
 import { describe, it, expect } from "vitest";
 
-import { alertSettingsSchema, storeProfileSchema } from "@/lib/validation/store-settings";
+import { alertSettingsSchema, revenueGoalSchema, storeProfileSchema } from "@/lib/validation/store-settings";
 
 describe("storeProfileSchema", () => {
+  it("accepts a store name", () => {
+    expect(storeProfileSchema.safeParse({ name: "Test Store" }).success).toBe(true);
+  });
+
+  it("rejects an empty store name", () => {
+    expect(storeProfileSchema.safeParse({ name: "  " }).success).toBe(false);
+  });
+});
+
+describe("revenueGoalSchema", () => {
   it("rejects monthly_revenue_goal of zero", () => {
-    expect(storeProfileSchema.safeParse({ name: "Test Store", monthly_revenue_goal: 0 }).success).toBe(false);
+    expect(revenueGoalSchema.safeParse({ monthly_revenue_goal: 0 }).success).toBe(false);
   });
 
   it("rejects negative monthly_revenue_goal", () => {
-    expect(storeProfileSchema.safeParse({ name: "Test Store", monthly_revenue_goal: -1000 }).success).toBe(false);
+    expect(revenueGoalSchema.safeParse({ monthly_revenue_goal: -1000 }).success).toBe(false);
   });
 
   it("accepts positive monthly_revenue_goal", () => {
-    expect(storeProfileSchema.safeParse({ name: "Test Store", monthly_revenue_goal: 50000 }).success).toBe(true);
+    expect(revenueGoalSchema.safeParse({ monthly_revenue_goal: "50000" }).success).toBe(true);
   });
 
   it("error message for zero goal is clear", () => {
-    const result = storeProfileSchema.safeParse({ name: "Test Store", monthly_revenue_goal: 0 });
+    const result = revenueGoalSchema.safeParse({ monthly_revenue_goal: 0 });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.flatten().fieldErrors.monthly_revenue_goal?.[0]).toContain("maior que zero");
     }
-  });
-
-  it("rejects an empty store name", () => {
-    expect(storeProfileSchema.safeParse({ name: "  ", monthly_revenue_goal: 1000 }).success).toBe(false);
   });
 });
 

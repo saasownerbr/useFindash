@@ -1,6 +1,6 @@
 import {
   BarChart3,
-  Calculator,
+  ClipboardList,
   DollarSign,
   LifeBuoy,
   Package,
@@ -20,7 +20,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { label: "Estoque", href: "/estoque", icon: Package },
-  { label: "Calculadora", href: "/calculadora", icon: Calculator },
+  { label: "Inputs", href: "/inputs", icon: ClipboardList },
   { label: "Vendas", href: "/vendas", icon: ShoppingCart },
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign },

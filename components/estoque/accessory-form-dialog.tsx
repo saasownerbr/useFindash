@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/supabase/types";
-import { accessorySchema, type AccessoryInput } from "@/lib/validation/accessory";
+import { ACCESSORY_CATEGORIES, accessorySchema, type AccessoryInput } from "@/lib/validation/accessory";
 
 type Accessory = Tables<"accessories">;
 
@@ -58,6 +59,11 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
     }
   }, [open, accessory, reset]);
 
+  const legacyCategory =
+    accessory?.category && !(ACCESSORY_CATEGORIES as readonly string[]).includes(accessory.category)
+      ? accessory.category
+      : null;
+
   async function onSubmit(data: AccessoryInput) {
     if (!storeId) {
       setError("root", { message: "Não foi possível identificar a loja. Recarregue a página." });
@@ -97,13 +103,22 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-2">
             <Label htmlFor="name">Nome</Label>
-            <Input id="name" placeholder="Capinha transparente" {...register("name")} />
+            <Input id="name" placeholder="Capinha MagSafe iPhone 15 Pro" {...register("name")} />
             {errors.name && <span className="text-xs text-danger">{errors.name.message}</span>}
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="category">Categoria (opcional)</Label>
-            <Input id="category" placeholder="Capinha" {...register("category")} />
+            <Select id="category" {...register("category")}>
+              <option value="">Sem categoria</option>
+              {ACCESSORY_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+              {/* Keeps a category typed before the fixed list existed. */}
+              {legacyCategory && <option value={legacyCategory}>{legacyCategory}</option>}
+            </Select>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

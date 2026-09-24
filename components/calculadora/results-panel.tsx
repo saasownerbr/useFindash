@@ -131,7 +131,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
 
       {!hasPrice && (
         <p className="text-xs text-[#6B7280]">
-          Informe o preço de mercado de referência para ver os valores. Cadastre preços em Configurações → Tabela de preços
+          Informe o preço de mercado de referência para ver os valores. Cadastre preços em Inputs → Tabela de Preços
           para preencher automaticamente.
         </p>
       )}

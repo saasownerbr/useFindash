@@ -3,10 +3,16 @@ import { z } from "zod";
 // "Minha Loja" card in Configurações.
 export const storeProfileSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome da loja"),
-  monthly_revenue_goal: z.coerce.number().positive("Meta mensal deve ser maior que zero"),
 });
 
 export type StoreProfileInput = z.infer<typeof storeProfileSchema>;
+
+// "Meta" tab in Financeiro.
+export const revenueGoalSchema = z.object({
+  monthly_revenue_goal: z.coerce.number().positive("Meta mensal deve ser maior que zero"),
+});
+
+export type RevenueGoalInput = z.infer<typeof revenueGoalSchema>;
 
 // "Alertas Automáticos" card in Configurações.
 export const alertSettingsSchema = z.object({

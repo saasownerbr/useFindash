@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isActiveRoute } from "@/lib/navigation";
+import { isActiveRoute, NAV_ITEMS } from "@/lib/navigation";
 
 describe("isActiveRoute", () => {
   it("matches an exact path", () => {
@@ -17,5 +17,13 @@ describe("isActiveRoute", () => {
 
   it("does not match a path that merely starts with the same letters", () => {
     expect(isActiveRoute("/estoquex", "/estoque")).toBe(false);
+  });
+});
+
+describe("NAV_ITEMS", () => {
+  it("groups the price table and calculator under Inputs", () => {
+    const hrefs = NAV_ITEMS.map((item) => item.href);
+    expect(hrefs).toContain("/inputs");
+    expect(hrefs).not.toContain("/calculadora");
   });
 });

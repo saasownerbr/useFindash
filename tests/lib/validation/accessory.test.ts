@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { accessorySchema } from "@/lib/validation/accessory";
+import { ACCESSORY_CATEGORIES, accessorySchema } from "@/lib/validation/accessory";
 
 describe("accessorySchema", () => {
   const valid = { name: "Capinha transparente", category: "Capinha", quantity: 10, cost: 5, salePrice: 25 };
@@ -28,5 +28,13 @@ describe("accessorySchema", () => {
   it("coerces numeric strings", () => {
     const result = accessorySchema.safeParse({ ...valid, quantity: "10", cost: "5", salePrice: "25" });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("ACCESSORY_CATEGORIES", () => {
+  it("covers the iPhone accessory niche with no duplicates", () => {
+    expect(ACCESSORY_CATEGORIES).toContain("Capinha");
+    expect(ACCESSORY_CATEGORIES).toContain("Carregador MagSafe");
+    expect(new Set(ACCESSORY_CATEGORIES).size).toBe(ACCESSORY_CATEGORIES.length);
   });
 });

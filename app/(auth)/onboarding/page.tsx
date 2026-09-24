@@ -36,7 +36,7 @@ export default function OnboardingPage() {
 
     const { error } = await supabase.rpc("create_store_with_owner", {
       store_name: data.storeName,
-      owner_name: user.email ?? "Owner",
+      owner_name: data.ownerName,
       monthly_goal: data.monthlyRevenueGoal,
       store_cnpj: data.cnpj,
     });
@@ -60,6 +60,11 @@ export default function OnboardingPage() {
         </p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="ownerName">Seu nome</Label>
+            <Input id="ownerName" autoComplete="name" placeholder="Ex: Ana Souza" {...register("ownerName")} />
+            {errors.ownerName && <span className="text-xs text-danger">{errors.ownerName.message}</span>}
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="storeName">Nome da loja</Label>
             <Input id="storeName" placeholder="Ex: iStore Centro" {...register("storeName")} />

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { AccountCard } from "@/components/configuracoes/account-card";
 import { AlertSettingsCard } from "@/components/configuracoes/alert-settings-card";
 import { CalculatorSettings } from "@/components/configuracoes/calculator-settings";
-import { PriceReferenceList } from "@/components/configuracoes/price-reference-list";
 import { SellerList } from "@/components/configuracoes/seller-list";
 import { StoreProfileCard } from "@/components/configuracoes/store-profile-card";
 import { PageContainer } from "@/components/ui/page-container";
@@ -28,14 +27,13 @@ export default function ConfiguracoesPage() {
     <PageContainer>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Conta, loja, vendedores, preços, alertas e calculadora.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Conta, loja, vendedores, alertas e calculadora.</p>
       </div>
 
       <div className="space-y-6">
         <AccountCard />
         <StoreProfileCard storeId={storeId} />
         <SellerList storeId={storeId} />
-        <PriceReferenceList storeId={storeId} />
         <AlertSettingsCard storeId={storeId} />
         <CalculatorSettings storeId={storeId} />
       </div>

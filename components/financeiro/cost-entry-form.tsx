@@ -59,7 +59,7 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
   }
 
   return (
-    <form className="grid grid-cols-5 gap-3 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit(onSubmit)}>
+    <form autoComplete="off" className="grid grid-cols-1 gap-3 md:grid-cols-5 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-2">
         <Label htmlFor="type">Tipo</Label>
         <Select id="type" {...register("type")}>
@@ -70,9 +70,16 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
           ))}
         </Select>
       </div>
-      <div className="col-span-2 flex flex-col gap-2">
+      <div className="flex flex-col gap-2 md:col-span-2">
         <Label htmlFor="description">Descrição</Label>
-        <Input id="description" {...register("description")} />
+        <Input
+          id="description"
+          placeholder="Descreva o lançamento"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          {...register("description")}
+        />
         {errors.description && <span className="text-xs text-danger">{errors.description.message}</span>}
       </div>
       <div className="flex flex-col gap-2">
@@ -85,12 +92,12 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
         <Input id="date" type="date" {...register("date")} />
         {errors.date && <span className="text-xs text-danger">{errors.date.message}</span>}
       </div>
-      <div className="col-span-5 flex justify-end">
+      <div className="flex justify-end md:col-span-5">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Salvando..." : "Adicionar lançamento"}
         </Button>
       </div>
-      {errors.root && <span className="col-span-5 text-xs text-danger">{errors.root.message}</span>}
+      {errors.root && <span className="text-xs text-danger md:col-span-5">{errors.root.message}</span>}
     </form>
   );
 }

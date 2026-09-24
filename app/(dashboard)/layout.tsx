@@ -1,20 +1,18 @@
-"use client";
-
 import type { ReactNode } from "react";
 
+import { MobileNav } from "@/components/mobile-nav";
 import { Sidebar } from "@/components/sidebar";
 import { Toaster } from "@/components/ui/toaster";
-import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { MobileNav } from "@/components/mobile-nav";
 
+// Sidebar and bottom nav are both rendered and switched by CSS, so the mobile
+// nav is in the server HTML and tappable before hydration instead of mounting
+// only after a media query runs on the client.
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
-
   return (
     <div className="flex min-h-screen bg-background">
-      {!isMobile && <Sidebar />}
-      <main className={`flex-1 p-8 ${isMobile ? "pb-20" : ""}`}>{children}</main>
-      {isMobile && <MobileNav />}
+      <Sidebar />
+      <main className="min-w-0 flex-1 p-8 pb-24 md:pb-8">{children}</main>
+      <MobileNav />
       <Toaster />
     </div>
   );

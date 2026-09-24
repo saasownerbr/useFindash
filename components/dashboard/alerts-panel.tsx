@@ -11,13 +11,23 @@ interface AlertCardProps {
   color: string;
   tint: string;
   href: string;
+  /** Replaces navigation, e.g. to switch tabs on the page that hosts the panel. */
+  onClick?: () => void;
 }
 
-function AlertCard({ count, label, icon: Icon, color, tint, href }: AlertCardProps) {
+function AlertCard({ count, label, icon: Icon, color, tint, href, onClick }: AlertCardProps) {
   const active = count > 0;
   return (
     <Link
       href={href}
+      onClick={
+        onClick
+          ? (event) => {
+              event.preventDefault();
+              onClick();
+            }
+          : undefined
+      }
       className={cn(
         "flex items-center gap-4 rounded-xl border border-[#2A2A2A] border-l-[3px] p-5 transition-colors hover:border-[#3D3D3D]",
         !active && "bg-card"
@@ -39,10 +49,12 @@ export function AlertsPanel({
   upgradeWindowCount,
   birthdaysCount,
   staleStockCount,
+  onStaleStockClick,
 }: {
   upgradeWindowCount: number;
   birthdaysCount: number;
   staleStockCount: number;
+  onStaleStockClick?: () => void;
 }) {
   return (
     <section aria-label="Alertas" className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -69,6 +81,7 @@ export function AlertsPanel({
         color="#EF4444"
         tint="rgba(239,68,68,0.06)"
         href="/estoque"
+        onClick={onStaleStockClick}
       />
     </section>
   );

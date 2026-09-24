@@ -3,6 +3,7 @@ import { z } from "zod";
 import { normalizeCnpj } from "@/lib/validation/cnpj";
 
 export const onboardingSchema = z.object({
+  ownerName: z.string().trim().min(2, "Informe seu nome."),
   storeName: z.string().trim().min(2, "Nome da loja precisa ter pelo menos 2 caracteres."),
   cnpj: z
     .string()

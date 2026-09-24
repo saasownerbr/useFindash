@@ -20,7 +20,7 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
     formState: { errors, isSubmitting },
   } = useForm<StoreProfileInput>({
     resolver: zodResolver(storeProfileSchema),
-    defaultValues: { name: "", monthly_revenue_goal: 0 },
+    defaultValues: { name: "" },
   });
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
     let cancelled = false;
     createClient()
       .from("stores")
-      .select("name, monthly_revenue_goal")
+      .select("name")
       .eq("id", storeId)
       .single()
       .then(({ data }) => {
@@ -54,20 +54,9 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
           <Input id="store-name" {...register("name")} />
           {errors.name && <span className="text-xs text-danger">{errors.name.message}</span>}
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="store-goal">Meta de faturamento mensal (R$)</Label>
-          <Input
-            id="store-goal"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="0.01"
-            {...register("monthly_revenue_goal")}
-          />
-          {errors.monthly_revenue_goal && (
-            <span className="text-xs text-danger">{errors.monthly_revenue_goal.message}</span>
-          )}
-        </div>
+        <p className="self-center text-xs text-muted-foreground">
+          A meta de faturamento agora fica em Financeiro › Meta.
+        </p>
         <div className="flex justify-end sm:col-span-2">
           <Button type="submit" disabled={isSubmitting || !storeId}>
             {isSubmitting ? "Salvando..." : "Salvar"}
