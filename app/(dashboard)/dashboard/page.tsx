@@ -12,7 +12,7 @@ import { PaymentMethodsChart } from "@/components/dashboard/payment-methods-char
 import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE, type DRE } from "@/lib/dre";
 import { calculateCAC, calculateRetentionRate } from "@/lib/finance";
@@ -50,12 +50,7 @@ export default function DashboardPage() {
 
     async function load() {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-
-      const storeId = await getActiveStoreId(supabase, user.id);
+      const storeId = await getClientStoreId();
       if (!storeId || cancelled) {
         setLoading(false);
         return;
@@ -63,13 +58,14 @@ export default function DashboardPage() {
 
       const now = new Date();
       const currentMonth = monthKey(now);
+      const nextMonth = monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)));
       const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
 
       // Use period filter dates if set
       const periodStart = startDate || sixMonthsAgo;
       const periodEnd = endDate || now;
 
-      const [storeRes, sixMonthSalesRes, periodSalesRes, costEntriesRes, customersRes, monthlyInputRes, productsRes] = await Promise.all([
+      const [storeRes, sixMonthSalesRes, periodSalesRes, costEntriesRes, customersRes, monthlyInputRes, productsRes, accessorySales] = await Promise.all([
         supabase.from("stores").select("*").eq("id", storeId).single(),
         supabase
           .from("sales")
@@ -86,6 +82,7 @@ export default function DashboardPage() {
         supabase.from("customers").select("id, ltv, birthdate").eq("store_id", storeId),
         supabase.from("monthly_inputs").select("*").eq("store_id", storeId).eq("month", monthStart(currentMonth)).maybeSingle(),
         supabase.from("products").select("id, days_in_stock, status").eq("store_id", storeId).eq("status", "available"),
+        sumAccessorySales(supabase, storeId, monthStart(currentMonth), monthStart(nextMonth)),
       ]);
 
       if (cancelled) return;
@@ -100,9 +97,6 @@ export default function DashboardPage() {
       const allSales = sixMonthSalesRes.data ?? [];
       const periodSales = periodSalesRes.data ?? [];
       const currentMonthSales = allSales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
-
-      const accessorySales = await sumAccessorySales(supabase, currentMonthSales.map((s) => s.id));
-      if (cancelled) return;
 
       setGoal(store?.monthly_revenue_goal ?? 0);
       setDre(

@@ -8,8 +8,7 @@ import { StepCustomer } from "@/components/vendas/step-customer";
 import { StepDetails } from "@/components/vendas/step-details";
 import { StepProduct } from "@/components/vendas/step-product";
 import { StepSummary } from "@/components/vendas/step-summary";
-import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import { cn } from "@/lib/utils";
 
@@ -36,12 +35,7 @@ export function SaleWizard() {
   useEffect(() => {
     let cancelled = false;
     async function resolveStore() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      const activeStoreId = await getClientStoreId();
       if (!cancelled) setStoreId(activeStoreId);
     }
     resolveStore();

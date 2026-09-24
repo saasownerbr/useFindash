@@ -29,18 +29,17 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
       const { start, end } = monthRange(month);
       const supabase = createClient();
 
-      const { data: sales, error: salesError } = await supabase
-        .from("sales")
-        .select("id, acquisition_cost, repair_cost, gross_margin, commission_amount")
-        .eq("store_id", storeId)
-        .gte("sold_at", start)
-        .lt("sold_at", end);
-
-      const { data: costEntries, error: costError } = await supabase
-        .from("cost_entries")
-        .select("type, amount")
-        .eq("store_id", storeId)
-        .eq("month", start);
+      const [{ data: sales, error: salesError }, { data: costEntries, error: costError }, accessorySales] =
+        await Promise.all([
+          supabase
+            .from("sales")
+            .select("id, acquisition_cost, repair_cost, gross_margin, commission_amount")
+            .eq("store_id", storeId)
+            .gte("sold_at", start)
+            .lt("sold_at", end),
+          supabase.from("cost_entries").select("type, amount").eq("store_id", storeId).eq("month", start),
+          sumAccessorySales(supabase, storeId, start, end),
+        ]);
 
       if (cancelled) return;
 
@@ -48,9 +47,6 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
         setError("Não foi possível carregar o DRE deste mês.");
         return;
       }
-
-      const accessorySales = await sumAccessorySales(supabase, (sales ?? []).map((s) => s.id));
-      if (cancelled) return;
 
       setError(null);
       setDre(

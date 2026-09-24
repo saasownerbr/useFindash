@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { modelOptions, normalizeKey, storageOptions } from "@/lib/iphone-models";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import type { Tables } from "@/lib/supabase/types";
 import {
   BATTERY_OPTIONS,
@@ -78,11 +78,7 @@ export function UsedDeviceCalculator() {
     let cancelled = false;
     async function load() {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const id = await getActiveStoreId(supabase, user.id);
+      const id = await getClientStoreId();
       if (!id || cancelled) return;
       setStoreId(id);
       const [refs, costs, store] = await Promise.all([

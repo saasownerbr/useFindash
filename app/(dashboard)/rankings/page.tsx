@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { rankChannels, rankProducts, rankSellers, type ChannelRankRow, type ProductRankRow, type SellerRankRow } from "@/lib/rankings";
 
 function monthRange(month: string) {
@@ -33,12 +33,7 @@ export default function RankingsPage() {
     async function load() {
       setLoading(true);
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-
-      const storeId = await getActiveStoreId(supabase, user.id);
+      const storeId = await getClientStoreId();
       if (!storeId || cancelled) {
         setLoading(false);
         return;
@@ -49,7 +44,7 @@ export default function RankingsPage() {
       const [salesRes, sellersRes] = await Promise.all([
         supabase
           .from("sales")
-          .select("id, seller_id, sale_price, gross_margin, commission_amount, sale_channel, products(model, storage)")
+          .select("id, seller_id, sale_price, gross_margin, commission_amount, sale_channel, products(model, storage), sale_accessories(quantity)")
           .eq("store_id", storeId)
           .gte("sold_at", start)
           .lt("sold_at", end),
@@ -65,19 +60,6 @@ export default function RankingsPage() {
       }
 
       const sales = salesRes.data ?? [];
-      const saleIds = sales.map((s) => s.id);
-
-      let accessoryCountBySale = new Map<string, number>();
-      if (saleIds.length > 0) {
-        const { data: saleAccessories } = await supabase
-          .from("sale_accessories")
-          .select("sale_id, quantity")
-          .in("sale_id", saleIds);
-        accessoryCountBySale = new Map();
-        for (const row of saleAccessories ?? []) {
-          accessoryCountBySale.set(row.sale_id, (accessoryCountBySale.get(row.sale_id) ?? 0) + row.quantity);
-        }
-      }
 
       const salesForRanking = sales.map((s) => ({
         seller_id: s.seller_id,
@@ -87,7 +69,7 @@ export default function RankingsPage() {
         sale_channel: s.sale_channel,
         model: (s.products as { model: string; storage: string } | null)?.model ?? null,
         storage: (s.products as { model: string; storage: string } | null)?.storage ?? null,
-        accessoryCount: accessoryCountBySale.get(s.id) ?? 0,
+        accessoryCount: s.sale_accessories.reduce((sum, a) => sum + a.quantity, 0),
       }));
 
       setSellerRows(rankSellers(salesForRanking, sellersRes.data ?? []));

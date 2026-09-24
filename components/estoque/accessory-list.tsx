@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import type { Tables } from "@/lib/supabase/types";
 
 type Accessory = Tables<"accessories">;
@@ -33,14 +33,7 @@ export function AccessoryList() {
     let cancelled = false;
 
     async function resolveStore() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || cancelled) return;
-
-      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      const activeStoreId = await getClientStoreId();
       if (cancelled) return;
 
       setStoreId(activeStoreId);
@@ -93,14 +86,15 @@ export function AccessoryList() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    // Debounce only while typing in the search box; the first load runs right away.
     debounceRef.current = setTimeout(() => {
       loadAccessories();
-    }, 300);
+    }, nameFilter ? 300 : 0);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [loadAccessories]);
+  }, [loadAccessories, nameFilter]);
 
   async function handleDelete() {
     if (!deletingAccessory) return;

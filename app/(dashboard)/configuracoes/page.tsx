@@ -8,8 +8,7 @@ import { SellerList } from "@/components/configuracoes/seller-list";
 import { SupportForm } from "@/components/configuracoes/support-form";
 import { StoreSettingsForm } from "@/components/configuracoes/store-settings-form";
 import { PageContainer } from "@/components/ui/page-container";
-import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -29,12 +28,7 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     let cancelled = false;
     async function resolveStore() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      const activeStoreId = await getClientStoreId();
       if (!cancelled) setStoreId(activeStoreId);
     }
     resolveStore();

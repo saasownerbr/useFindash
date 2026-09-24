@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { escapeOrFilterValue } from "@/lib/supabase/filters";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { isInUpgradeWindow } from "@/lib/customer-alerts";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
@@ -42,32 +42,23 @@ export function CustomerList() {
     let cancelled = false;
 
     async function resolveStore() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || cancelled) return;
-
-      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      const activeStoreId = await getClientStoreId();
       if (cancelled) return;
 
       setStoreId(activeStoreId);
       setStoreResolved(true);
 
       if (activeStoreId) {
-        const { data: store } = await supabase
-          .from("stores")
-          .select("upgrade_alert_months")
-          .eq("id", activeStoreId)
-          .single();
+        const supabase = createClient();
+        const [{ data: store }, { data: sales }] = await Promise.all([
+          supabase.from("stores").select("upgrade_alert_months").eq("id", activeStoreId).single(),
+          supabase
+            .from("sales")
+            .select("customer_id, sold_at")
+            .eq("store_id", activeStoreId)
+            .order("sold_at", { ascending: false }),
+        ]);
         if (!cancelled && store) setUpgradeAlertMonths(store.upgrade_alert_months);
-
-        const { data: sales } = await supabase
-          .from("sales")
-          .select("customer_id, sold_at")
-          .eq("store_id", activeStoreId)
-          .order("sold_at", { ascending: false });
         if (!cancelled && sales) {
           const map = new Map<string, string>();
           for (const sale of sales) {
@@ -122,14 +113,15 @@ export function CustomerList() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    // Debounce only while typing a search; the first load and cleared searches run right away.
     debounceRef.current = setTimeout(() => {
       loadCustomers();
-    }, 300);
+    }, searchTerm ? 300 : 0);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [loadCustomers]);
+  }, [loadCustomers, searchTerm]);
 
   async function handleDelete() {
     if (!deletingCustomer) return;

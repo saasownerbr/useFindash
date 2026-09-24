@@ -9,8 +9,7 @@ import { MonthlyInputForm } from "@/components/financeiro/monthly-input-form";
 import { Label } from "@/components/ui/label";
 import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { PageContainer } from "@/components/ui/page-container";
-import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -30,12 +29,7 @@ export default function FinanceiroPage() {
   useEffect(() => {
     let cancelled = false;
     async function resolveStore() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const activeStoreId = await getActiveStoreId(supabase, user.id);
+      const activeStoreId = await getClientStoreId();
       if (!cancelled) setStoreId(activeStoreId);
     }
     resolveStore();

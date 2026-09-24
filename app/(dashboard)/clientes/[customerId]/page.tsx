@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { getActiveStoreId } from "@/lib/supabase/store";
+import { getClientStoreId } from "@/lib/supabase/client-store";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { formatCurrencyBRL } from "@/lib/finance";
 import type { Tables } from "@/lib/supabase/types";
@@ -31,25 +31,23 @@ export default function CustomerProfilePage() {
 
     async function load() {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-
-      const storeId = await getActiveStoreId(supabase, user.id);
+      const storeId = await getClientStoreId();
       if (!storeId || cancelled) return;
 
-      const { data: store } = await supabase.from("stores").select("upgrade_alert_months").eq("id", storeId).single();
-      if (!cancelled && store) setUpgradeAlertMonths(store.upgrade_alert_months);
-
-      const { data: customerRow, error: customerError } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("id", params.customerId)
-        .eq("store_id", storeId)
-        .maybeSingle();
+      const [{ data: store }, { data: customerRow, error: customerError }, { data: salesRows, error: salesError }] =
+        await Promise.all([
+          supabase.from("stores").select("upgrade_alert_months").eq("id", storeId).single(),
+          supabase.from("customers").select("*").eq("id", params.customerId).eq("store_id", storeId).maybeSingle(),
+          supabase
+            .from("sales")
+            .select("*")
+            .eq("customer_id", params.customerId)
+            .eq("store_id", storeId)
+            .order("sold_at", { ascending: false }),
+        ]);
 
       if (cancelled) return;
+      if (store) setUpgradeAlertMonths(store.upgrade_alert_months);
 
       if (customerError || !customerRow) {
         setNotFound(true);
@@ -57,14 +55,6 @@ export default function CustomerProfilePage() {
       }
 
       setCustomer(customerRow);
-
-      const { data: salesRows, error: salesError } = await supabase
-        .from("sales")
-        .select("*")
-        .eq("customer_id", customerRow.id)
-        .order("sold_at", { ascending: false });
-
-      if (cancelled) return;
 
       if (salesError) {
         setError("Não foi possível carregar o histórico de compras.");
