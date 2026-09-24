@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { SettingsCard } from "@/components/configuracoes/settings-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +17,14 @@ type CostField = "screen_cost" | "battery_cost" | "camera_cost";
 type Draft = Record<CostField, string>;
 
 const COST_FIELDS: { key: CostField; label: string }[] = [
-  { key: "screen_cost", label: "Tela" },
-  { key: "battery_cost", label: "Bateria" },
-  { key: "camera_cost", label: "Câmera" },
+  { key: "screen_cost", label: "Troca de tela" },
+  { key: "battery_cost", label: "Troca de bateria" },
+  { key: "camera_cost", label: "Troca de câmera" },
 ];
 
 const EMPTY_DRAFT: Draft = { screen_cost: "", battery_cost: "", camera_cost: "" };
+
+const GRID = "grid grid-cols-[minmax(140px,1.6fr)_repeat(3,minmax(90px,1fr))_auto] items-center gap-2";
 
 function toDraft(row: RepairCost): Draft {
   return {
@@ -45,6 +48,7 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
   const [savingMargin, setSavingMargin] = useState(false);
   const [rows, setRows] = useState<RepairCost[] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [adding, setAdding] = useState(false);
   const [newModel, setNewModel] = useState("");
   const [newDraft, setNewDraft] = useState<Draft>(EMPTY_DRAFT);
 
@@ -79,12 +83,21 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
   }
 
   async function saveRow(row: RepairCost) {
-    const { error } = await createClient()
+    const values = fromDraft(drafts[row.id]);
+    if (COST_FIELDS.every((f) => values[f.key] === row[f.key])) return;
+    const { data, error } = await createClient()
       .from("repair_costs")
-      .update({ ...fromDraft(drafts[row.id]), updated_at: new Date().toISOString() })
-      .eq("id", row.id);
-    if (error) toast.error("Não foi possível salvar os custos.");
-    else toast.success(`Custos do ${row.model} salvos`);
+      .update({ ...values, updated_at: new Date().toISOString() })
+      .eq("id", row.id)
+      .select("*")
+      .single();
+    if (error || !data) {
+      toast.error("Não foi possível salvar os custos.");
+      setDrafts((d) => ({ ...d, [row.id]: toDraft(row) }));
+      return;
+    }
+    setRows((list) => list?.map((r) => (r.id === data.id ? data : r)) ?? null);
+    toast.success(`Custos do ${row.model} salvos`);
   }
 
   async function deleteRow(row: RepairCost) {
@@ -102,9 +115,10 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
       toast.error(error.code === "23505" ? "Esse modelo já está na tabela." : "Não foi possível adicionar.");
       return;
     }
+    toast.success(`${newModel} adicionado`);
+    setAdding(false);
     setNewModel("");
     setNewDraft(EMPTY_DRAFT);
-    toast.success(`${newModel} adicionado`);
     load();
   }
 
@@ -112,82 +126,88 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
   const availableModels = IPHONE_MODELS.map((m) => m.model).filter((m) => !usedModels.has(normalizeKey(m)));
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <section className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-        <h2 className="text-base font-semibold text-foreground">Margem mínima desejada</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A calculadora desconta essa margem do preço de revenda para chegar ao valor máximo de compra.
-        </p>
-        <div className="mt-4 flex items-end gap-3">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="minMargin">Margem (%)</Label>
-            <Input
-              id="minMargin"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={99}
-              step="0.5"
-              className="w-32"
-              value={marginPercent}
-              onChange={(e) => setMarginPercent(e.target.value)}
-            />
-          </div>
-          <Button onClick={saveMargin} disabled={savingMargin}>
-            {savingMargin ? "Salvando..." : "Salvar"}
-          </Button>
+    <SettingsCard
+      title="Calculadora de Seminovo"
+      description="A calculadora desconta a margem mínima do preço de revenda e sugere estes custos de reparo."
+    >
+      <div className="flex items-end gap-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="minMargin">Margem mínima desejada (%)</Label>
+          <Input
+            id="minMargin"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={99}
+            step="0.5"
+            className="w-32"
+            value={marginPercent}
+            onChange={(e) => setMarginPercent(e.target.value)}
+          />
         </div>
-      </section>
+        <Button onClick={saveMargin} disabled={savingMargin || !storeId}>
+          {savingMargin ? "Salvando..." : "Salvar"}
+        </Button>
+      </div>
 
-      <section className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-        <h2 className="text-base font-semibold text-foreground">Custos de reparo por modelo</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Quanto custa trocar tela, bateria e câmera de cada modelo. A calculadora usa esses valores como sugestão.
-        </p>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-foreground">Custos de reparo por modelo (R$)</h3>
+        <Button size="sm" variant="secondary" onClick={() => setAdding(true)} disabled={!storeId || adding}>
+          Adicionar modelo
+        </Button>
+      </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg border border-dashed border-border p-3 sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))_auto] sm:items-end">
-          <div className="col-span-2 flex flex-col gap-2 sm:col-span-1">
-            <Label htmlFor="newModel">Modelo</Label>
-            <Select id="newModel" value={newModel} onChange={(e) => setNewModel(e.target.value)}>
-              <option value="">Selecione</option>
-              {availableModels.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+      <div className="mt-3 overflow-x-auto">
+        <div className="min-w-[560px]">
+          <div className={`${GRID} border-b border-[#2A2A2A] pb-2 text-xs text-muted-foreground`}>
+            <span>Modelo</span>
+            {COST_FIELDS.map((f) => (
+              <span key={f.key}>{f.label}</span>
+            ))}
+            <span className="sr-only">Ações</span>
+          </div>
+
+          {adding && (
+            <div className={`${GRID} border-b border-[#2A2A2A] bg-primary/5 py-2`}>
+              <Select aria-label="Modelo" value={newModel} onChange={(e) => setNewModel(e.target.value)}>
+                <option value="">Selecione</option>
+                {availableModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </Select>
+              {COST_FIELDS.map((field) => (
+                <Input
+                  key={field.key}
+                  aria-label={field.label}
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.01"
+                  value={newDraft[field.key]}
+                  onChange={(e) => setNewDraft((d) => ({ ...d, [field.key]: e.target.value }))}
+                />
               ))}
-            </Select>
-          </div>
-          {COST_FIELDS.map((field) => (
-            <div key={field.key} className="flex flex-col gap-2">
-              <Label htmlFor={`new-${field.key}`}>{field.label} (R$)</Label>
-              <Input
-                id={`new-${field.key}`}
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                value={newDraft[field.key]}
-                onChange={(e) => setNewDraft((d) => ({ ...d, [field.key]: e.target.value }))}
-              />
+              <div className="flex gap-1">
+                <Button size="sm" onClick={addRow} disabled={!newModel}>
+                  Salvar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>
+                  Cancelar
+                </Button>
+              </div>
             </div>
-          ))}
-          <Button onClick={addRow} disabled={!newModel}>
-            Adicionar
-          </Button>
-        </div>
+          )}
 
-        {rows === null ? (
-          <div className="mt-4 h-12 animate-pulse rounded-md bg-background/60" />
-        ) : rows.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">Nenhum modelo configurado ainda.</p>
-        ) : (
-          <div className="mt-4 divide-y divide-border">
-            {rows.map((row) => (
-              <div
-                key={row.id}
-                className="grid grid-cols-2 gap-3 py-3 sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))_auto] sm:items-center"
-              >
-                <span className="col-span-2 text-sm font-medium text-foreground sm:col-span-1">{row.model}</span>
+          {rows === null ? (
+            <div className="mt-3 h-10 animate-pulse rounded-md bg-background/60" />
+          ) : rows.length === 0 && !adding ? (
+            <p className="py-4 text-sm text-muted-foreground">Nenhum modelo configurado ainda.</p>
+          ) : (
+            rows.map((row) => (
+              <div key={row.id} className={`${GRID} border-b border-[#2A2A2A] py-2 last:border-0`}>
+                <span className="truncate text-sm font-medium text-foreground">{row.model}</span>
                 {COST_FIELDS.map((field) => (
                   <Input
                     key={field.key}
@@ -196,26 +216,23 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
                     inputMode="decimal"
                     min={0}
                     step="0.01"
-                    placeholder={field.label}
+                    placeholder="—"
                     value={drafts[row.id]?.[field.key] ?? ""}
                     onChange={(e) =>
                       setDrafts((d) => ({ ...d, [row.id]: { ...d[row.id], [field.key]: e.target.value } }))
                     }
+                    onBlur={() => saveRow(row)}
+                    onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                   />
                 ))}
-                <div className="flex gap-1">
-                  <Button size="sm" variant="secondary" onClick={() => saveRow(row)}>
-                    Salvar
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => deleteRow(row)}>
-                    Remover
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={() => deleteRow(row)}>
+                  Remover
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+            ))
+          )}
+        </div>
+      </div>
+    </SettingsCard>
   );
 }

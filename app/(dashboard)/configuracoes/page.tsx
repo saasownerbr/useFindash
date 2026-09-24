@@ -2,36 +2,23 @@
 
 import { useEffect, useState } from "react";
 
+import { AccountCard } from "@/components/configuracoes/account-card";
+import { AlertSettingsCard } from "@/components/configuracoes/alert-settings-card";
 import { CalculatorSettings } from "@/components/configuracoes/calculator-settings";
 import { PriceReferenceList } from "@/components/configuracoes/price-reference-list";
 import { SellerList } from "@/components/configuracoes/seller-list";
-import { SupportForm } from "@/components/configuracoes/support-form";
-import { StoreSettingsForm } from "@/components/configuracoes/store-settings-form";
+import { StoreProfileCard } from "@/components/configuracoes/store-profile-card";
 import { PageContainer } from "@/components/ui/page-container";
 import { getClientStoreId } from "@/lib/supabase/client-store";
-import { cn } from "@/lib/utils";
-
-const TABS = [
-  { key: "loja", label: "Loja" },
-  { key: "vendedores", label: "Vendedores" },
-  { key: "precos", label: "Tabela de preços" },
-  { key: "calculadora", label: "Calculadora" },
-  { key: "suporte", label: "Suporte" },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
 
 export default function ConfiguracoesPage() {
-  const [tab, setTab] = useState<TabKey>("loja");
   const [storeId, setStoreId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function resolveStore() {
-      const activeStoreId = await getClientStoreId();
-      if (!cancelled) setStoreId(activeStoreId);
-    }
-    resolveStore();
+    getClientStoreId().then((id) => {
+      if (!cancelled) setStoreId(id);
+    });
     return () => {
       cancelled = true;
     };
@@ -39,33 +26,18 @@ export default function ConfiguracoesPage() {
 
   return (
     <PageContainer>
-      <div>
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Dados da loja, vendedores, tabela de preços e alertas.</p>
-
-      <div className="mt-6 flex gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "px-4 py-2 text-sm font-medium text-muted-foreground transition-colors",
-              tab === t.key && "border-b-2 border-primary text-foreground"
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+        <p className="mt-1 text-sm text-muted-foreground">Conta, loja, vendedores, preços, alertas e calculadora.</p>
       </div>
 
-      <div className="mt-6">
-        {tab === "loja" && <StoreSettingsForm storeId={storeId} />}
-        {tab === "vendedores" && <SellerList storeId={storeId} />}
-        {tab === "precos" && <PriceReferenceList storeId={storeId} />}
-        {tab === "calculadora" && <CalculatorSettings storeId={storeId} />}
-        {tab === "suporte" && <SupportForm />}
-      </div>
+      <div className="space-y-6">
+        <AccountCard />
+        <StoreProfileCard storeId={storeId} />
+        <SellerList storeId={storeId} />
+        <PriceReferenceList storeId={storeId} />
+        <AlertSettingsCard storeId={storeId} />
+        <CalculatorSettings storeId={storeId} />
       </div>
     </PageContainer>
   );

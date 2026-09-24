@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { NetMarginCard, RevenueCard } from "@/components/finance-highlight-cards";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
@@ -80,7 +81,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          <DreLine label="Receita" value={formatCurrencyBRL(dre.revenue)} />
+          <RevenueCard label="Receita" value={dre.revenue} />
           <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
           <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
           <DreLine label="Custos fixos" value={formatCurrencyBRL(dre.costsByType.fixed)} />
@@ -88,19 +89,19 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
           <DreLine label="Marketing" value={formatCurrencyBRL(dre.costsByType.marketing)} />
           <DreLine label="Fornecedor" value={formatCurrencyBRL(dre.costsByType.supplier)} />
           <DreLine label="Comissões" value={formatCurrencyBRL(dre.commissions)} />
-          <DreLine label="Margem líquida" value={formatCurrencyBRL(dre.netMargin)} highlight />
+          <NetMarginCard value={dre.netMargin} />
         </div>
       )}
     </div>
   );
 }
 
-function DreLine({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function DreLine({ label, value }: { label: string; value: string }) {
   return (
     <Card>
       <CardContent className="p-4">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={highlight ? "text-xl font-bold text-primary" : "text-lg font-semibold text-foreground"}>{value}</p>
+        <p className="text-lg font-semibold text-foreground">{value}</p>
       </CardContent>
     </Card>
   );

@@ -84,3 +84,78 @@ select {
 .bottom-nav::-webkit-scrollbar {
   display: none;
 }
+
+/* Light theme ("Modo claro" in Configurações): the <html> element gets the
+   "light" class. Tokens flip here; the rules below remap the neutral hex
+   colors that components use directly. */
+html.light {
+  color-scheme: light;
+  --background: 240 5% 96%;
+  --foreground: 221 39% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 221 39% 11%;
+  --border: 220 13% 88%;
+  --secondary: 220 14% 94%;
+  --secondary-foreground: 221 39% 11%;
+  --muted: 220 14% 94%;
+  --muted-foreground: 220 9% 40%;
+}
+
+html.light .bg-\[\#0F0F0F\],
+html.light .bg-\[\#111111\] {
+  background-color: #F4F4F6;
+}
+
+html.light .bg-\[\#1A1A1A\] {
+  background-color: #FFFFFF;
+}
+
+html.light .bg-\[\#2A2A2A\] {
+  background-color: #E5E7EB;
+}
+
+html.light .border-\[\#2A2A2A\] {
+  border-color: #E1E3E8;
+}
+
+html.light .border-\[\#3D3D3D\],
+html.light .border-\[\#4B5563\] {
+  border-color: #D1D5DB;
+}
+
+html.light .text-\[\#F8F8F8\] {
+  color: #111827;
+}
+
+html.light .text-\[\#9CA3AF\] {
+  color: #4B5563;
+}
+
+html.light .text-\[\#6B7280\] {
+  color: #6B7280;
+}
+
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #FFFFFF !important;
+  border-color: #D1D5DB !important;
+  color: #111827 !important;
+}
+
+html.light input:hover,
+html.light select:hover,
+html.light textarea:hover {
+  border-color: #9CA3AF !important;
+}
+
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #3B82F6 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #9CA3AF !important;
+}

@@ -2,6 +2,7 @@ import {
   BarChart3,
   Calculator,
   DollarSign,
+  LifeBuoy,
   Package,
   Settings,
   ShoppingCart,
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Financeiro", href: "/financeiro", icon: DollarSign },
   { label: "Rankings", href: "/rankings", icon: Trophy },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
+  { label: "Suporte", href: "/suporte", icon: LifeBuoy },
 ];
 
 export function isActiveRoute(pathname: string, href: string): boolean {

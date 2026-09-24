@@ -34,14 +34,14 @@ export function Logo({ size = "md", className }: LogoProps) {
       viewBox="202 408 676 118"
       height={height}
       width={(height * 676) / 118}
-      className={cn("shrink-0", className)}
+      className={cn("shrink-0 text-foreground", className)}
       xmlns="http://www.w3.org/2000/svg"
     >
       {USE.map((d) => (
         <path key={d.slice(0, 16)} d={d} fill="#757575" />
       ))}
       {FINDASH.map((d) => (
-        <path key={d.slice(0, 16)} d={d} fill="#F7F7F7" />
+        <path key={d.slice(0, 16)} d={d} fill="currentColor" />
       ))}
     </svg>
   );

@@ -9,12 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
-import type { Tables } from "@/lib/supabase/types";
 import { sellerSchema, type SellerInput } from "@/lib/validation/seller";
-
-type Seller = Tables<"store_users">;
 
 const ROLE_LABELS: Record<SellerInput["role"], string> = {
   owner: "Dono",
@@ -26,13 +22,13 @@ interface SellerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   storeId: string | null;
-  seller: Seller | null;
   onSaved: () => void;
 }
 
 const DEFAULT_VALUES: SellerInput = { name: "", email: "", role: "seller", commission_rate: 0 };
 
-export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved }: SellerFormDialogProps) {
+/** Invites a new seller; existing sellers are edited inline in the list. */
+export function SellerFormDialog({ open, onOpenChange, storeId, onSaved }: SellerFormDialogProps) {
   const {
     register,
     handleSubmit,
@@ -45,36 +41,12 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
   });
 
   useEffect(() => {
-    if (!open) return;
-    if (seller) {
-      reset({ name: seller.name, email: "", role: seller.role as SellerInput["role"], commission_rate: seller.commission_rate });
-    } else {
-      reset(DEFAULT_VALUES);
-    }
-  }, [open, seller, reset]);
+    if (open) reset(DEFAULT_VALUES);
+  }, [open, reset]);
 
   async function onSubmit(data: SellerInput) {
     if (!storeId) {
       setError("root", { message: "Não foi possível identificar a loja. Recarregue a página." });
-      return;
-    }
-
-    if (seller) {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("store_users")
-        .update({ name: data.name, role: data.role, commission_rate: data.commission_rate })
-        .eq("id", seller.id);
-
-      if (error) {
-        setError("root", { message: "Não foi possível salvar o vendedor." });
-        toast.error("Não foi possível salvar o vendedor.");
-        return;
-      }
-
-      toast.success("Vendedor atualizado com sucesso");
-      onOpenChange(false);
-      onSaved();
       return;
     }
 
@@ -105,7 +77,7 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{seller ? "Editar vendedor" : "Novo vendedor"}</DialogTitle>
+          <DialogTitle>Adicionar vendedor</DialogTitle>
         </DialogHeader>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
@@ -115,16 +87,14 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
             {errors.name && <span className="text-xs text-danger">{errors.name.message}</span>}
           </div>
 
-          {!seller && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} />
-              {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
-              <p className="text-xs text-muted-foreground">
-                Um convite será enviado por email para que o vendedor defina sua senha.
-              </p>
-            </div>
-          )}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...register("email")} />
+            {errors.email && <span className="text-xs text-danger">{errors.email.message}</span>}
+            <p className="text-xs text-muted-foreground">
+              Um convite será enviado por email para que o vendedor defina sua senha.
+            </p>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -138,9 +108,20 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="commission_rate">Comissão (fração, ex: 0.05)</Label>
-              <Input id="commission_rate" type="number" min={0} max={1} step="0.01" {...register("commission_rate")} />
-              {errors.commission_rate && <span className="text-xs text-danger">{errors.commission_rate.message}</span>}
+              <Label htmlFor="commission_rate">Comissão (%)</Label>
+              <Input
+                id="commission_rate"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={100}
+                step="0.5"
+                // Typed as a percentage, stored as a fraction (5 → 0.05).
+                {...register("commission_rate", { setValueAs: (v) => (v === "" ? 0 : Number(v) / 100) })}
+              />
+              {errors.commission_rate && (
+                <span className="text-xs text-danger">Use um valor entre 0% e 100%.</span>
+              )}
             </div>
           </div>
 
@@ -149,7 +130,7 @@ export function SellerFormDialog({ open, onOpenChange, storeId, seller, onSaved 
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : "Salvar"}
+              {isSubmitting ? "Enviando..." : "Adicionar"}
             </Button>
           </div>
           {errors.root && <span className="text-xs text-danger">{errors.root.message}</span>}
