@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 
-import { isInUpgradeWindow, isBirthdayWithinDays, daysInStock, nextBirthday } from "@/lib/customer-alerts";
+import {
+  daysInStock,
+  daysUntilBirthday,
+  isBirthdayWithinDays,
+  isInUpgradeWindow,
+  monthsSince,
+  nextBirthday,
+} from "@/lib/customer-alerts";
 
 describe("isInUpgradeWindow", () => {
   it("is true when the last sale was at least N months ago", () => {
@@ -62,5 +69,19 @@ describe("daysInStock", () => {
   it("returns 0 for a purchase made today", () => {
     const now = new Date("2026-09-23T12:00:00Z");
     expect(daysInStock("2026-09-23", now)).toBe(0);
+  });
+});
+
+describe("daysUntilBirthday", () => {
+  it("counts days to the next birthday", () => {
+    expect(daysUntilBirthday("1990-09-27", new Date("2026-09-24T12:00:00Z"))).toBe(3);
+    expect(daysUntilBirthday("1990-09-24", new Date("2026-09-24T12:00:00Z"))).toBe(0);
+  });
+});
+
+describe("monthsSince", () => {
+  it("counts whole months", () => {
+    expect(monthsSince("2024-01-15", new Date("2026-09-24T00:00:00Z"))).toBe(32);
+    expect(monthsSince("2026-08-25", new Date("2026-09-24T00:00:00Z"))).toBe(0);
   });
 });

@@ -8,9 +8,13 @@ export function ProductRanking({ rows }: { rows: ProductRankRow[] }) {
     .map((row) => ({
       key: `${row.model}-${row.storage}`,
       name: `${row.model} · ${row.storage}`,
-      value: `${row.unitsSold} ${row.unitsSold === 1 ? "unidade" : "unidades"}`,
-      details: [`Margem média ${formatCurrencyBRL(row.avgGrossMargin)}`],
+      center: <span className="text-[#10B981]">Margem média {formatCurrencyBRL(row.avgGrossMargin)}</span>,
+      right: (
+        <span className="text-[#9CA3AF]">
+          {row.unitsSold} {row.unitsSold === 1 ? "unidade" : "unidades"}
+        </span>
+      ),
     }));
 
-  return <RankingList items={items} emptyMessage="Nenhum aparelho vendido neste mês." />;
+  return <RankingList title="Produtos" items={items} emptyMessage="Nenhum aparelho vendido neste mês." />;
 }

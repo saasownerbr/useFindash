@@ -3,17 +3,22 @@ import { z } from "zod";
 /** Accessory categories an iPhone store actually stocks. */
 export const ACCESSORY_CATEGORIES = [
   "Capinha",
-  "Película",
-  "Carregador (fonte)",
-  "Cabo USB-C / Lightning",
-  "Carregador MagSafe",
-  "Bateria portátil",
-  "Fone / AirPods",
-  "Pulseira Apple Watch",
-  "Película de câmera",
-  "Suporte veicular",
+  "Película de vidro",
+  "Película de privacidade",
+  "Carregador original",
+  "Carregador compatível",
+  "Cabo USB-C",
+  "Cabo Lightning",
   "Adaptador",
-  "Outros",
+  "AirPods",
+  "Fone com fio",
+  "Suporte veicular",
+  "Suporte de mesa",
+  "Bateria externa",
+  "Capa MagSafe",
+  "Acessório MagSafe",
+  "Limpeza e manutenção",
+  "Outro",
 ] as const;
 
 export const accessorySchema = z.object({

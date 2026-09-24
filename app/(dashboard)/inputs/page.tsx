@@ -2,32 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-import { UsedDeviceCalculator } from "@/components/calculadora/used-device-calculator";
-import { PriceReferenceList } from "@/components/configuracoes/price-reference-list";
+import { CalculatorSettings } from "@/components/inputs/calculator-settings";
+import { PriceReferenceList } from "@/components/inputs/price-reference-list";
 import { PageContainer } from "@/components/ui/page-container";
 import { getClientStoreId } from "@/lib/supabase/client-store";
-import { cn } from "@/lib/utils";
-
-const TABS = [
-  { key: "precos", label: "Tabela de Preços" },
-  { key: "calculadora", label: "Calculadora de Seminovo" },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
-
-function isTabKey(value: string | null): value is TabKey {
-  return TABS.some((t) => t.key === value);
-}
 
 export default function InputsPage() {
-  const [tab, setTab] = useState<TabKey>("precos");
   const [storeId, setStoreId] = useState<string | null>(null);
-
-  // /inputs?tab=calculadora (the old /calculadora route redirects here).
-  useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get("tab");
-    if (isTabKey(requested)) setTab(requested);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,32 +22,16 @@ export default function InputsPage() {
 
   return (
     <PageContainer>
-      <div>
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Inputs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tabela de preços de referência e avaliação de seminovos antes da compra.
+          Preços de referência e parâmetros que alimentam a precificação e a Calculadora de Seminovo.
         </p>
+      </div>
 
-        <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium text-muted-foreground transition-colors",
-                tab === t.key && "border-b-2 border-primary text-foreground"
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6">
-          {tab === "precos" && <PriceReferenceList storeId={storeId} />}
-          {tab === "calculadora" && <UsedDeviceCalculator />}
-        </div>
+      <div className="grid grid-cols-1 items-start gap-6 2xl:grid-cols-2">
+        <PriceReferenceList storeId={storeId} />
+        <CalculatorSettings storeId={storeId} />
       </div>
     </PageContainer>
   );

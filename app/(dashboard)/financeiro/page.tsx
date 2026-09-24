@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { key: "dre", label: "DRE" },
   { key: "lancamentos", label: "Lançamentos" },
-  { key: "trafego", label: "Tráfego e leads" },
   { key: "meta", label: "Meta" },
+  { key: "trafego", label: "Tráfego e leads" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -27,6 +27,13 @@ export default function FinanceiroPage() {
   const [storeId, setStoreId] = useState<string | null>(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [reloadKey, setReloadKey] = useState(0);
+
+  // /financeiro?tab=trafego comes from the dashboard's CAC card.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    const match = TABS.find((t) => t.key === requested);
+    if (match) setTab(match.key);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,19 +1,12 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent } from "@/components/ui/card";
-
-const CHANNEL_LABELS: Record<string, string> = {
-  instagram: "Instagram",
-  whatsapp: "WhatsApp",
-  pdv: "Loja física",
-  referral: "Indicação",
-  paid_traffic: "Tráfego pago",
-};
+import { channelColors, channelLabel } from "@/lib/channels";
 
 export function ChannelBarChart({ data }: { data: { channel: string; total: number }[] }) {
-  const chartData = data.map((d) => ({ ...d, label: CHANNEL_LABELS[d.channel] ?? d.channel }));
+  const chartData = data.map((d) => ({ ...d, label: channelLabel(d.channel) }));
 
   return (
     <Card>
@@ -26,7 +19,11 @@ export function ChannelBarChart({ data }: { data: { channel: string; total: numb
               <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-              <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                {chartData.map((d) => (
+                  <Cell key={d.channel} fill={channelColors(d.channel).color} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

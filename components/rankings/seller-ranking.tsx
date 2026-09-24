@@ -8,14 +8,16 @@ export function SellerRanking({ rows }: { rows: SellerRankRow[] }) {
     .map((row) => ({
       key: row.sellerId,
       name: row.name,
-      value: formatCurrencyBRL(row.totalRevenue),
-      details: [
-        `${row.salesCount} ${row.salesCount === 1 ? "venda" : "vendas"}`,
-        `Ticket médio ${formatCurrencyBRL(row.avgTicket)}`,
-        `${row.avgAccessoriesPerSale.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} acessório por venda`,
-        `Comissão ${formatCurrencyBRL(row.totalCommission)}`,
-      ],
+      center: (
+        <div>
+          <p className="font-semibold tabular-nums text-[#F8F8F8]">{formatCurrencyBRL(row.totalRevenue)}</p>
+          <p className="text-xs text-[#9CA3AF]">
+            Ticket médio {formatCurrencyBRL(row.avgTicket)} · {row.salesCount} {row.salesCount === 1 ? "venda" : "vendas"}
+          </p>
+        </div>
+      ),
+      right: <span className="tabular-nums text-[#10B981]">Comissão {formatCurrencyBRL(row.totalCommission)}</span>,
     }));
 
-  return <RankingList items={items} emptyMessage="Nenhuma venda neste mês." />;
+  return <RankingList title="Vendedores" items={items} emptyMessage="Nenhuma venda neste mês." />;
 }

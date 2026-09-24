@@ -167,7 +167,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
       description="Preço de mercado por modelo e o quanto cada grade vale sobre ele. Os valores salvam ao sair do campo."
       action={
         <Button size="sm" onClick={() => setNewRow({ ...NEW_ROW })} disabled={!storeId || !!newRow}>
-          Adicionar linha
+          Adicionar modelo
         </Button>
       }
     >

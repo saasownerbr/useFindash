@@ -44,15 +44,3 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
-export function GoalProgressSkeleton() {
-  return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <Skeleton className="mb-3 h-4 w-32" />
-      <Skeleton className="mb-4 h-2 w-full" />
-      <div className="flex justify-between">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-20" />
-      </div>
-    </div>
-  );
-}

@@ -21,9 +21,10 @@ describe("isActiveRoute", () => {
 });
 
 describe("NAV_ITEMS", () => {
-  it("groups the price table and calculator under Inputs", () => {
+  it("places Inputs after Financeiro and before Rankings", () => {
     const hrefs = NAV_ITEMS.map((item) => item.href);
-    expect(hrefs).toContain("/inputs");
-    expect(hrefs).not.toContain("/calculadora");
+    const inputs = hrefs.indexOf("/inputs");
+    expect(inputs).toBe(hrefs.indexOf("/financeiro") + 1);
+    expect(hrefs[inputs + 1]).toBe("/rankings");
   });
 });

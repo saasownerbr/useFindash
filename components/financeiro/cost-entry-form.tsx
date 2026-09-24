@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
-import { costEntrySchema, type CostEntryInput } from "@/lib/validation/cost-entry";
+import { DESCRIPTION_PLACEHOLDERS, costEntrySchema, type CostEntryInput } from "@/lib/validation/cost-entry";
 
 const TYPE_LABELS: Record<CostEntryInput["type"], string> = {
-  fixed: "Fixo",
-  variable: "Variável",
+  fixed: "Custo Fixo",
+  variable: "Custo Variável",
   marketing: "Marketing",
   supplier: "Fornecedor",
 };
@@ -21,6 +21,7 @@ const TYPE_LABELS: Record<CostEntryInput["type"], string> = {
 export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; onSaved: () => void }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -29,6 +30,8 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
     resolver: zodResolver(costEntrySchema),
     defaultValues: { type: "fixed", description: "", amount: 0, date: "" },
   });
+
+  const type = useWatch({ control, name: "type" });
 
   async function onSubmit(data: CostEntryInput) {
     if (!storeId) {
@@ -74,7 +77,7 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
         <Label htmlFor="description">Descrição</Label>
         <Input
           id="description"
-          placeholder="Descreva o lançamento"
+          placeholder={DESCRIPTION_PLACEHOLDERS[type ?? "fixed"]}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}

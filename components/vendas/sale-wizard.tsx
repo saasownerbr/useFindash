@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { SaleCustomerCard } from "@/components/vendas/sale-customer-card";
 import { StepAccessories } from "@/components/vendas/step-accessories";
 import { StepCustomer } from "@/components/vendas/step-customer";
 import { StepDetails } from "@/components/vendas/step-details";
@@ -28,7 +27,6 @@ export function SaleWizard() {
   const customer = useSaleWizardStore((s) => s.customer);
   const product = useSaleWizardStore((s) => s.product);
   const productSkipped = useSaleWizardStore((s) => s.productSkipped);
-  const setCustomer = useSaleWizardStore((s) => s.setCustomer);
   const skipProduct = useSaleWizardStore((s) => s.skipProduct);
   const saleChannel = useSaleWizardStore((s) => s.saleChannel);
   const sellerId = useSaleWizardStore((s) => s.sellerId);
@@ -56,8 +54,7 @@ export function SaleWizard() {
     step === 1 ? canAdvanceFrom1 : step === 2 ? canAdvanceFrom2 : step === 3 ? canAdvanceFrom3 : canAdvanceFrom4;
 
   return (
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="min-w-0 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
         {STEPS.map((s, index) => (
           <div key={s.key} className="flex flex-1 items-center gap-2">
@@ -82,9 +79,17 @@ export function SaleWizard() {
         ))}
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
         {step === 1 && <StepCustomer storeId={storeId} />}
-        {step === 2 && <StepProduct storeId={storeId} />}
+        {step === 2 && (
+          <StepProduct
+            storeId={storeId}
+            onSkip={() => {
+              skipProduct();
+              setStep(3);
+            }}
+          />
+        )}
         {step === 3 && <StepAccessories storeId={storeId} />}
         {step === 4 && <StepDetails storeId={storeId} />}
         {step === 5 && <StepSummary storeId={storeId} />}
@@ -95,25 +100,12 @@ export function SaleWizard() {
           <Button variant="secondary" disabled={step === 1} onClick={() => setStep((s) => (s - 1) as typeof step)}>
             Voltar
           </Button>
-          <div className="flex gap-2">
-            {step === 2 && !product && !productSkipped && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  skipProduct();
-                  setStep(3);
-                }}
-              >
-                Pular produto
-              </Button>
-            )}
-            <Button
-              disabled={!canAdvance || (step === 2 && !product && !productSkipped)}
-              onClick={() => setStep((s) => (s + 1) as typeof step)}
-            >
-              Avançar
-            </Button>
-          </div>
+          <Button
+            disabled={!canAdvance || (step === 2 && !product && !productSkipped)}
+            onClick={() => setStep((s) => (s + 1) as typeof step)}
+          >
+            Avançar
+          </Button>
         </div>
       )}
       {step === 5 && (
@@ -123,15 +115,6 @@ export function SaleWizard() {
           </Button>
         </div>
       )}
-      </div>
-
-      <SaleCustomerCard
-        storeId={storeId}
-        onChangeCustomer={() => {
-          setCustomer(null);
-          setStep(1);
-        }}
-      />
     </div>
   );
 }

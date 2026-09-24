@@ -1,4 +1,4 @@
-import { KpiCardsSkeleton, ChartSkeleton, GoalProgressSkeleton } from "@/components/dashboard/skeleton-cards";
+import { KpiCardsSkeleton, ChartSkeleton } from "@/components/dashboard/skeleton-cards";
 
 export default function DashboardLoading() {
   return (
@@ -14,9 +14,6 @@ export default function DashboardLoading() {
 
       {/* KPI Cards */}
       <KpiCardsSkeleton />
-
-      {/* Goal Progress */}
-      <GoalProgressSkeleton />
 
       {/* Payment Methods */}
       <ChartSkeleton />
@@ -36,9 +33,6 @@ export default function DashboardLoading() {
           </div>
         ))}
       </div>
-
-      {/* Alerts Panel */}
-      <ChartSkeleton />
     </div>
   );
 }

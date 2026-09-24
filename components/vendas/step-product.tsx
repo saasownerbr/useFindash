@@ -13,11 +13,12 @@ import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
 
-export function StepProduct({ storeId }: { storeId: string | null }) {
+export function StepProduct({ storeId, onSkip }: { storeId: string | null; onSkip: () => void }) {
   const product = useSaleWizardStore((s) => s.product);
   const productSkipped = useSaleWizardStore((s) => s.productSkipped);
   const setProduct = useSaleWizardStore((s) => s.setProduct);
-  const skipProduct = useSaleWizardStore((s) => s.skipProduct);
+  // setProduct(null) also clears productSkipped, reopening the search.
+  const unskipProduct = () => setProduct(null);
 
   const [searchMode, setSearchMode] = useState<"imei" | "model">("model");
   const [term, setTerm] = useState("");
@@ -60,7 +61,7 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
     return (
       <div className="rounded-lg border border-dashed border-border p-6 text-center">
         <p className="text-sm text-muted-foreground">Venda somente de acessórios, sem aparelho.</p>
-        <Button variant="secondary" className="mt-3" onClick={() => skipProduct()}>
+        <Button variant="secondary" className="mt-3" onClick={unskipProduct}>
           Buscar aparelho
         </Button>
       </div>
@@ -69,8 +70,8 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Select value={searchMode} onChange={(e) => setSearchMode(e.target.value as "imei" | "model")} className="w-40">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Select value={searchMode} onChange={(e) => setSearchMode(e.target.value as "imei" | "model")} className="sm:w-40">
           <option value="model">Por modelo</option>
           <option value="imei">Por IMEI</option>
         </Select>
@@ -95,6 +96,14 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
           {searching ? "Buscando..." : "Buscar"}
         </Button>
       </div>
+
+      <button
+        type="button"
+        onClick={onSkip}
+        className="w-full rounded-md border border-[#2A2A2A] bg-transparent px-4 py-2 text-sm font-medium text-[#9CA3AF] transition-colors hover:border-[#3D3D3D] hover:text-foreground sm:w-auto"
+      >
+        Pular — vender apenas acessório
+      </button>
 
       {results && results.length === 0 && (
         <p className="text-sm text-muted-foreground">Nenhum aparelho disponível encontrado.</p>
@@ -136,10 +145,6 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
           })}
         </div>
       )}
-
-      <p className="text-xs text-muted-foreground">
-        Venda só de acessórios? Use &quot;Pular produto&quot; abaixo.
-      </p>
     </div>
   );
 }

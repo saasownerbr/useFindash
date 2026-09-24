@@ -4,36 +4,37 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { GoalProgress } from "@/components/dashboard/goal-progress";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
+import { currentMonthValue } from "@/components/ui/month-picker";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE } from "@/lib/dre";
 import { formatCurrencyBRL } from "@/lib/finance";
+import { goalPace } from "@/lib/revenue-goal";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { revenueGoalSchema, type RevenueGoalInput } from "@/lib/validation/store-settings";
 
-function monthRange(month: string) {
-  const start = `${month}-01`;
+function currentMonthRange() {
+  const month = currentMonthValue();
   const [year, mon] = month.split("-").map(Number);
-  const nextMonth = mon === 12 ? `${year + 1}-01` : `${year}-${String(mon + 1).padStart(2, "0")}`;
-  return { start, end: `${nextMonth}-01` };
+  const next = mon === 12 ? `${year + 1}-01` : `${year}-${String(mon + 1).padStart(2, "0")}`;
+  return { start: `${month}-01`, end: `${next}-01` };
 }
 
-function daysLeftInMonth(month: string, now = new Date()): number | null {
-  if (month !== currentMonthValue()) return null;
-  const [year, mon] = month.split("-").map(Number);
-  const lastDay = new Date(year, mon, 0).getDate();
-  return lastDay - now.getDate() + 1;
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-lg border border-[#2A2A2A] p-4">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-bold tabular-nums text-foreground">{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
 }
 
-/** "Meta" tab in Financeiro: edit the monthly revenue goal and track the month against it. */
+/** "Meta" tab in Financeiro: set the monthly revenue goal and follow the current month against it. */
 export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
-  const [month, setMonth] = useState(currentMonthValue());
   const [goal, setGoal] = useState<number | null>(null);
   const [revenue, setRevenue] = useState<number | null>(null);
 
@@ -50,28 +51,10 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    createClient()
-      .from("stores")
-      .select("monthly_revenue_goal")
-      .eq("id", storeId)
-      .single()
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        setGoal(data.monthly_revenue_goal);
-        reset({ monthly_revenue_goal: data.monthly_revenue_goal });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [storeId, reset]);
-
-  useEffect(() => {
-    if (!storeId) return;
-    let cancelled = false;
-    setRevenue(null);
-    const { start, end } = monthRange(month);
     const supabase = createClient();
+    const { start, end } = currentMonthRange();
     Promise.all([
+      supabase.from("stores").select("monthly_revenue_goal").eq("id", storeId).single(),
       supabase
         .from("sales")
         .select("acquisition_cost, repair_cost, gross_margin, commission_amount")
@@ -79,13 +62,17 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
         .gte("sold_at", start)
         .lt("sold_at", end),
       sumAccessorySales(supabase, storeId, start, end),
-    ]).then(([{ data: sales }, accessorySales]) => {
-      if (!cancelled) setRevenue(buildDRE(sales ?? [], [], accessorySales).revenue);
+    ]).then(([storeRes, salesRes, accessorySales]) => {
+      if (cancelled) return;
+      const storeGoal = Number(storeRes.data?.monthly_revenue_goal ?? 0);
+      setGoal(storeGoal);
+      reset({ monthly_revenue_goal: storeGoal });
+      setRevenue(buildDRE(salesRes.data ?? [], [], accessorySales).revenue);
     });
     return () => {
       cancelled = true;
     };
-  }, [storeId, month]);
+  }, [storeId, reset]);
 
   async function onSubmit(data: RevenueGoalInput) {
     if (!storeId) return;
@@ -98,48 +85,12 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
     toast.success("Meta de faturamento salva");
   }
 
-  const remaining = goal != null && revenue != null ? Math.max(0, goal - revenue) : null;
-  const daysLeft = daysLeftInMonth(month);
+  const pace = goal != null && revenue != null ? goalPace(revenue, goal) : null;
+  const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(new Date());
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="meta-month">Mês</Label>
-        <MonthPicker id="meta-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
-      </div>
-
-      {goal == null || revenue == null ? (
-        <div className="h-28 animate-pulse rounded-xl bg-card" />
-      ) : (
-        <GoalProgress currentRevenue={revenue} goal={goal} />
-      )}
-
-      {remaining != null && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Falta para a meta</p>
-              <p className="text-xl font-bold text-foreground">{formatCurrencyBRL(remaining)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Necessário por dia</p>
-              <p className="text-xl font-bold text-foreground">
-                {daysLeft ? formatCurrencyBRL(remaining / daysLeft) : "—"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {daysLeft ? `${daysLeft} dia${daysLeft > 1 ? "s" : ""} restantes no mês` : "Só para o mês atual"}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <form
-        className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end"
-        onSubmit={handleSubmit(onSubmit)}
-      >
+    <section className="space-y-6 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
+      <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-1 flex-col gap-2">
           <Label htmlFor="monthly_revenue_goal">Meta de faturamento mensal (R$)</Label>
           <Input
@@ -155,9 +106,56 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
           )}
         </div>
         <Button type="submit" disabled={isSubmitting || !storeId}>
-          {isSubmitting ? "Salvando..." : "Salvar meta"}
+          {isSubmitting ? "Salvando..." : "Salvar"}
         </Button>
       </form>
-    </div>
+
+      {!pace || goal == null || revenue == null ? (
+        <div className="h-40 animate-pulse rounded-lg bg-background/60" />
+      ) : (
+        <>
+          <div>
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Atingido em {monthName}
+                </p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                  {formatCurrencyBRL(revenue)}{" "}
+                  <span className="text-base font-medium text-muted-foreground">de {formatCurrencyBRL(goal)}</span>
+                </p>
+              </div>
+              <span className="text-2xl font-bold tabular-nums text-primary">{pace.percentage.toFixed(0)}%</span>
+            </div>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#2A2A2A]">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${pace.percentage}%`, background: "linear-gradient(90deg, #3B82F6 0%, #10B981 100%)" }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Stat label="Falta para a meta" value={formatCurrencyBRL(pace.remaining)} />
+            <Stat
+              label="Média diária necessária"
+              value={pace.remaining > 0 ? formatCurrencyBRL(pace.dailyNeeded) : "Meta batida"}
+              hint={`${pace.daysLeft} dia${pace.daysLeft > 1 ? "s" : ""} restantes no mês`}
+            />
+            <Stat
+              label="Projeção no ritmo atual"
+              value={formatCurrencyBRL(pace.projection)}
+              hint={
+                goal > 0
+                  ? pace.projection >= goal
+                    ? "Acima da meta"
+                    : `${formatCurrencyBRL(goal - pace.projection)} abaixo da meta`
+                  : undefined
+              }
+            />
+          </div>
+        </>
+      )}
+    </section>
   );
 }

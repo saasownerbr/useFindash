@@ -43,11 +43,22 @@ export function nextBirthday(birthdate: string, now: Date = new Date()): Date {
   return next;
 }
 
+export function daysUntilBirthday(birthdate: string, now: Date = new Date()): number {
+  const today = startOfDayUTC(now);
+  return Math.round((nextBirthday(birthdate, now).getTime() - today.getTime()) / 86400000);
+}
+
+/** Whole calendar months from `date` to `now` (a month counts once its day-of-month is reached). */
+export function monthsSince(date: string, now: Date = new Date()): number {
+  const from = new Date(date);
+  let months = (now.getUTCFullYear() - from.getUTCFullYear()) * 12 + (now.getUTCMonth() - from.getUTCMonth());
+  if (now.getUTCDate() < from.getUTCDate()) months -= 1;
+  return Math.max(0, months);
+}
+
 export function isBirthdayWithinDays(birthdate: string | null, days: number, now: Date = new Date()): boolean {
   if (!birthdate) return false;
-  const today = startOfDayUTC(now);
-  const next = nextBirthday(birthdate, now);
-  const diffDays = Math.round((next.getTime() - today.getTime()) / 86400000);
+  const diffDays = daysUntilBirthday(birthdate, now);
   return diffDays >= 0 && diffDays <= days;
 }
 

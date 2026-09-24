@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { SettingsCard } from "@/components/configuracoes/settings-card";
 import { ChannelRanking } from "@/components/rankings/channel-ranking";
 import { ProductRanking } from "@/components/rankings/product-ranking";
 import { SellerRanking } from "@/components/rankings/seller-ranking";
@@ -103,22 +102,16 @@ export default function RankingsPage() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="space-y-6">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-56 animate-pulse rounded-xl bg-card" />
+            <div key={i} className="h-40 animate-pulse rounded-xl bg-card" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <SettingsCard title="Vendedores" description="Faturamento por vendedor no mês.">
-            <SellerRanking rows={sellerRows} />
-          </SettingsCard>
-          <SettingsCard title="Produtos" description="Modelos mais vendidos no mês.">
-            <ProductRanking rows={productRows} />
-          </SettingsCard>
-          <SettingsCard title="Canais" description="Faturamento por canal de venda.">
-            <ChannelRanking rows={channelRows} />
-          </SettingsCard>
+        <div className="space-y-6">
+          <SellerRanking rows={sellerRows} />
+          <ProductRanking rows={productRows} />
+          <ChannelRanking rows={channelRows} />
         </div>
       )}
       </div>

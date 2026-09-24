@@ -375,7 +375,7 @@ export function UsedDeviceCalculator() {
               </div>
               {!repairConfig && model && (
                 <p className="text-xs text-[#6B7280]">
-                  Configure os custos de reparo deste modelo em Configurações → Calculadora para preencher automaticamente.
+                  Configure os custos de reparo deste modelo em Inputs → Calculadora de Seminovo para preencher automaticamente.
                 </p>
               )}
             </div>

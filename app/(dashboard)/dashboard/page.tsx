@@ -1,12 +1,26 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
-import { ChannelBarChart } from "@/components/dashboard/channel-bar-chart";
+import { ChartSkeleton } from "@/components/dashboard/skeleton-cards";
+
+// Recharts is most of this page's JavaScript; loading it on demand lets the page open right away.
+const ChannelBarChart = dynamic(
+  () => import("@/components/dashboard/channel-bar-chart").then((m) => m.ChannelBarChart),
+  { ssr: false, loading: ChartSkeleton }
+);
+const RevenueLineChart = dynamic(
+  () => import("@/components/dashboard/revenue-line-chart").then((m) => m.RevenueLineChart),
+  { ssr: false, loading: ChartSkeleton }
+);
+const PaymentMethodsChart = dynamic(
+  () => import("@/components/dashboard/payment-methods-chart").then((m) => m.PaymentMethodsChart),
+  { ssr: false, loading: ChartSkeleton }
+);
+
 import { KpiCards } from "@/components/dashboard/kpi-cards";
-import { MetricCards } from "@/components/dashboard/metric-cards";
-import { RevenueLineChart } from "@/components/dashboard/revenue-line-chart";
-import { PaymentMethodsChart } from "@/components/dashboard/payment-methods-chart";
+import { MetricCards, type PaidTrafficMetrics } from "@/components/dashboard/metric-cards";
 import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
 import { createClient } from "@/lib/supabase/client";
@@ -32,7 +46,7 @@ export default function DashboardPage() {
   const [revenueByMonth, setRevenueByMonth] = useState<{ month: string; revenue: number }[]>([]);
   const [channelData, setChannelData] = useState<{ channel: string; total: number }[]>([]);
   const [avgLtv, setAvgLtv] = useState(0);
-  const [paidTrafficCac, setPaidTrafficCac] = useState(0);
+  const [paidTraffic, setPaidTraffic] = useState<PaidTrafficMetrics>({ cac: 0, salesCount: 0, investment: 0 });
   const [retentionRate, setRetentionRate] = useState(0);
   const [paymentMethods, setPaymentMethods] = useState({ pix: 0, debit: 0, credit: 0 });
 
@@ -72,7 +86,7 @@ export default function DashboardPage() {
           .lte("sold_at", periodEnd.toISOString()),
         supabase.from("cost_entries").select("type, amount, month").eq("store_id", storeId).eq("month", monthStart(currentMonth)),
         supabase.from("customers").select("id, ltv").eq("store_id", storeId),
-        supabase.from("monthly_inputs").select("*").eq("store_id", storeId).eq("month", monthStart(currentMonth)).maybeSingle(),
+        supabase.from("monthly_inputs").select("paid_traffic_investment").eq("store_id", storeId).eq("month", monthStart(currentMonth)).maybeSingle(),
         sumAccessorySales(supabase, storeId, monthStart(currentMonth), monthStart(nextMonth)),
       ]);
 
@@ -124,8 +138,11 @@ export default function DashboardPage() {
 
       const paidTrafficSalesCount = currentMonthSales.filter((s) => s.sale_channel === "paid_traffic").length;
       const paidTrafficInvestment = monthlyInputRes.data?.paid_traffic_investment ?? 0;
-      const paidLeadsCount = (monthlyInputRes.data?.leads_instagram ?? 0) + (monthlyInputRes.data?.leads_whatsapp ?? 0);
-      setPaidTrafficCac(calculateCAC(paidTrafficInvestment, paidTrafficSalesCount, paidLeadsCount));
+      setPaidTraffic({
+        cac: calculateCAC(paidTrafficInvestment, paidTrafficSalesCount),
+        salesCount: paidTrafficSalesCount,
+        investment: paidTrafficInvestment,
+      });
 
       const salesCountByCustomer = new Map<string, number>();
       for (const sale of currentMonthSales) {
@@ -200,7 +217,7 @@ export default function DashboardPage() {
         <ChannelBarChart data={channelData} />
       </div>
 
-      <MetricCards avgLtv={avgLtv} paidTrafficCac={paidTrafficCac} retentionRate={retentionRate} />
+      <MetricCards avgLtv={avgLtv} paidTraffic={paidTraffic} retentionRate={retentionRate} />
       </div>
     </PageContainer>
   );

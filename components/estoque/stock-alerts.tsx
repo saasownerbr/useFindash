@@ -1,33 +1,106 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { MessageCircle } from "lucide-react";
 
-import { AlertsPanel } from "@/components/dashboard/alerts-panel";
+import { AlertSettingsForm } from "@/components/estoque/alert-settings-form";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
-import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
+import { daysUntilBirthday, isInUpgradeWindow, monthsSince } from "@/lib/customer-alerts";
 import { formatCurrencyBRL } from "@/lib/finance";
+import type { AlertSettingsInput } from "@/lib/validation/store-settings";
+import { whatsappLink } from "@/lib/whatsapp";
 
-type StaleProduct = {
+type Customer = { id: string; name: string; whatsapp: string; birthdate: string | null };
+type DeviceSale = { customer_id: string; sold_at: string; products: { model: string } | null };
+type Product = {
   id: string;
   model: string;
   storage: string;
-  color: string | null;
+  grade: string | null;
+  acquisition_cost: number;
   days_in_stock: number;
-  final_price: number | null;
   suggested_price: number | null;
 };
 
-interface AlertData {
-  upgradeWindowCount: number;
-  birthdaysCount: number;
-  staleProducts: StaleProduct[];
-  stockAlertDays: number;
+interface RawData {
+  customers: Customer[];
+  deviceSales: DeviceSale[];
+  products: Product[];
 }
 
-/** "Alertas" tab in Estoque: the three alert cards plus the devices sitting in stock too long. */
-export function StockAlerts({ onShowDevices }: { onShowDevices: () => void }) {
-  const [data, setData] = useState<AlertData | null>(null);
+const DATE = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
+const DAY_MONTH = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
+
+function WhatsAppButton({ phone, message }: { phone: string; message: string }) {
+  const href = whatsappLink(phone, message);
+  if (!href) return <span className="text-xs text-muted-foreground">—</span>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 rounded-md bg-[rgba(37,211,102,0.12)] px-2.5 py-1 text-xs font-medium text-[#25D366] hover:bg-[rgba(37,211,102,0.2)]"
+    >
+      <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+      WhatsApp
+    </a>
+  );
+}
+
+function AlertTable({
+  title,
+  color,
+  count,
+  headers,
+  empty,
+  children,
+}: {
+  title: string;
+  color: string;
+  count: number;
+  headers: string[];
+  empty: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-[#2A2A2A] border-l-[3px] bg-[#1A1A1A]" style={{ borderLeftColor: count > 0 ? color : "#2A2A2A" }}>
+      <div className="flex items-center justify-between gap-3 px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <span className="text-2xl font-bold tabular-nums" style={{ color: count > 0 ? color : "#6B7280" }}>
+          {count}
+        </span>
+      </div>
+      {count === 0 ? (
+        <p className="border-t border-[#2A2A2A] px-5 py-6 text-center text-sm text-muted-foreground">{empty}</p>
+      ) : (
+        <div className="overflow-x-auto border-t border-[#2A2A2A]">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground">
+                {headers.map((h) => (
+                  <th key={h} className="px-5 py-2 font-medium">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>{children}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+const ROW = "border-t border-[#2A2A2A]";
+const CELL = "px-5 py-3";
+
+/** "Alertas" tab in Estoque: upgrade window, upcoming birthdays and stale devices, plus their thresholds. */
+export function StockAlerts() {
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AlertSettingsInput | null>(null);
+  const [data, setData] = useState<RawData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,17 +108,23 @@ export function StockAlerts({ onShowDevices }: { onShowDevices: () => void }) {
 
     async function load() {
       const supabase = createClient();
-      const storeId = await getClientStoreId();
-      if (!storeId || cancelled) return;
+      const id = await getClientStoreId();
+      if (!id || cancelled) return;
+      setStoreId(id);
 
       const [storeRes, customersRes, salesRes, productsRes] = await Promise.all([
-        supabase.from("stores").select("upgrade_alert_months, stock_alert_days").eq("id", storeId).single(),
-        supabase.from("customers").select("id, birthdate").eq("store_id", storeId),
-        supabase.from("sales").select("customer_id, sold_at").eq("store_id", storeId).order("sold_at", { ascending: false }),
+        supabase.from("stores").select("upgrade_alert_months, stock_alert_days").eq("id", id).single(),
+        supabase.from("customers").select("id, name, whatsapp, birthdate").eq("store_id", id).order("name"),
+        supabase
+          .from("sales")
+          .select("customer_id, sold_at, products(model)")
+          .eq("store_id", id)
+          .not("product_id", "is", null)
+          .order("sold_at", { ascending: false }),
         supabase
           .from("products")
-          .select("id, model, storage, color, days_in_stock, final_price, suggested_price")
-          .eq("store_id", storeId)
+          .select("id, model, storage, grade, acquisition_cost, days_in_stock, suggested_price")
+          .eq("store_id", id)
           .eq("status", "available")
           .order("days_in_stock", { ascending: false }),
       ]);
@@ -56,23 +135,14 @@ export function StockAlerts({ onShowDevices }: { onShowDevices: () => void }) {
         return;
       }
 
-      // Sales come newest first, so the first one seen per customer is the latest.
-      const lastSaleByCustomer = new Map<string, string>();
-      for (const sale of salesRes.data ?? []) {
-        if (!lastSaleByCustomer.has(sale.customer_id)) lastSaleByCustomer.set(sale.customer_id, sale.sold_at);
-      }
-
-      const customers = customersRes.data ?? [];
-      const upgradeAlertMonths = storeRes.data?.upgrade_alert_months ?? 20;
-      const stockAlertDays = storeRes.data?.stock_alert_days ?? 30;
-
+      setSettings({
+        stock_alert_days: storeRes.data.stock_alert_days ?? 30,
+        upgrade_alert_months: storeRes.data.upgrade_alert_months ?? 20,
+      });
       setData({
-        upgradeWindowCount: customers.filter((c) =>
-          isInUpgradeWindow(lastSaleByCustomer.get(c.id) ?? null, upgradeAlertMonths)
-        ).length,
-        birthdaysCount: customers.filter((c) => isBirthdayWithinDays(c.birthdate, 7)).length,
-        staleProducts: (productsRes.data ?? []).filter((p) => p.days_in_stock > stockAlertDays),
-        stockAlertDays,
+        customers: customersRes.data ?? [],
+        deviceSales: (salesRes.data ?? []) as DeviceSale[],
+        products: productsRes.data ?? [],
       });
     }
 
@@ -82,58 +152,114 @@ export function StockAlerts({ onShowDevices }: { onShowDevices: () => void }) {
     };
   }, []);
 
+  const lists = useMemo(() => {
+    if (!data || !settings) return null;
+
+    // Sales come newest first, so the first one seen per customer is their latest iPhone.
+    const lastDeviceSale = new Map<string, DeviceSale>();
+    for (const sale of data.deviceSales) {
+      if (!lastDeviceSale.has(sale.customer_id)) lastDeviceSale.set(sale.customer_id, sale);
+    }
+
+    const upgrade = data.customers
+      .map((customer) => ({ customer, sale: lastDeviceSale.get(customer.id) }))
+      .filter(
+        (row): row is { customer: Customer; sale: DeviceSale } =>
+          !!row.sale && isInUpgradeWindow(row.sale.sold_at, settings.upgrade_alert_months)
+      )
+      .sort((a, b) => (a.sale.sold_at < b.sale.sold_at ? -1 : 1));
+
+    const birthdays = data.customers
+      .filter((c): c is Customer & { birthdate: string } => !!c.birthdate)
+      .map((customer) => ({ customer, daysLeft: daysUntilBirthday(customer.birthdate) }))
+      .filter((row) => row.daysLeft >= 0 && row.daysLeft <= 7)
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+
+    const stale = data.products.filter((p) => p.days_in_stock > settings.stock_alert_days);
+
+    return { upgrade, birthdays, stale };
+  }, [data, settings]);
+
   if (error) return <p className="text-sm text-danger">{error}</p>;
 
-  if (!data) {
+  if (!lists) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="space-y-4">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-xl bg-card" />
+          <div key={i} className="h-32 animate-pulse rounded-xl bg-card" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <AlertsPanel
-        upgradeWindowCount={data.upgradeWindowCount}
-        birthdaysCount={data.birthdaysCount}
-        staleStockCount={data.staleProducts.length}
-        onStaleStockClick={onShowDevices}
-      />
+    <div className="space-y-4">
+      <AlertTable
+        title="Clientes em janela de upgrade"
+        color="#F59E0B"
+        count={lists.upgrade.length}
+        headers={["Cliente", "WhatsApp", "Modelo comprado", "Data da compra", "Meses", ""]}
+        empty="Nenhum cliente na janela de upgrade."
+      >
+        {lists.upgrade.map(({ customer, sale }) => (
+          <tr key={customer.id} className={ROW}>
+            <td className={`${CELL} font-medium text-foreground`}>{customer.name}</td>
+            <td className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td className={CELL}>{sale.products?.model ?? "—"}</td>
+            <td className={`${CELL} text-muted-foreground`}>{DATE.format(new Date(sale.sold_at))}</td>
+            <td className={`${CELL} tabular-nums`}>{monthsSince(sale.sold_at)}</td>
+            <td className={`${CELL} text-right`}>
+              <WhatsAppButton
+                phone={customer.whatsapp}
+                message={`Oi ${customer.name.split(" ")[0]}! Já faz um tempo desde o seu ${sale.products?.model ?? "iPhone"}. Temos ótimas condições para upgrade, quer ver?`}
+              />
+            </td>
+          </tr>
+        ))}
+      </AlertTable>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Parados há mais de {data.stockAlertDays} dias</h2>
-        {data.staleProducts.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Nenhum aparelho parado no estoque.
-          </div>
-        ) : (
-          <ul className="overflow-hidden rounded-xl border border-border bg-card">
-            {data.staleProducts.map((p) => {
-              const price = p.final_price ?? p.suggested_price;
-              return (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 text-sm last:border-0"
-                >
-                  <span className="min-w-0 truncate font-medium text-foreground">
-                    {p.model} · {p.storage}
-                    {p.color ? ` · ${p.color}` : ""}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-3">
-                    <span className="text-muted-foreground">{price != null ? formatCurrencyBRL(price) : "Sem preço"}</span>
-                    <span className="rounded-md bg-danger/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-danger">
-                      {p.days_in_stock} dias
-                    </span>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+      <AlertTable
+        title="Aniversários nos próximos 7 dias"
+        color="#10B981"
+        count={lists.birthdays.length}
+        headers={["Nome", "WhatsApp", "Aniversário", "Dias restantes", ""]}
+        empty="Nenhum aniversário nos próximos 7 dias."
+      >
+        {lists.birthdays.map(({ customer, daysLeft }) => (
+          <tr key={customer.id} className={ROW}>
+            <td className={`${CELL} font-medium text-foreground`}>{customer.name}</td>
+            <td className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
+            <td className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
+            <td className={`${CELL} text-right`}>
+              <WhatsAppButton phone={customer.whatsapp} message={`Feliz aniversário, ${customer.name.split(" ")[0]}! 🎉`} />
+            </td>
+          </tr>
+        ))}
+      </AlertTable>
+
+      <AlertTable
+        title="Aparelhos parados no estoque"
+        color="#EF4444"
+        count={lists.stale.length}
+        headers={["Modelo", "Armazenamento", "Grade", "Custo", "Dias parado", "Preço sugerido"]}
+        empty="Nenhum aparelho parado no estoque."
+      >
+        {lists.stale.map((p) => (
+          <tr key={p.id} className={ROW}>
+            <td className={`${CELL} font-medium text-foreground`}>{p.model}</td>
+            <td className={CELL}>{p.storage}</td>
+            <td className={CELL}>{p.grade ?? "—"}</td>
+            <td className={`${CELL} tabular-nums`}>{formatCurrencyBRL(Number(p.acquisition_cost))}</td>
+            <td className={`${CELL} font-semibold tabular-nums text-[#EF4444]`}>{p.days_in_stock}</td>
+            <td className={`${CELL} tabular-nums`}>
+              {p.suggested_price != null ? formatCurrencyBRL(Number(p.suggested_price)) : "—"}
+            </td>
+          </tr>
+        ))}
+      </AlertTable>
+
+      <AlertSettingsForm storeId={storeId} initial={settings} onSaved={setSettings} />
     </div>
   );
 }

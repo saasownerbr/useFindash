@@ -1,6 +1,6 @@
 import { RankingList } from "@/components/rankings/ranking-list";
+import { ChannelBadge } from "@/components/ui/channel-badge";
 import { formatCurrencyBRL } from "@/lib/finance";
-import { channelColor, channelLabel } from "@/lib/channels";
 import type { ChannelRankRow } from "@/lib/rankings";
 
 export function ChannelRanking({ rows }: { rows: ChannelRankRow[] }) {
@@ -8,11 +8,14 @@ export function ChannelRanking({ rows }: { rows: ChannelRankRow[] }) {
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
     .map((row) => ({
       key: row.channel,
-      name: channelLabel(row.channel),
-      accent: channelColor(row.channel),
-      value: formatCurrencyBRL(row.totalRevenue),
-      details: [`${(row.percentage * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do total`],
+      name: <ChannelBadge channel={row.channel} />,
+      center: <span className="font-semibold tabular-nums text-[#F8F8F8]">{formatCurrencyBRL(row.totalRevenue)}</span>,
+      right: (
+        <span className="text-[#9CA3AF]">
+          {(row.percentage * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do total
+        </span>
+      ),
     }));
 
-  return <RankingList items={items} emptyMessage="Nenhuma venda neste mês." />;
+  return <RankingList title="Canais" items={items} emptyMessage="Nenhuma venda neste mês." />;
 }
