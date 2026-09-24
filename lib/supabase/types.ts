@@ -142,8 +142,6 @@ export type Database = {
           created_at: string
           id: string
           leads_instagram: number
-          leads_pdv: number
-          leads_referral: number
           leads_whatsapp: number
           month: string
           paid_traffic_investment: number
@@ -153,8 +151,6 @@ export type Database = {
           created_at?: string
           id?: string
           leads_instagram?: number
-          leads_pdv?: number
-          leads_referral?: number
           leads_whatsapp?: number
           month: string
           paid_traffic_investment?: number
@@ -164,8 +160,6 @@ export type Database = {
           created_at?: string
           id?: string
           leads_instagram?: number
-          leads_pdv?: number
-          leads_referral?: number
           leads_whatsapp?: number
           month?: string
           paid_traffic_investment?: number
@@ -278,6 +272,7 @@ export type Database = {
           id: string
           imei: string | null
           model: string
+          origin: string | null
           purchase_date: string | null
           repair_cost: number
           status: string
@@ -298,6 +293,7 @@ export type Database = {
           id?: string
           imei?: string | null
           model: string
+          origin?: string | null
           purchase_date?: string | null
           repair_cost?: number
           status?: string
@@ -318,6 +314,7 @@ export type Database = {
           id?: string
           imei?: string | null
           model?: string
+          origin?: string | null
           purchase_date?: string | null
           repair_cost?: number
           status?: string

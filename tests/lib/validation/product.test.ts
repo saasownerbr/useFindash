@@ -39,6 +39,19 @@ describe("productFormSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a new batch without an IMEI", () => {
+    expect(productFormSchema.safeParse({ ...baseNew, imei: "" }).success).toBe(true);
+  });
+
+  it("rejects a new batch IMEI that isn't 15 digits", () => {
+    expect(productFormSchema.safeParse({ ...baseNew, imei: "12345" }).success).toBe(false);
+  });
+
+  it("accepts a known origin and rejects an unknown one", () => {
+    expect(productFormSchema.safeParse({ ...baseNew, origin: "trade_in" }).success).toBe(true);
+    expect(productFormSchema.safeParse({ ...baseNew, origin: "fornecedor x" }).success).toBe(false);
+  });
+
   it("rejects a model shorter than 2 characters", () => {
     expect(productFormSchema.safeParse({ ...baseNew, model: "a" }).success).toBe(false);
   });

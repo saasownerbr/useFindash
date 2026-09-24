@@ -1,7 +1,39 @@
 import Link from "next/link";
+import { AlertTriangle, ArrowUpCircle, Gift, type LucideIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+interface AlertCardProps {
+  count: number;
+  label: string;
+  icon: LucideIcon;
+  /** Accent color and its 6% tint, used only while there is something to act on. */
+  color: string;
+  tint: string;
+  href: string;
+}
+
+function AlertCard({ count, label, icon: Icon, color, tint, href }: AlertCardProps) {
+  const active = count > 0;
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-4 rounded-xl border border-[#2A2A2A] border-l-[3px] p-5 transition-colors hover:border-[#3D3D3D]",
+        !active && "bg-card"
+      )}
+      style={active ? { borderLeftColor: color, backgroundColor: tint } : { borderLeftColor: "#2A2A2A" }}
+    >
+      <Icon className="h-6 w-6 shrink-0" style={{ color: active ? color : "#6B7280" }} aria-hidden />
+      <div>
+        <p className="text-[32px] font-bold leading-none tabular-nums" style={{ color: active ? color : "#6B7280" }}>
+          {count}
+        </p>
+        <p className="mt-1.5 text-xs text-[#9CA3AF]">{label}</p>
+      </div>
+    </Link>
+  );
+}
 
 export function AlertsPanel({
   upgradeWindowCount,
@@ -12,41 +44,32 @@ export function AlertsPanel({
   birthdaysCount: number;
   staleStockCount: number;
 }) {
-  const rows = [
-    {
-      label: "Clientes em janela de upgrade",
-      count: upgradeWindowCount,
-      href: "/clientes",
-    },
-    {
-      label: "Aniversários nos próximos 7 dias",
-      count: birthdaysCount,
-      href: "/clientes",
-    },
-    {
-      label: "Aparelhos parados no estoque",
-      count: staleStockCount,
-      href: "/estoque",
-    },
-  ];
-
   return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="mb-3 text-sm font-medium text-foreground">Alertas</p>
-        <div className="space-y-2">
-          {rows.map((row) => (
-            <Link
-              key={row.label}
-              href={row.href}
-              className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-secondary/40"
-            >
-              <span className={row.count > 0 ? "text-foreground" : "text-muted-foreground"}>{row.label}</span>
-              <Badge variant={row.count > 0 ? "warning" : "default"}>{row.count}</Badge>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <section aria-label="Alertas" className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <AlertCard
+        count={upgradeWindowCount}
+        label="em janela de upgrade"
+        icon={ArrowUpCircle}
+        color="#F59E0B"
+        tint="rgba(245,158,11,0.06)"
+        href="/clientes?upgrade=in_window"
+      />
+      <AlertCard
+        count={birthdaysCount}
+        label="aniversários nos próximos 7 dias"
+        icon={Gift}
+        color="#10B981"
+        tint="rgba(16,185,129,0.06)"
+        href="/clientes"
+      />
+      <AlertCard
+        count={staleStockCount}
+        label="aparelhos parados no estoque"
+        icon={AlertTriangle}
+        color="#EF4444"
+        tint="rgba(239,68,68,0.06)"
+        href="/estoque"
+      />
+    </section>
   );
 }

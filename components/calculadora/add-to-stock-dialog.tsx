@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { colorOptions } from "@/lib/iphone-models";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/lib/supabase/types";
 import { toast } from "@/lib/toast";
 import type { Grade } from "@/lib/used-device-calculator";
+import { PRODUCT_ORIGINS } from "@/lib/validation/product";
 
 function today() {
   const now = new Date();
@@ -36,7 +39,8 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
   const [imei, setImei] = useState("");
   const [acquisitionCost, setAcquisitionCost] = useState("");
   const [repairCost, setRepairCost] = useState("");
-  const [supplier, setSupplier] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [color, setColor] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(today());
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -47,7 +51,8 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
     setImei(initialImei);
     setAcquisitionCost(offerPrice);
     setRepairCost(String(Math.round(repairTotal * 100) / 100));
-    setSupplier("");
+    setOrigin("");
+    setColor("");
     setPurchaseDate(today());
     setError(null);
   }, [open, initialImei, offerPrice, repairTotal]);
@@ -74,7 +79,8 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
         repair_cost: repair,
         grade: props.grade,
         suggested_price: Math.round(props.suggestedPrice * 100) / 100,
-        supplier: supplier.trim() || null,
+        color: color || null,
+        origin: origin || null,
         purchase_date: purchaseDate || null,
         checkup_data: props.checkupData,
       })
@@ -131,6 +137,19 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
               onChange={(e) => setImei(e.target.value.replace(/\D/g, ""))}
             />
           </div>
+          {colorOptions(props.model).length > 0 && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="stock-color">Cor (opcional)</Label>
+              <Select id="stock-color" value={color} onChange={(e) => setColor(e.target.value)}>
+                <option value="">Selecione</option>
+                {colorOptions(props.model).map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="stock-cost">Custo de aquisição (R$)</Label>
@@ -160,13 +179,15 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="stock-supplier">Fornecedor ou origem</Label>
-              <Input
-                id="stock-supplier"
-                placeholder="Ex: cliente balcão, trade-in"
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-              />
+              <Label htmlFor="stock-origin">Origem</Label>
+              <Select id="stock-origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>
+                <option value="">Selecione</option>
+                {PRODUCT_ORIGINS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="stock-date">Data de compra</Label>

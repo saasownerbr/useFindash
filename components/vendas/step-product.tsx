@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModelCombobox } from "@/components/ui/model-combobox";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
@@ -23,12 +24,13 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
   const [results, setResults] = useState<Product[] | null>(null);
   const [searching, setSearching] = useState(false);
 
-  async function search() {
-    if (!storeId || !term.trim()) return;
+  async function search(value = term) {
+    const trimmed = value.trim();
+    if (!storeId || !trimmed) return;
     setSearching(true);
     const supabase = createClient();
     let query = supabase.from("products").select("*").eq("store_id", storeId).eq("status", "available");
-    query = searchMode === "imei" ? query.eq("imei", term.trim()) : query.ilike("model", `%${term.trim()}%`);
+    query = searchMode === "imei" ? query.eq("imei", trimmed) : query.ilike("model", `%${trimmed}%`);
     const { data } = await query.limit(10);
     setResults(data ?? []);
     setSearching(false);
@@ -72,14 +74,24 @@ export function StepProduct({ storeId }: { storeId: string | null }) {
           <option value="model">Por modelo</option>
           <option value="imei">Por IMEI</option>
         </Select>
-        <Input
-          placeholder={searchMode === "imei" ? "Digite o IMEI (15 dígitos)" : "Digite o modelo"}
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && search()}
-          className="flex-1"
-        />
-        <Button type="button" onClick={search} disabled={searching}>
+        {searchMode === "imei" ? (
+          <Input
+            placeholder="Digite o IMEI (15 dígitos)"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+            className="flex-1"
+          />
+        ) : (
+          <ModelCombobox
+            value={term}
+            onChange={setTerm}
+            onSelect={(model) => search(model)}
+            placeholder="Digite o modelo (ex: 13 Pro)"
+            className="flex-1"
+          />
+        )}
+        <Button type="button" onClick={() => search()} disabled={searching}>
           {searching ? "Buscando..." : "Buscar"}
         </Button>
       </div>

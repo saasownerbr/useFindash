@@ -3,6 +3,17 @@ import { z } from "zod";
 export const productStatusValues = ["available", "reserved", "sold"] as const;
 export const productTypeValues = ["new", "semi_novo"] as const;
 
+export const PRODUCT_ORIGINS = [
+  { value: "wholesaler", label: "Atacadista" },
+  { value: "distributor", label: "Distribuidora" },
+  { value: "trade_in", label: "Trade-in" },
+  { value: "individual", label: "Pessoa física" },
+  { value: "other", label: "Outro" },
+] as const;
+
+export type ProductOrigin = (typeof PRODUCT_ORIGINS)[number]["value"];
+const originValues = PRODUCT_ORIGINS.map((o) => o.value) as [ProductOrigin, ...ProductOrigin[]];
+
 export const productFormSchema = z
   .object({
     type: z.enum(productTypeValues),
@@ -11,7 +22,7 @@ export const productFormSchema = z
     color: z.string().trim().optional(),
     acquisitionCost: z.coerce.number().positive("Custo de aquisição precisa ser maior que zero."),
     repairCost: z.coerce.number().min(0, "Custo de reparo não pode ser negativo.").default(0),
-    supplier: z.string().trim().optional(),
+    origin: z.enum(originValues).or(z.literal("")).optional(),
     purchaseDate: z.string().trim().optional(),
     quantity: z.coerce
       .number()
@@ -21,7 +32,10 @@ export const productFormSchema = z
     imei: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.type === "semi_novo" && !/^\d{15}$/.test(data.imei ?? "")) {
+    // Seminovos always need the IMEI; a new batch may register it later.
+    const imei = data.imei ?? "";
+    const required = data.type === "semi_novo";
+    if ((required || imei !== "") && !/^\d{15}$/.test(imei)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["imei"],

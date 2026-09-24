@@ -28,6 +28,12 @@ export function CustomerList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
   const [upgradeFilter, setUpgradeFilter] = useState("");
+
+  // /clientes?upgrade=in_window comes from the dashboard's upgrade alert.
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get("upgrade");
+    if (value === "in_window" || value === "out_window") setUpgradeFilter(value);
+  }, []);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);

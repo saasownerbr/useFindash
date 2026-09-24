@@ -27,8 +27,6 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
       paid_traffic_investment: 0,
       leads_instagram: 0,
       leads_whatsapp: 0,
-      leads_pdv: 0,
-      leads_referral: 0,
     },
   });
 
@@ -50,8 +48,6 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
           paid_traffic_investment: data.paid_traffic_investment,
           leads_instagram: data.leads_instagram,
           leads_whatsapp: data.leads_whatsapp,
-          leads_pdv: data.leads_pdv,
-          leads_referral: data.leads_referral,
         });
       }
     }
@@ -75,8 +71,6 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
         paid_traffic_investment: data.paid_traffic_investment,
         leads_instagram: data.leads_instagram,
         leads_whatsapp: data.leads_whatsapp,
-        leads_pdv: data.leads_pdv,
-        leads_referral: data.leads_referral,
       },
       { onConflict: "store_id,month" }
     );
@@ -112,14 +106,6 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
       <div className="flex flex-col gap-2">
         <Label htmlFor="leads_whatsapp">Leads WhatsApp</Label>
         <Input id="leads_whatsapp" type="number" min={0} {...register("leads_whatsapp")} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="leads_pdv">Leads loja física</Label>
-        <Input id="leads_pdv" type="number" min={0} {...register("leads_pdv")} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="leads_referral">Leads indicação</Label>
-        <Input id="leads_referral" type="number" min={0} {...register("leads_referral")} />
       </div>
       <div className="col-span-2 flex justify-end">
         <Button type="submit" disabled={isSubmitting}>

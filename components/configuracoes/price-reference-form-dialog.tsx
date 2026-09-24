@@ -2,12 +2,15 @@
 
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModelCombobox } from "@/components/ui/model-combobox";
+import { Select } from "@/components/ui/select";
+import { findCatalogModel } from "@/lib/apple-catalog";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
@@ -42,14 +45,21 @@ export function PriceReferenceFormDialog({
 }: PriceReferenceFormDialogProps) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    watch,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<PriceReferenceInput>({
     resolver: zodResolver(priceReferenceSchema),
     defaultValues: DEFAULT_VALUES,
   });
+
+  const catalogModel = findCatalogModel(watch("model") ?? "");
+  const storage = watch("storage");
+  const storageChoices =
+    catalogModel && storage && !catalogModel.storage.includes(storage) ? [storage, ...catalogModel.storage] : catalogModel?.storage ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -107,12 +117,27 @@ export function PriceReferenceFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="model">Modelo</Label>
-              <Input id="model" placeholder="iPhone 13" {...register("model")} />
+              <Controller
+                control={control}
+                name="model"
+                render={({ field }) => <ModelCombobox id="model" value={field.value} onChange={field.onChange} />}
+              />
               {errors.model && <span className="text-xs text-danger">{errors.model.message}</span>}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="storage">Armazenamento</Label>
-              <Input id="storage" placeholder="128GB" {...register("storage")} />
+              {catalogModel ? (
+                <Select id="storage" {...register("storage")}>
+                  <option value="">Selecione</option>
+                  {storageChoices.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input id="storage" placeholder="128GB" {...register("storage")} />
+              )}
               {errors.storage && <span className="text-xs text-danger">{errors.storage.message}</span>}
             </div>
           </div>

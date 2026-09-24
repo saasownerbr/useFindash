@@ -55,6 +55,12 @@ describe("calculateCAC", () => {
   it("returns 0 for organic channels regardless of sale count", () => {
     expect(calculateCAC(0, 10)).toBe(0);
   });
+  it("falls back to Instagram + WhatsApp leads when no paid-traffic sale was recorded", () => {
+    expect(calculateCAC(1000, 0, 40)).toBe(25);
+  });
+  it("prefers real paid-traffic sales over leads when both exist", () => {
+    expect(calculateCAC(1000, 4, 40)).toBe(250);
+  });
 });
 
 describe("calculateROAS", () => {

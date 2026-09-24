@@ -135,10 +135,11 @@ export default function DashboardPage() {
 
       const paidTrafficSalesCount = currentMonthSales.filter((s) => s.sale_channel === "paid_traffic").length;
       const paidTrafficInvestment = monthlyInputRes.data?.paid_traffic_investment ?? 0;
+      const paidLeadsCount = (monthlyInputRes.data?.leads_instagram ?? 0) + (monthlyInputRes.data?.leads_whatsapp ?? 0);
       setCacByChannel(
         SALE_CHANNELS.map((channel) => ({
           channel,
-          cac: channel === "paid_traffic" ? calculateCAC(paidTrafficInvestment, paidTrafficSalesCount) : 0,
+          cac: channel === "paid_traffic" ? calculateCAC(paidTrafficInvestment, paidTrafficSalesCount, paidLeadsCount) : 0,
         }))
       );
 

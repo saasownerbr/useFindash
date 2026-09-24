@@ -15,9 +15,14 @@ export function calculateNetMargin(
   return grossMargin - totalCosts - commissions;
 }
 
-export function calculateCAC(paidTrafficInvestment: number, paidTrafficSalesCount: number): number {
-  if (paidTrafficSalesCount <= 0) return 0;
-  return paidTrafficInvestment / paidTrafficSalesCount;
+/**
+ * Paid-traffic CAC: investment per paid-traffic sale. Months with no such sale
+ * recorded fall back to the Instagram + WhatsApp leads the store entered.
+ */
+export function calculateCAC(paidTrafficInvestment: number, paidTrafficSalesCount: number, paidLeadsCount = 0): number {
+  const denominator = paidTrafficSalesCount > 0 ? paidTrafficSalesCount : paidLeadsCount;
+  if (denominator <= 0) return 0;
+  return paidTrafficInvestment / denominator;
 }
 
 export function calculateROAS(paidTrafficRevenue: number, paidTrafficInvestment: number): number {

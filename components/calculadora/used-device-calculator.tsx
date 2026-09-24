@@ -7,7 +7,9 @@ import { OptionGroup } from "@/components/calculadora/option-group";
 import { ResultsPanel } from "@/components/calculadora/results-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModelCombobox } from "@/components/ui/model-combobox";
 import { Select } from "@/components/ui/select";
+import { lookupImei } from "@/lib/imei-lookup";
 import { modelOptions, normalizeKey, storageOptions } from "@/lib/iphone-models";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
@@ -131,39 +133,20 @@ export function UsedDeviceCalculator() {
       return;
     }
     if (!storeId) return;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("model, storage, status")
-      .eq("store_id", storeId)
-      .eq("imei", digits)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!data) {
-      // The first 8 digits (TAC) identify the model, so a device the store bought before tells us what this one is.
-      const { data: sameModel } = await supabase
-        .from("products")
-        .select("model")
-        .eq("store_id", storeId)
-        .like("imei", `${digits.slice(0, 8)}%`)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (sameModel) {
-        selectDevice(sameModel.model, "");
-        setImeiNote({ tone: "info", text: `Modelo identificado pelo IMEI: ${sameModel.model}. Selecione o armazenamento.` });
-        return;
-      }
+    const found = await lookupImei(createClient(), storeId, digits);
+    if (found.kind === "exact") {
+      selectDevice(found.model, found.storage);
+      setImeiNote(
+        found.status === "sold"
+          ? { tone: "info", text: `Este aparelho já foi vendido pela sua loja: ${found.model} ${found.storage}.` }
+          : { tone: "warn", text: `Este IMEI já está no seu estoque (${found.model} ${found.storage}).` }
+      );
+    } else if (found.kind === "tac") {
+      selectDevice(found.model, "");
+      setImeiNote({ tone: "info", text: `Modelo identificado pelo IMEI: ${found.model}. Selecione o armazenamento.` });
+    } else {
       setImeiNote({ tone: "info", text: "IMEI válido. Selecione o modelo e o armazenamento abaixo." });
-      return;
     }
-    selectDevice(data.model, data.storage);
-    setImeiNote(
-      data.status === "sold"
-        ? { tone: "info", text: `Este aparelho já foi vendido pela sua loja: ${data.model} ${data.storage}.` }
-        : { tone: "warn", text: `Este IMEI já está no seu estoque (${data.model} ${data.storage}).` }
-    );
   }
 
   const setAnswer = <K extends keyof CheckupAnswers>(key: K) => (value: CheckupAnswers[K]) =>
@@ -251,14 +234,7 @@ export function UsedDeviceCalculator() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="model">Modelo</Label>
-              <Select id="model" value={model} onChange={(e) => selectDevice(e.target.value, "")}>
-                <option value="">Selecione o modelo</option>
-                {models.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </Select>
+              <ModelCombobox id="model" value={model} models={models} onChange={(value) => selectDevice(value, "")} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="storage">Armazenamento</Label>
