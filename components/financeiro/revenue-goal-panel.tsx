@@ -25,7 +25,7 @@ function currentMonthRange() {
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-lg border border-[#2A2A2A] p-4">
+    <div className="rounded-lg bg-card-secondary p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-bold tabular-nums text-foreground">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
@@ -89,7 +89,7 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
   const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(new Date());
 
   return (
-    <section className="space-y-6 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
+    <section className="space-y-6 rounded-xl bg-card shadow-card p-4 md:p-5">
       <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-1 flex-col gap-2">
           <Label htmlFor="monthly_revenue_goal">Meta de faturamento mensal (R$)</Label>
@@ -127,10 +127,10 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
               </div>
               <span className="text-2xl font-bold tabular-nums text-primary">{pace.percentage.toFixed(0)}%</span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#2A2A2A]">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#242424]">
               <div
-                className="h-full rounded-full"
-                style={{ width: `${pace.percentage}%`, background: "linear-gradient(90deg, #3B82F6 0%, #10B981 100%)" }}
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${pace.percentage}%` }}
               />
             </div>
           </div>

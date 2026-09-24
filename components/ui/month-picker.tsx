@@ -57,12 +57,12 @@ export function MonthPicker({ id, value, onChange, placeholder = "Selecionar mê
           id={id}
           type="button"
           className={cn(
-            "flex h-10 w-48 items-center justify-between gap-2 rounded-lg border border-[#2A2A2A] bg-[#1A1A1A] px-3 text-sm text-[#F8F8F8] transition-colors hover:border-[#3D3D3D] focus-visible:border-[#3B82F6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/15 data-[state=open]:border-[#3B82F6]",
+            "flex h-10 w-48 items-center justify-between gap-2 rounded-lg border border-[#242424] bg-[#1A1A1A] px-3 text-sm text-[#F0F0F0] transition-colors hover:border-[#2E2E2E] focus-visible:border-[#dae878] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#dae878]/15 data-[state=open]:border-[#dae878]",
             className
           )}
         >
-          <span className={label ? "first-letter:uppercase" : "text-[#6B7280]"}>{label ?? placeholder}</span>
-          <CalendarIcon className="h-4 w-4 shrink-0 text-[#6B7280]" />
+          <span className={label ? "first-letter:uppercase" : "text-[#666666]"}>{label ?? placeholder}</span>
+          <CalendarIcon className="h-4 w-4 shrink-0 text-[#666666]" />
         </button>
       </PopoverTrigger>
 
@@ -72,16 +72,16 @@ export function MonthPicker({ id, value, onChange, placeholder = "Selecionar mê
             type="button"
             aria-label="Ano anterior"
             onClick={() => setViewYear((y) => y - 1)}
-            className="rounded-md p-1 text-[#6B7280] hover:bg-[#2A2A2A] hover:text-[#F8F8F8]"
+            className="rounded-md p-1 text-[#666666] hover:bg-[#242424] hover:text-[#F0F0F0]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-[13px] font-medium text-[#6B7280]">{viewYear}</span>
+          <span className="text-[13px] font-medium text-[#666666]">{viewYear}</span>
           <button
             type="button"
             aria-label="Próximo ano"
             onClick={() => setViewYear((y) => y + 1)}
-            className="rounded-md p-1 text-[#6B7280] hover:bg-[#2A2A2A] hover:text-[#F8F8F8]"
+            className="rounded-md p-1 text-[#666666] hover:bg-[#242424] hover:text-[#F0F0F0]"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -99,8 +99,8 @@ export function MonthPicker({ id, value, onChange, placeholder = "Selecionar mê
                 className={cn(
                   "rounded-lg px-3 py-2 text-[13px] transition-colors",
                   isSelected
-                    ? "bg-[#3B82F6] font-semibold text-white"
-                    : "text-[#9CA3AF] hover:bg-[#2A2A2A] hover:text-[#F8F8F8]"
+                    ? "bg-[#dae878] font-semibold text-white"
+                    : "text-[#808080] hover:bg-[#242424] hover:text-[#F0F0F0]"
                 )}
               >
                 {name}
@@ -109,14 +109,14 @@ export function MonthPicker({ id, value, onChange, placeholder = "Selecionar mê
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-[#2A2A2A] pt-3">
+        <div className="mt-3 flex items-center justify-between border-t border-[#242424] pt-3">
           <button
             type="button"
             onClick={() => {
               onChange("");
               setOpen(false);
             }}
-            className="text-[13px] text-[#6B7280] hover:text-[#9CA3AF]"
+            className="text-[13px] text-[#666666] hover:text-[#808080]"
           >
             Limpar
           </button>
@@ -126,7 +126,7 @@ export function MonthPicker({ id, value, onChange, placeholder = "Selecionar mê
               onChange(currentMonthValue());
               setOpen(false);
             }}
-            className="text-[13px] text-[#3B82F6] hover:text-[#60A5FA]"
+            className="text-[13px] text-[#dae878] hover:text-[#c8d668]"
           >
             Este mês
           </button>

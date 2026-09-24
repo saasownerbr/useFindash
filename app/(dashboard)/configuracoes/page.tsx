@@ -24,8 +24,8 @@ export default function ConfiguracoesPage() {
   return (
     <PageContainer>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Conta, loja e vendedores.</p>
+        <h1 className="text-[22px] font-bold text-foreground">Configurações</h1>
+        <p className="mt-1 text-[13px] text-muted-foreground">Conta, loja e vendedores.</p>
       </div>
 
       <div className="space-y-6">

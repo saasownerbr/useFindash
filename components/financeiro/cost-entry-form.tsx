@@ -62,7 +62,7 @@ export function CostEntryForm({ storeId, onSaved }: { storeId: string | null; on
   }
 
   return (
-    <form autoComplete="off" className="grid grid-cols-1 gap-3 md:grid-cols-5 rounded-lg border border-border bg-card p-4" onSubmit={handleSubmit(onSubmit)}>
+    <form autoComplete="off" className="grid grid-cols-1 gap-3 md:grid-cols-5 rounded-xl bg-card shadow-card p-4 md:p-5" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-2">
         <Label htmlFor="type">Tipo</Label>
         <Select id="type" {...register("type")}>

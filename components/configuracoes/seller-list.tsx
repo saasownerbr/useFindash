@@ -127,7 +127,7 @@ export function SellerList({ storeId }: { storeId: string | null }) {
       ) : sellers.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhum vendedor cadastrado ainda.</p>
       ) : (
-        <div className="divide-y divide-[#2A2A2A]">
+        <div className="divide-y divide-[#242424]">
           <div className="hidden grid-cols-[minmax(0,1fr)_140px_auto] gap-3 pb-2 text-xs text-muted-foreground sm:grid">
             <span>Nome</span>
             <span>Comissão (%)</span>

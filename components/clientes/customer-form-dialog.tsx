@@ -137,7 +137,7 @@ export function CustomerFormDialog({ open, onOpenChange, storeId, customer, onSa
             {errors.whatsapp && <span className="text-xs text-danger">{errors.whatsapp.message}</span>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="birthdate">Data de nascimento (opcional)</Label>
               <Input id="birthdate" type="date" {...register("birthdate")} />

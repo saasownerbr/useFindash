@@ -39,7 +39,7 @@ export function StepProduct({ storeId, onSkip }: { storeId: string | null; onSki
 
   if (product) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Aparelho selecionado</p>
@@ -100,7 +100,7 @@ export function StepProduct({ storeId, onSkip }: { storeId: string | null; onSki
       <button
         type="button"
         onClick={onSkip}
-        className="w-full rounded-md border border-[#2A2A2A] bg-transparent px-4 py-2 text-sm font-medium text-[#9CA3AF] transition-colors hover:border-[#3D3D3D] hover:text-foreground sm:w-auto"
+        className="w-full rounded-md border border-[#242424] bg-transparent px-4 py-2 text-sm font-medium text-[#808080] transition-colors hover:border-[#2E2E2E] hover:text-foreground sm:w-auto"
       >
         Pular — vender apenas acessório
       </button>
@@ -110,7 +110,7 @@ export function StepProduct({ storeId, onSkip }: { storeId: string | null; onSki
       )}
 
       {results && results.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <div className="overflow-hidden rounded-xl bg-card shadow-card">
           {results.map((result) => {
             const price = result.final_price ?? result.suggested_price;
             return (

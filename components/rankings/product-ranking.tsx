@@ -10,7 +10,7 @@ export function ProductRanking({ rows }: { rows: ProductRankRow[] }) {
       name: `${row.model} · ${row.storage}`,
       center: <span className="text-[#10B981]">Margem média {formatCurrencyBRL(row.avgGrossMargin)}</span>,
       right: (
-        <span className="text-[#9CA3AF]">
+        <span className="text-[#808080]">
           {row.unitsSold} {row.unitsSold === 1 ? "unidade" : "unidades"}
         </span>
       ),

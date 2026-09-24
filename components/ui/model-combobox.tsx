@@ -85,7 +85,7 @@ export function ModelCombobox({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-[#2A2A2A] bg-[#1A1A1A] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-[#242424] bg-[#1A1A1A] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
         >
           {matches.map((model, index) => (
             <li

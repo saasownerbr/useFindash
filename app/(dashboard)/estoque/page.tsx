@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AccessoryList } from "@/components/estoque/accessory-list";
 import { ProductList } from "@/components/estoque/product-list";
 import { StockAlerts } from "@/components/estoque/stock-alerts";
 import { PageContainer } from "@/components/ui/page-container";
-import { cn } from "@/lib/utils";
+import { TabBar } from "@/components/ui/tab-bar";
 
 const TABS = [
   { key: "aparelhos", label: "Aparelhos" },
@@ -19,27 +19,20 @@ type TabKey = (typeof TABS)[number]["key"];
 export default function EstoquePage() {
   const [tab, setTab] = useState<TabKey>("aparelhos");
 
+  // /estoque?tab=alertas comes from the dashboard alert cards.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    const match = TABS.find((t) => t.key === requested);
+    if (match) setTab(match.key);
+  }, []);
+
   return (
     <PageContainer>
       <div>
-      <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Gerencie aparelhos, acessórios e alertas da loja.</p>
+      <h1 className="text-[22px] font-bold text-foreground">Estoque</h1>
+      <p className="mt-1 text-[13px] text-muted-foreground">Gerencie aparelhos, acessórios e alertas da loja.</p>
 
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium text-muted-foreground transition-colors",
-              tab === t.key && "border-b-2 border-primary text-foreground"
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <TabBar className="mt-6" tabs={TABS} value={tab} onChange={setTab} />
 
       <div className="mt-6">
         {tab === "aparelhos" && <ProductList />}

@@ -40,10 +40,20 @@ export const usePeriodFilterStore = create<PeriodFilterState>((set) => {
 
   const defaultRange = getDefaultDateRange("month");
 
+  // Presets are relative to today, so only a custom range keeps its saved dates;
+  // "Este mês" saved in August must mean September when reopened in September.
+  const periodType: PeriodType = initialState?.periodType || "month";
+  const isCustom = periodType === "custom" && initialState?.startDate && initialState?.endDate;
+  const range = isCustom
+    ? { start: new Date(initialState.startDate), end: new Date(initialState.endDate) }
+    : periodType === "custom"
+      ? defaultRange
+      : getDefaultDateRange(periodType);
+
   return {
-    periodType: initialState?.periodType || "month",
-    startDate: initialState?.startDate ? new Date(initialState.startDate) : defaultRange.start,
-    endDate: initialState?.endDate ? new Date(initialState.endDate) : defaultRange.end,
+    periodType: isCustom || periodType !== "custom" ? periodType : "month",
+    startDate: range.start,
+    endDate: range.end,
     setPeriod: (type: PeriodType, start?: Date, end?: Date) => {
       set((state) => {
         let newStart = start;

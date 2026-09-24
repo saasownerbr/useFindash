@@ -12,10 +12,11 @@ interface PaymentMethodsChartProps {
   data: PaymentMethodData;
 }
 
+// Brand ramp from the logo file: lime, olive, gray.
 const COLORS = {
-  pix: "#10B981",
-  debit: "#3B82F6",
-  credit: "#8B5CF6",
+  pix: "#dae878",
+  debit: "#abb250",
+  credit: "#8b8b8b",
 };
 
 export function PaymentMethodsChart({ data }: PaymentMethodsChartProps) {
@@ -33,13 +34,13 @@ export function PaymentMethodsChart({ data }: PaymentMethodsChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <CardTitle className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#808080]">
           Métodos de Pagamento
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Stacked bar */}
-        <div className="flex h-2 overflow-hidden rounded-full bg-card/50" style={{ backgroundColor: "#2A2A2A" }}>
+        <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-[#242424]">
           {pixPercent > 0 && (
             <div
               className="transition-all"

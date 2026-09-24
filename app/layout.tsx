@@ -9,16 +9,17 @@ export const metadata: Metadata = {
   description: "Gestão Inteligente para Lojistas de iPhone",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.svg?v=3", type: "image/svg+xml" },
+      { url: "/favicon.png?v=3", sizes: "32x32", type: "image/png" },
     ],
-    apple: "/apple-touch-icon.png",
+    apple: "/apple-touch-icon.png?v=3",
   },
   manifest: "/site.webmanifest",
 };
 
 export const viewport: Viewport = {
   themeColor: "#0F0F0F",
+  colorScheme: "dark",
   // Lets env(safe-area-inset-bottom) keep the bottom nav clear of the iPhone home indicator.
   viewportFit: "cover",
 };

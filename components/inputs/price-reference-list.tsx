@@ -175,7 +175,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
 
       <div className="overflow-x-auto">
         <div className="min-w-[760px]">
-          <div className={`${GRID} border-b border-[#2A2A2A] pb-2 text-xs text-muted-foreground`}>
+          <div className={`${GRID} border-b border-[#242424] pb-2 text-xs text-muted-foreground`}>
             <span>Modelo</span>
             <span>Armazenamento</span>
             {FIELDS.map((f) => (
@@ -188,7 +188,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
           </div>
 
           {newRow && (
-            <div className={`${GRID} border-b border-[#2A2A2A] bg-primary/5 py-2`}>
+            <div className={`${GRID} border-b border-[#242424] bg-primary/5 py-2`}>
               <ModelCombobox
                 value={newRow.model}
                 onChange={(model) => setNewRow((r) => r && { ...r, model })}
@@ -246,7 +246,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
             </p>
           ) : (
             rows.map((row) => (
-              <div key={row.id} className={`${GRID} border-b border-[#2A2A2A] py-2 last:border-0`}>
+              <div key={row.id} className={`${GRID} border-b border-[#242424] py-2 last:border-0`}>
                 <span className="truncate text-sm font-medium text-foreground">{row.model}</span>
                 <span className="text-sm text-muted-foreground">{row.storage}</span>
                 {FIELDS.map((f) => (

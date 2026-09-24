@@ -110,7 +110,7 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-lg border border-border">
+      <div className="overflow-hidden rounded-xl bg-card shadow-card">
         {state.product && (
           <div className="flex items-center justify-between border-b border-border px-4 py-3 text-sm">
             <span className="text-foreground">
@@ -136,16 +136,16 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
           <p className="text-xs text-muted-foreground">CMV</p>
           <p className="text-lg font-semibold text-foreground">{formatCurrencyBRL(cmv)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Margem</p>
           <p className="text-lg font-semibold text-foreground">{formatCurrencyBRL(margin)}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
           <p className="text-xs text-muted-foreground">Comissão estimada</p>
           <p className="text-lg font-semibold text-foreground">{formatCurrencyBRL(estimatedCommission)}</p>
         </div>

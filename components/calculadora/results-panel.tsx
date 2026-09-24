@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const GRADE_COLORS: Record<Grade, string> = {
   "A+": "#10B981",
   A: "#10B981",
-  B: "#3B82F6",
+  B: "#dae878",
   C: "#F59E0B",
   sucata: "#EF4444",
 };
@@ -34,7 +34,7 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative h-28 w-28 shrink-0">
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden>
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="#2A2A2A" strokeWidth="8" />
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="#242424" strokeWidth="8" />
         <circle
           cx="50"
           cy="50"
@@ -52,7 +52,7 @@ function ScoreRing({ score }: { score: number }) {
         <span className="text-3xl font-bold tabular-nums" style={{ color }}>
           {score}
         </span>
-        <span className="text-[11px] text-[#6B7280]">de 100</span>
+        <span className="text-[11px] text-[#666666]">de 100</span>
       </div>
     </div>
   );
@@ -103,13 +103,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
           <p className="text-4xl font-bold leading-tight" style={{ color: GRADE_COLORS[props.grade] }}>
             {props.grade === "sucata" ? "Sucata" : props.grade}
           </p>
-          <p className="mt-1 text-xs text-[#6B7280]">
+          <p className="mt-1 text-xs text-[#666666]">
             {incomplete ? `Checkup: ${props.answered} de ${props.total} itens` : "Checkup completo"}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-lg bg-background/60 p-3">
           <p className="text-xs text-muted-foreground">Preço de revenda sugerido</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-foreground">
@@ -130,7 +130,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
       </div>
 
       {!hasPrice && (
-        <p className="text-xs text-[#6B7280]">
+        <p className="text-xs text-[#666666]">
           Informe o preço de mercado de referência para ver os valores. Cadastre preços em Inputs → Tabela de Preços de Referência
           para preencher automaticamente.
         </p>
@@ -200,7 +200,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
         <Button className="w-full" disabled={!props.canAddToStock} onClick={props.onAddToStock}>
           Adicionar ao Estoque com este custo
         </Button>
-        {props.addDisabledReason && <p className="mt-2 text-xs text-[#6B7280]">{props.addDisabledReason}</p>}
+        {props.addDisabledReason && <p className="mt-2 text-xs text-[#666666]">{props.addDisabledReason}</p>}
       </div>
     </div>
   );

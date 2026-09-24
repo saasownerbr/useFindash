@@ -85,7 +85,7 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
   }
 
   return (
-    <form className="grid max-w-xl grid-cols-2 gap-4 rounded-lg border border-border bg-card p-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="grid max-w-xl grid-cols-2 gap-4 rounded-xl bg-card shadow-card p-4 md:p-5" onSubmit={handleSubmit(onSubmit)}>
       <div className="col-span-2 flex flex-col gap-2">
         <Label htmlFor="month">Mês</Label>
         <Controller

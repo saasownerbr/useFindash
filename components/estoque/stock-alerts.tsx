@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { MessageCircle } from "lucide-react";
 
 import { AlertSettingsForm } from "@/components/estoque/alert-settings-form";
+import { ExpandableRow } from "@/components/ui/row-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 import { daysUntilBirthday, isInUpgradeWindow, monthsSince } from "@/lib/customer-alerts";
@@ -64,18 +65,18 @@ function AlertTable({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-[#2A2A2A] border-l-[3px] bg-[#1A1A1A]" style={{ borderLeftColor: count > 0 ? color : "#2A2A2A" }}>
+    <section className="overflow-hidden rounded-xl border border-[#242424] border-l-[3px] bg-[#1A1A1A]" style={{ borderLeftColor: count > 0 ? color : "#242424" }}>
       <div className="flex items-center justify-between gap-3 px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <span className="text-2xl font-bold tabular-nums" style={{ color: count > 0 ? color : "#6B7280" }}>
+        <h2 className="text-[13px] font-semibold text-foreground">{title}</h2>
+        <span className="text-2xl font-bold tabular-nums" style={{ color: count > 0 ? color : "#666666" }}>
           {count}
         </span>
       </div>
       {count === 0 ? (
-        <p className="border-t border-[#2A2A2A] px-5 py-6 text-center text-sm text-muted-foreground">{empty}</p>
+        <p className="border-t border-[#242424] px-5 py-6 text-center text-sm text-muted-foreground">{empty}</p>
       ) : (
-        <div className="overflow-x-auto border-t border-[#2A2A2A]">
-          <table className="w-full min-w-[560px] text-sm">
+        <div className="overflow-x-auto border-t border-[#242424]">
+          <table className="rtable w-full text-sm md:min-w-[560px]">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
                 {headers.map((h) => (
@@ -93,7 +94,7 @@ function AlertTable({
   );
 }
 
-const ROW = "border-t border-[#2A2A2A]";
+const ROW = "border-t border-[#242424]";
 const CELL = "px-5 py-3";
 
 /** "Alertas" tab in Estoque: upgrade window, upcoming birthdays and stale devices, plus their thresholds. */
@@ -186,7 +187,7 @@ export function StockAlerts() {
     return (
       <div className="space-y-4">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-32 animate-pulse rounded-xl bg-card" />
+          <div key={i} className="h-32 animate-pulse rounded-xl bg-card shadow-card" />
         ))}
       </div>
     );
@@ -202,19 +203,19 @@ export function StockAlerts() {
         empty="Nenhum cliente na janela de upgrade."
       >
         {lists.upgrade.map(({ customer, sale }) => (
-          <tr key={customer.id} className={ROW}>
-            <td className={`${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
-            <td className={CELL}>{sale.products?.model ?? "—"}</td>
-            <td className={`${CELL} text-muted-foreground`}>{DATE.format(new Date(sale.sold_at))}</td>
-            <td className={`${CELL} tabular-nums`}>{monthsSince(sale.sold_at)}</td>
-            <td className={`${CELL} text-right`}>
+          <ExpandableRow key={customer.id} className={ROW}>
+            <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td data-label="Modelo comprado" className={CELL}>{sale.products?.model ?? "—"}</td>
+            <td data-label="Data da compra" className={`${CELL} text-muted-foreground`}>{DATE.format(new Date(sale.sold_at))}</td>
+            <td data-label="Meses desde a compra" className={`${CELL} tabular-nums`}>{monthsSince(sale.sold_at)}</td>
+            <td className={`rt-key ${CELL} text-right`}>
               <WhatsAppButton
                 phone={customer.whatsapp}
                 message={`Oi ${customer.name.split(" ")[0]}! Já faz um tempo desde o seu ${sale.products?.model ?? "iPhone"}. Temos ótimas condições para upgrade, quer ver?`}
               />
             </td>
-          </tr>
+          </ExpandableRow>
         ))}
       </AlertTable>
 
@@ -226,15 +227,15 @@ export function StockAlerts() {
         empty="Nenhum aniversário nos próximos 7 dias."
       >
         {lists.birthdays.map(({ customer, daysLeft }) => (
-          <tr key={customer.id} className={ROW}>
-            <td className={`${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
-            <td className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
-            <td className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
-            <td className={`${CELL} text-right`}>
+          <ExpandableRow key={customer.id} className={ROW}>
+            <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td data-label="Aniversário" className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
+            <td data-label="Dias restantes" className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
+            <td className={`rt-key ${CELL} text-right`}>
               <WhatsAppButton phone={customer.whatsapp} message={`Feliz aniversário, ${customer.name.split(" ")[0]}! 🎉`} />
             </td>
-          </tr>
+          </ExpandableRow>
         ))}
       </AlertTable>
 
@@ -246,16 +247,16 @@ export function StockAlerts() {
         empty="Nenhum aparelho parado no estoque."
       >
         {lists.stale.map((p) => (
-          <tr key={p.id} className={ROW}>
-            <td className={`${CELL} font-medium text-foreground`}>{p.model}</td>
-            <td className={CELL}>{p.storage}</td>
-            <td className={CELL}>{p.grade ?? "—"}</td>
-            <td className={`${CELL} tabular-nums`}>{formatCurrencyBRL(Number(p.acquisition_cost))}</td>
-            <td className={`${CELL} font-semibold tabular-nums text-[#EF4444]`}>{p.days_in_stock}</td>
-            <td className={`${CELL} tabular-nums`}>
+          <ExpandableRow key={p.id} className={ROW}>
+            <td className={`rt-key ${CELL} font-medium text-foreground`}>{p.model}</td>
+            <td data-label="Armazenamento" className={CELL}>{p.storage}</td>
+            <td data-label="Grade" className={CELL}>{p.grade ?? "—"}</td>
+            <td data-label="Custo" className={`${CELL} tabular-nums`}>{formatCurrencyBRL(Number(p.acquisition_cost))}</td>
+            <td className={`rt-key ${CELL} font-semibold tabular-nums text-[#EF4444]`}>{p.days_in_stock} dias</td>
+            <td data-label="Preço sugerido" className={`${CELL} tabular-nums`}>
               {p.suggested_price != null ? formatCurrencyBRL(Number(p.suggested_price)) : "—"}
             </td>
-          </tr>
+          </ExpandableRow>
         ))}
       </AlertTable>
 

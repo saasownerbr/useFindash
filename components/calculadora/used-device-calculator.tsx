@@ -50,8 +50,8 @@ function toNumber(value: string) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-      <h2 className="mb-4 text-base font-semibold text-foreground">{title}</h2>
+    <section className="rounded-xl bg-card shadow-card p-4 md:p-5">
+      <h2 className="mb-4 text-[13px] font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   );
@@ -264,7 +264,7 @@ export function UsedDeviceCalculator() {
                 value={referencePrice}
                 onChange={(e) => setReferencePrice(e.target.value)}
               />
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-[#666666]">
                 {priceRef
                   ? "Preenchido pela sua tabela de preços. Pode editar."
                   : model && storage
@@ -286,7 +286,7 @@ export function UsedDeviceCalculator() {
                 value={answers.battery}
                 onChange={setAnswer("battery")}
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="batteryPercent">Saúde da bateria (%)</Label>
                   <Input
@@ -374,7 +374,7 @@ export function UsedDeviceCalculator() {
                 </span>
               </div>
               {!repairConfig && model && (
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[#666666]">
                   Configure os custos de reparo deste modelo em Inputs → Calculadora de Seminovo para preencher automaticamente.
                 </p>
               )}
@@ -383,8 +383,8 @@ export function UsedDeviceCalculator() {
         </Section>
       </div>
 
-      <aside className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5 lg:sticky lg:top-6 lg:border-l-2 lg:border-l-[#3B82F6]">
-        <h2 className="mb-4 text-base font-semibold text-foreground">Resultado</h2>
+      <aside className="rounded-xl bg-card shadow-card p-4 md:p-5 lg:sticky lg:top-6 lg:border-l-2 lg:border-l-[#dae878]">
+        <h2 className="mb-4 text-[13px] font-semibold text-foreground">Resultado</h2>
         <ResultsPanel
           score={score}
           grade={grade}

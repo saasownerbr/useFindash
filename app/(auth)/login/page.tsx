@@ -75,7 +75,7 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-center text-sm">
-        <Link href="/signup" className="text-[#6B7280] hover:text-foreground">
+        <Link href="/signup" className="text-[#666666] hover:text-foreground">
           Criar conta
         </Link>
       </p>

@@ -159,7 +159,7 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
 
       <div className="mt-3 overflow-x-auto">
         <div className="min-w-[560px]">
-          <div className={`${GRID} border-b border-[#2A2A2A] pb-2 text-xs text-muted-foreground`}>
+          <div className={`${GRID} border-b border-[#242424] pb-2 text-xs text-muted-foreground`}>
             <span>Modelo</span>
             {COST_FIELDS.map((f) => (
               <span key={f.key}>{f.label}</span>
@@ -168,7 +168,7 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
           </div>
 
           {adding && (
-            <div className={`${GRID} border-b border-[#2A2A2A] bg-primary/5 py-2`}>
+            <div className={`${GRID} border-b border-[#242424] bg-primary/5 py-2`}>
               <Select aria-label="Modelo" value={newModel} onChange={(e) => setNewModel(e.target.value)}>
                 <option value="">Selecione</option>
                 {availableModels.map((m) => (
@@ -206,7 +206,7 @@ export function CalculatorSettings({ storeId }: { storeId: string | null }) {
             <p className="py-4 text-sm text-muted-foreground">Nenhum modelo configurado ainda.</p>
           ) : (
             rows.map((row) => (
-              <div key={row.id} className={`${GRID} border-b border-[#2A2A2A] py-2 last:border-0`}>
+              <div key={row.id} className={`${GRID} border-b border-[#242424] py-2 last:border-0`}>
                 <span className="truncate text-sm font-medium text-foreground">{row.model}</span>
                 {COST_FIELDS.map((field) => (
                   <Input

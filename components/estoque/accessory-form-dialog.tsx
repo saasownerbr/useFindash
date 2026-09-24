@@ -121,7 +121,7 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="quantity">Quantidade</Label>
               <Input id="quantity" type="number" min={0} step="1" {...register("quantity")} />

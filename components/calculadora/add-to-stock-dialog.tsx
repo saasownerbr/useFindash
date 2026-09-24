@@ -104,7 +104,7 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="rounded-xl border-[#2A2A2A] bg-[#1A1A1A]">
+      <DialogContent className="rounded-xl border-[#242424] bg-[#1A1A1A]">
         <DialogHeader>
           <DialogTitle>Adicionar ao estoque</DialogTitle>
           <DialogDescription>
@@ -150,7 +150,7 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
               </Select>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="stock-cost">Custo de aquisição (R$)</Label>
               <Input
@@ -177,7 +177,7 @@ export function AddToStockDialog(props: AddToStockDialogProps) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="stock-origin">Origem</Label>
               <Select id="stock-origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>

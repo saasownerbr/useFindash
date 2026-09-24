@@ -62,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           style={{
             width: "24px",
             height: "24px",
-            border: "2px solid #3B82F6",
+            border: "2px solid #dae878",
             borderTopColor: "transparent",
             borderRadius: "50%",
             animation: "spin 1s linear infinite",

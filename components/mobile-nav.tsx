@@ -23,10 +23,10 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Menu principal"
-      className="bottom-nav fixed bottom-0 left-0 right-0 z-50 overflow-x-auto overflow-y-hidden border-t border-[#2A2A2A] bg-[#1A1A1A] pt-2 md:hidden"
+      className="bottom-nav fixed bottom-0 left-0 right-0 z-50 overflow-x-auto overflow-y-hidden border-t border-[#1E1E1E] bg-[#0D0D0D] pt-1 md:hidden"
       style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
     >
-      <div className="flex min-w-max flex-row items-center px-4">
+      <div className="flex min-w-max flex-row items-center">
         {NAV_ITEMS.map((item) => {
           const active = pendingHref ? pendingHref === item.href : isActiveRoute(pathname, item.href);
           return (
@@ -40,8 +40,9 @@ export function MobileNav() {
               }}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-w-[72px] flex-col items-center justify-center gap-1 rounded-xl px-4 py-2",
-                active ? "bg-[rgba(59,130,246,0.12)] text-[#3B82F6]" : "text-[#6B7280]"
+                // 56px minimum touch area; only the color marks the active module.
+                "flex min-h-[56px] min-w-[56px] flex-col items-center justify-center gap-1 px-3",
+                active ? "text-primary" : "text-[#606060]"
               )}
             >
               <item.icon className="h-[22px] w-[22px]" aria-hidden />

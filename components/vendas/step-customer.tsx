@@ -54,7 +54,7 @@ function CustomerPreview({
   const currentModel = sales?.find((s) => s.products)?.products?.model;
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
+    <div className="flex h-full flex-col rounded-xl bg-card shadow-card p-4 md:p-5">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary">
           {customer.name.trim().charAt(0).toUpperCase()}
@@ -178,7 +178,7 @@ export function StepCustomer({ storeId }: { storeId: string | null }) {
         )}
 
         {results && results.length > 0 && (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-xl bg-card shadow-card">
             {results.map((result) => (
               <button
                 key={result.id}
@@ -205,8 +205,8 @@ export function StepCustomer({ storeId }: { storeId: string | null }) {
           onUse={() => use(preview)}
         />
       ) : (
-        <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#2A2A2A] bg-[#2A2A2A]/30 p-6 text-center">
-          <p className="text-sm text-[#9CA3AF]">Selecione um cliente para ver os detalhes</p>
+        <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#242424] bg-[#242424]/30 p-6 text-center">
+          <p className="text-sm text-[#808080]">Selecione um cliente para ver os detalhes</p>
           <Button type="button" variant="secondary" onClick={() => setFormOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" aria-hidden />
             Novo cliente

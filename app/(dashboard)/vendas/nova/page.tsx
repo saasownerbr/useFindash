@@ -6,8 +6,8 @@ export default function NovaVendaPage() {
     <PageContainer>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Nova venda</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Registre uma venda em 5 passos — o cliente fica sempre visível ao lado.</p>
+          <h1 className="text-[22px] font-bold text-foreground">Nova venda</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">Registre uma venda em 5 passos — o cliente fica sempre visível ao lado.</p>
         </div>
         <SaleWizard />
       </div>

@@ -43,7 +43,7 @@ export function SupportForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="max-w-2xl space-y-5 rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5"
+      className="max-w-2xl space-y-5 rounded-xl bg-card shadow-card p-4 md:p-5"
     >
       <div className="space-y-2">
         <Label htmlFor="description">Descreva o problema</Label>
@@ -84,7 +84,7 @@ export function SupportForm() {
         {errors.whatsapp && <span className="text-xs text-danger">{errors.whatsapp.message}</span>}
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full bg-[#3B82F6] hover:bg-[#3B82F6]/90">
+      <Button type="submit" disabled={isSubmitting} className="w-full bg-[#dae878] hover:bg-[#dae878]/90">
         {isSubmitting ? "Enviando..." : "Enviar mensagem"}
       </Button>
     </form>

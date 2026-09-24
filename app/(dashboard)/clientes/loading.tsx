@@ -16,7 +16,7 @@ export default function ClientesLoading() {
       <div className="h-10 w-full max-w-sm animate-pulse rounded bg-card/50" />
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="rounded-xl bg-card shadow-card overflow-hidden">
         <div className="divide-y divide-border">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4">

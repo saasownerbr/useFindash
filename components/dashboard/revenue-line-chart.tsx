@@ -1,32 +1,42 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { CHART_AXIS, CHART_GRID, CHART_PRIMARY, CHART_TOOLTIP } from "@/lib/chart-theme";
 import { formatCurrencyBRL } from "@/lib/finance";
+
+const compactBRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact" });
 
 export function RevenueLineChart({ data }: { data: { month: string; revenue: number }[] }) {
   return (
     <Card>
-      <CardContent className="p-4">
-        <p className="mb-4 text-sm font-medium text-foreground">Faturamento — últimos 6 meses</p>
-        <div className="h-64">
+      <CardContent className="pt-4 md:pt-5">
+        <p className="mb-4 text-[13px] font-semibold text-foreground">Faturamento — últimos 6 meses</p>
+        <div className="h-40 md:h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickFormatter={(value) => formatCurrencyBRL(value)}
-                width={90}
+            <AreaChart data={data} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_PRIMARY} stopOpacity={0.15} />
+                  <stop offset="100%" stopColor={CHART_PRIMARY} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...CHART_GRID} />
+              <XAxis dataKey="month" {...CHART_AXIS} />
+              <YAxis {...CHART_AXIS} tickFormatter={(value) => compactBRL.format(value)} width={72} />
+              <Tooltip formatter={(value: number) => formatCurrencyBRL(value)} {...CHART_TOOLTIP} />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                name="Faturamento"
+                stroke={CHART_PRIMARY}
+                strokeWidth={2.5}
+                fill="url(#revenueFill)"
+                dot={false}
+                activeDot={{ r: 5, fill: CHART_PRIMARY, stroke: "#0F0F0F", strokeWidth: 2 }}
               />
-              <Tooltip
-                formatter={(value: number) => formatCurrencyBRL(value)}
-                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-              />
-              <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

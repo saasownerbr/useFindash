@@ -9,9 +9,9 @@ export function ChannelRanking({ rows }: { rows: ChannelRankRow[] }) {
     .map((row) => ({
       key: row.channel,
       name: <ChannelBadge channel={row.channel} />,
-      center: <span className="font-semibold tabular-nums text-[#F8F8F8]">{formatCurrencyBRL(row.totalRevenue)}</span>,
+      center: <span className="font-semibold tabular-nums text-[#F0F0F0]">{formatCurrencyBRL(row.totalRevenue)}</span>,
       right: (
-        <span className="text-[#9CA3AF]">
+        <span className="text-[#808080]">
           {(row.percentage * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do total
         </span>
       ),

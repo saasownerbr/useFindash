@@ -277,7 +277,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
             {errors.model && <span className="text-xs text-danger">{errors.model.message}</span>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="storage">Armazenamento</Label>
               {pickFromCatalog ? (
@@ -311,7 +311,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="acquisitionCost">
                 {type === "new" ? "Custo de aquisição por unidade (R$)" : "Custo de aquisição (R$)"}
@@ -328,7 +328,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="origin">Origem (opcional)</Label>
               <Select id="origin" {...register("origin")}>
@@ -355,7 +355,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
           )}
 
           {confirmingClear ? (
-            <div className="flex flex-wrap items-center justify-end gap-2 rounded-md border border-[#2A2A2A] p-3">
+            <div className="flex flex-wrap items-center justify-end gap-2 rounded-md border border-[#242424] p-3">
               <span className="mr-auto text-sm text-foreground">Deseja limpar todos os campos?</span>
               <Button type="button" variant="secondary" size="sm" onClick={() => setConfirmingClear(false)}>
                 Cancelar
@@ -369,7 +369,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
               <Button
                 type="button"
                 variant="ghost"
-                className="border border-[#2A2A2A] bg-transparent text-[#6B7280]"
+                className="border border-[#242424] bg-transparent text-[#666666]"
                 onClick={() => setConfirmingClear(true)}
               >
                 Limpar

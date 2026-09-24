@@ -48,7 +48,7 @@ export function StepAccessories({ storeId }: { storeId: string | null }) {
         ) : available.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum acessório disponível em estoque.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-xl bg-card shadow-card">
             {available.map((accessory) => (
               <div
                 key={accessory.id}
@@ -99,7 +99,7 @@ export function StepAccessories({ storeId }: { storeId: string | null }) {
         {accessories.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum acessório adicionado — esta etapa é opcional.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-xl bg-card shadow-card">
             {accessories.map((item) => (
               <div
                 key={item.accessoryId}

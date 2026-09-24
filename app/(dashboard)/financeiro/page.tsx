@@ -10,8 +10,8 @@ import { RevenueGoalPanel } from "@/components/financeiro/revenue-goal-panel";
 import { Label } from "@/components/ui/label";
 import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { PageContainer } from "@/components/ui/page-container";
+import { TabBar } from "@/components/ui/tab-bar";
 import { getClientStoreId } from "@/lib/supabase/client-store";
-import { cn } from "@/lib/utils";
 
 const TABS = [
   { key: "dre", label: "DRE" },
@@ -50,24 +50,10 @@ export default function FinanceiroPage() {
   return (
     <PageContainer>
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-        <p className="mt-1 text-sm text-muted-foreground">DRE mensal, lançamentos, tráfego pago e meta de faturamento.</p>
+        <h1 className="text-[22px] font-bold text-foreground">Financeiro</h1>
+        <p className="mt-1 text-[13px] text-muted-foreground">DRE mensal, lançamentos, tráfego pago e meta de faturamento.</p>
 
-      <div className="mt-6 flex gap-1 overflow-x-auto border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium text-muted-foreground transition-colors",
-              tab === t.key && "border-b-2 border-primary text-foreground"
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <TabBar className="mt-6" tabs={TABS} value={tab} onChange={setTab} />
 
       <div className="mt-6">
         {tab === "dre" && <DrePanel storeId={storeId} />}

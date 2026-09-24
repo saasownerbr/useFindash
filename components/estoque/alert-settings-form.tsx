@@ -47,8 +47,8 @@ export function AlertSettingsForm({
   }
 
   return (
-    <section className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-5">
-      <h2 className="text-base font-semibold text-foreground">Configuração dos alertas</h2>
+    <section className="rounded-xl bg-card shadow-card p-4 md:p-5">
+      <h2 className="text-[13px] font-semibold text-foreground">Configuração dos alertas</h2>
       <form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="stock-alert-days">Alertar aparelhos parados após X dias</Label>

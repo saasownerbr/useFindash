@@ -33,7 +33,7 @@ export function OptionGroup<K extends string>({ label, name, options, value, onC
                   ? danger
                     ? "border-danger bg-danger/10 text-foreground"
                     : "border-primary bg-primary/10 text-foreground"
-                  : "border-border bg-background/40 text-muted-foreground hover:border-[#3D3D3D] hover:text-foreground"
+                  : "border-border bg-background/40 text-muted-foreground hover:border-[#2E2E2E] hover:text-foreground"
               )}
             >
               <span className="flex items-center gap-2.5">
@@ -41,7 +41,7 @@ export function OptionGroup<K extends string>({ label, name, options, value, onC
                   aria-hidden
                   className={cn(
                     "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                    selected ? (danger ? "border-danger" : "border-primary") : "border-[#4B5563]"
+                    selected ? (danger ? "border-danger" : "border-primary") : "border-[#2E2E2E]"
                   )}
                 >
                   {selected && <span className={cn("h-2 w-2 rounded-full", danger ? "bg-danger" : "bg-primary")} />}
@@ -49,11 +49,11 @@ export function OptionGroup<K extends string>({ label, name, options, value, onC
                 {option.label}
               </span>
               {option.points !== undefined && (
-                <span className={cn("shrink-0 tabular-nums text-xs", selected ? "text-foreground" : "text-[#6B7280]")}>
+                <span className={cn("shrink-0 tabular-nums text-xs", selected ? "text-foreground" : "text-[#666666]")}>
                   {option.points} pts
                 </span>
               )}
-              {option.note && <span className="shrink-0 text-xs text-[#6B7280]">{option.note}</span>}
+              {option.note && <span className="shrink-0 text-xs text-[#666666]">{option.note}</span>}
             </button>
           );
         })}

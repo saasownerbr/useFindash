@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { Megaphone, Repeat, UserRound } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import { formatCurrencyBRL } from "@/lib/finance";
 
 export interface PaidTrafficMetrics {
@@ -9,51 +10,48 @@ export interface PaidTrafficMetrics {
   investment: number;
 }
 
+/** Third dashboard row: CAC, LTV and retention, each with a line of context. */
 export function MetricCards({
   avgLtv,
+  customersCount,
   paidTraffic,
   retentionRate,
+  buyersCount,
 }: {
   avgLtv: number;
+  customersCount: number;
   paidTraffic: PaidTrafficMetrics;
   retentionRate: number;
+  buyersCount: number;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">LTV médio</p>
-          <p className="text-xl font-bold text-foreground">{formatCurrencyBRL(avgLtv)}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">CAC Tráfego Pago</p>
-          {paidTraffic.investment > 0 ? (
-            <>
-              <p className="text-xl font-bold text-foreground">
-                {paidTraffic.salesCount > 0 ? formatCurrencyBRL(paidTraffic.cac) : "—"}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  {paidTraffic.salesCount} {paidTraffic.salesCount === 1 ? "venda" : "vendas"} de tráfego pago
-                </span>
-                <span>Investimento no mês {formatCurrencyBRL(paidTraffic.investment)}</span>
-              </div>
-            </>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+      <KpiCard
+        label="CAC Tráfego Pago"
+        icon={Megaphone}
+        value={paidTraffic.investment > 0 && paidTraffic.salesCount > 0 ? formatCurrencyBRL(paidTraffic.cac) : "—"}
+        footer={
+          paidTraffic.investment > 0 ? (
+            `${paidTraffic.salesCount} ${paidTraffic.salesCount === 1 ? "venda" : "vendas"} de tráfego pago · ${formatCurrencyBRL(paidTraffic.investment)} investidos no mês`
           ) : (
-            <Link href="/financeiro?tab=trafego" className="mt-1 block text-sm text-primary hover:underline">
+            <Link href="/financeiro?tab=trafego" className="text-primary hover:underline">
               Configure o investimento no módulo Financeiro
             </Link>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">Taxa de retenção</p>
-          <p className="text-xl font-bold text-foreground">{(retentionRate * 100).toFixed(1)}%</p>
-        </CardContent>
-      </Card>
+          )
+        }
+      />
+      <KpiCard
+        label="LTV médio"
+        icon={UserRound}
+        value={formatCurrencyBRL(avgLtv)}
+        footer={`Média de ${customersCount} ${customersCount === 1 ? "cliente" : "clientes"} da base`}
+      />
+      <KpiCard
+        label="Taxa de retenção"
+        icon={Repeat}
+        value={`${(retentionRate * 100).toFixed(1)}%`}
+        footer={`Clientes que compraram mais de uma vez entre ${buyersCount} ${buyersCount === 1 ? "comprador" : "compradores"} no período`}
+      />
     </div>
   );
 }

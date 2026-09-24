@@ -6,6 +6,7 @@ import { AccessoryFormDialog } from "@/components/estoque/accessory-form-dialog"
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RowToggle } from "@/components/ui/row-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 import type { Tables } from "@/lib/supabase/types";
@@ -14,6 +15,7 @@ type Accessory = Tables<"accessories">;
 
 export function AccessoryList() {
   const [accessories, setAccessories] = useState<Accessory[] | null>(null);
+  const [openRow, setOpenRow] = useState<string | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storeResolved, setStoreResolved] = useState(false);
   const [nameFilter, setNameFilter] = useState("");
@@ -157,8 +159,8 @@ export function AccessoryList() {
           Nenhum acessório encontrado. Cadastre o primeiro para começar.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl bg-card shadow-card">
+          <table className="rtable w-full text-left text-sm">
             <thead className="border-b border-border bg-card text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Nome</th>
@@ -171,17 +173,17 @@ export function AccessoryList() {
             </thead>
             <tbody>
               {accessories.map((accessory) => (
-                <tr key={accessory.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3">{accessory.name}</td>
-                  <td className="px-4 py-3">{accessory.category ?? "—"}</td>
-                  <td className="px-4 py-3">{accessory.quantity}</td>
-                  <td className="px-4 py-3">
+                <tr key={accessory.id} data-open={openRow === accessory.id} className="border-b border-border last:border-0">
+                  <td className="rt-key px-4 py-3 font-medium text-foreground">{accessory.name}</td>
+                  <td data-label="Categoria" className="px-4 py-3">{accessory.category ?? "—"}</td>
+                  <td className="rt-key px-4 py-3 tabular-nums">{accessory.quantity} un.</td>
+                  <td data-label="Custo" className="px-4 py-3">
                     {accessory.cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Preço de venda" className="px-4 py-3">
                     {accessory.sale_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="" className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
@@ -205,6 +207,10 @@ export function AccessoryList() {
                       </Button>
                     </div>
                   </td>
+                  <RowToggle
+                    open={openRow === accessory.id}
+                    onToggle={() => setOpenRow((id) => (id === accessory.id ? null : accessory.id))}
+                  />
                 </tr>
               ))}
             </tbody>

@@ -19,7 +19,7 @@ export default function NovaVendaLoading() {
       </div>
 
       {/* Current step */}
-      <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+      <div className="space-y-4 rounded-xl bg-card shadow-card p-4 md:p-5">
         <Skeleton className="h-10 w-full" />
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-14 w-full" />

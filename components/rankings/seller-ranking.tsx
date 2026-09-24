@@ -10,8 +10,8 @@ export function SellerRanking({ rows }: { rows: SellerRankRow[] }) {
       name: row.name,
       center: (
         <div>
-          <p className="font-semibold tabular-nums text-[#F8F8F8]">{formatCurrencyBRL(row.totalRevenue)}</p>
-          <p className="text-xs text-[#9CA3AF]">
+          <p className="font-semibold tabular-nums text-[#F0F0F0]">{formatCurrencyBRL(row.totalRevenue)}</p>
+          <p className="text-xs text-[#808080]">
             Ticket médio {formatCurrencyBRL(row.avgTicket)} · {row.salesCount} {row.salesCount === 1 ? "venda" : "vendas"}
           </p>
         </div>

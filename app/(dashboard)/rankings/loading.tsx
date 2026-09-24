@@ -26,7 +26,7 @@ export default function RankingsLoading() {
       </div>
 
       {/* Rankings Table */}
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-xl bg-card shadow-card">
         <div className="divide-y divide-border">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="flex items-center justify-between p-4">

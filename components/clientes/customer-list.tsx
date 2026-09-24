@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomerFormDialog, CHANNEL_LABELS } from "@/components/clientes/customer-form-dialog";
 import { ChannelBadge } from "@/components/ui/channel-badge";
 import { Badge } from "@/components/ui/badge";
+import { ExpandableRow } from "@/components/ui/row-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -220,8 +221,8 @@ export function CustomerList() {
           Nenhum cliente encontrado. Cadastre o primeiro cliente para começar.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl bg-card shadow-card">
+          <table className="rtable w-full text-left text-sm">
             <thead className="border-b border-border bg-card text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Nome</th>
@@ -237,23 +238,23 @@ export function CustomerList() {
                 const lastSale = lastSaleByCustomer.get(customer.id) ?? null;
                 const inWindow = isInUpgradeWindow(lastSale, upgradeAlertMonths);
                 return (
-                  <tr
+                  <ExpandableRow
                     key={customer.id}
                     className="cursor-pointer border-b border-border last:border-0 hover:bg-secondary/40"
                     onClick={() => router.push(`/clientes/${customer.id}`)}
                   >
-                    <td className="px-4 py-3 font-medium text-foreground">{customer.name}</td>
-                    <td className="px-4 py-3">{customer.whatsapp}</td>
-                    <td className="px-4 py-3">
+                    <td className="rt-key px-4 py-3 font-medium text-foreground">{customer.name}</td>
+                    <td data-label="WhatsApp" className="px-4 py-3">{customer.whatsapp}</td>
+                    <td data-label="Canal" className="px-4 py-3">
                       <ChannelBadge channel={customer.acquisition_channel} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="rt-key px-4 py-3 tabular-nums">
                       {customer.ltv.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Upgrade" className="px-4 py-3">
                       {inWindow ? <Badge variant="warning">Janela de upgrade</Badge> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td data-label="" className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
@@ -277,7 +278,7 @@ export function CustomerList() {
                         </Button>
                       </div>
                     </td>
-                  </tr>
+                  </ExpandableRow>
                 );
               })}
             </tbody>

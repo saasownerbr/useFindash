@@ -20,7 +20,7 @@ export default function VendasLoading() {
       </div>
 
       {/* Content */}
-      <div className="rounded-lg border border-border bg-card p-6">
+      <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-16 w-full animate-pulse rounded bg-card/50" />

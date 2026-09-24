@@ -21,7 +21,7 @@ export default function EstoqueLoading() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-xl bg-card shadow-card">
         <div className="divide-y divide-border">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4">

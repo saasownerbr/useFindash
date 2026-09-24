@@ -7,7 +7,7 @@ export default function SuporteLoading() {
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-4 w-80" />
       </div>
-      <div className="max-w-2xl space-y-5 rounded-xl border border-border bg-card p-5">
+      <div className="max-w-2xl space-y-5 rounded-xl bg-card shadow-card p-4 md:p-5">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-4 w-44" />

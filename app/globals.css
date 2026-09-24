@@ -4,17 +4,22 @@
 
 :root {
   color-scheme: dark;
+  /* #0F0F0F page, #1A1A1A card, #161616 inner card, #242424 border, #F0F0F0 / #808080 text */
   --background: 0 0% 6%;
-  --foreground: 0 0% 97%;
+  --foreground: 0 0% 94%;
   --card: 0 0% 10%;
-  --card-foreground: 0 0% 97%;
-  --border: 0 0% 16%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 16%;
-  --secondary-foreground: 0 0% 97%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 218 11% 65%;
+  --card-secondary: 0 0% 8.6%;
+  --card-foreground: 0 0% 94%;
+  --border: 0 0% 14%;
+  --border-hover: 0 0% 18%;
+  /* #dae878 lime; #c8d668 on hover; #111111 on top of it */
+  --primary: 67.5 71% 69%;
+  --primary-hover: 67 57% 62%;
+  --primary-foreground: 0 0% 7%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 94%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 50%;
   --success: 160 84% 39%;
   --warning: 38 92% 50%;
   --danger: 0 84% 60%;
@@ -26,18 +31,20 @@
 
 body {
   background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  /* Body copy is #D0D0D0 at 14px; headings and figures use text-foreground (#F0F0F0). */
+  color: #D0D0D0;
+  font-size: 14px;
 }
 
 /* Global form styles */
 input,
 select,
 textarea {
-  background-color: #1A1A1A !important;
-  border: 1px solid #2A2A2A !important;
-  border-radius: 8px !important;
-  color: #F8F8F8 !important;
-  height: 40px !important;
+  background-color: #111111 !important;
+  border: 1px solid #242424 !important;
+  border-radius: 10px !important;
+  color: #F0F0F0 !important;
+  height: 42px !important;
   padding: 0 12px !important;
 }
 
@@ -49,21 +56,21 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #6B7280 !important;
+  color: #505050 !important;
 }
 
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #3D3D3D !important;
+  border-color: #2E2E2E !important;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #3B82F6 !important;
+  border-color: #dae878 !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 2px rgba(218,232,120,0.15) !important;
 }
 
 select {
@@ -91,6 +98,61 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Tables on phones: each row keeps its two .rt-key cells plus a "Ver mais detalhes" toggle;
+   opening it lists the remaining cells under them, labelled by data-label. */
+@media (max-width: 767px) {
+  .rtable thead {
+    display: none;
+  }
+  .rtable,
+  .rtable tbody {
+    display: block;
+    width: 100%;
+  }
+  .rtable tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 4px;
+    padding: 12px 16px;
+  }
+  .rtable td {
+    padding: 0 !important;
+    order: 2;
+  }
+  .rtable td.rt-key {
+    order: 0;
+  }
+  .rtable td.rt-key + td.rt-key,
+  .rtable td.rt-key ~ td.rt-key {
+    justify-self: end;
+    text-align: right;
+  }
+  .rtable td.rt-toggle {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+  .rtable td:not(.rt-key):not(.rt-toggle) {
+    display: none;
+  }
+  .rtable tr[data-open="true"] td:not(.rt-key):not(.rt-toggle) {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 6px !important;
+    font-size: 13px;
+    text-align: right;
+  }
+  .rtable tr[data-open="true"] td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    color: #808080;
+    text-align: left;
+  }
+}
+
 /* Light theme ("Modo claro" in Configurações): the <html> element gets the
    "light" class. Tokens flip here; the rules below remap the neutral hex
    colors that components use directly. */
@@ -105,6 +167,34 @@ html.light {
   --secondary-foreground: 221 39% 11%;
   --muted: 220 14% 94%;
   --muted-foreground: 220 9% 40%;
+  --card-secondary: 220 14% 97%;
+  --border-hover: 220 13% 80%;
+  /* The lime is unreadable on white; light mode uses a deeper olive of the same hue. */
+  --primary: 67 62% 38%;
+  --primary-hover: 67 62% 33%;
+  --primary-foreground: 0 0% 100%;
+}
+
+html.light body {
+  color: #1F2937;
+}
+
+html.light .bg-\[\#111111\],
+html.light .bg-\[\#0D0D0D\] {
+  background-color: #F4F4F6;
+}
+
+html.light .border-\[\#1E1E1E\] {
+  border-color: #E1E3E8;
+}
+
+html.light .text-\[\#D0D0D0\],
+html.light .text-\[\#F0F0F0\] {
+  color: #111827;
+}
+
+html.light .bg-\[\#161616\] {
+  background-color: #F7F7F8;
 }
 
 html.light .bg-\[\#0F0F0F\],
@@ -116,29 +206,29 @@ html.light .bg-\[\#1A1A1A\] {
   background-color: #FFFFFF;
 }
 
-html.light .bg-\[\#2A2A2A\] {
+html.light .bg-\[\#242424\] {
   background-color: #E5E7EB;
 }
 
-html.light .border-\[\#2A2A2A\] {
+html.light .border-\[\#242424\] {
   border-color: #E1E3E8;
 }
 
-html.light .border-\[\#3D3D3D\],
-html.light .border-\[\#4B5563\] {
+html.light .border-\[\#2E2E2E\],
+html.light .border-\[\#2E2E2E\] {
   border-color: #D1D5DB;
 }
 
-html.light .text-\[\#F8F8F8\] {
+html.light .text-\[\#F0F0F0\] {
   color: #111827;
 }
 
-html.light .text-\[\#9CA3AF\] {
-  color: #4B5563;
+html.light .text-\[\#808080\] {
+  color: #2E2E2E;
 }
 
-html.light .text-\[\#6B7280\] {
-  color: #6B7280;
+html.light .text-\[\#666666\] {
+  color: #666666;
 }
 
 html.light input,
@@ -152,16 +242,16 @@ html.light textarea {
 html.light input:hover,
 html.light select:hover,
 html.light textarea:hover {
-  border-color: #9CA3AF !important;
+  border-color: #808080 !important;
 }
 
 html.light input:focus,
 html.light select:focus,
 html.light textarea:focus {
-  border-color: #3B82F6 !important;
+  border-color: #dae878 !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #9CA3AF !important;
+  color: #808080 !important;
 }

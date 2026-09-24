@@ -90,8 +90,8 @@ export default function RankingsPage() {
     <PageContainer>
       <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Rankings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Desempenho de vendedores, produtos e canais.</p>
+          <h1 className="text-[22px] font-bold text-foreground">Rankings</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">Desempenho de vendedores, produtos e canais.</p>
         </div>
 
       <div className="flex flex-col gap-2">
@@ -104,7 +104,7 @@ export default function RankingsPage() {
       {loading ? (
         <div className="space-y-6">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-40 animate-pulse rounded-xl bg-card" />
+            <div key={i} className="h-40 animate-pulse rounded-xl bg-card shadow-card" />
           ))}
         </div>
       ) : (

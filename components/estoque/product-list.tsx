@@ -7,6 +7,7 @@ import { ProductFormDialog } from "@/components/estoque/product-form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RowToggle } from "@/components/ui/row-toggle";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
@@ -47,6 +48,7 @@ export function ProductList() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [openRow, setOpenRow] = useState<string | null>(null);
 
   // /estoque?novo=<id> comes from the used-device calculator after adding a product.
   useEffect(() => {
@@ -230,8 +232,8 @@ export function ProductList() {
           Nenhum aparelho encontrado. Cadastre o primeiro aparelho para começar.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-xl bg-card shadow-card">
+          <table className="rtable w-full text-left text-sm">
             <thead className="border-b border-border bg-card text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Modelo</th>
@@ -248,31 +250,32 @@ export function ProductList() {
                 <tr
                   key={product.id}
                   id={`product-${product.id}`}
+                  data-open={openRow === product.id}
                   className={cn(
                     "border-b border-border transition-colors duration-700 last:border-0",
                     product.id === highlightId && "bg-primary/10 outline outline-1 -outline-offset-1 outline-primary"
                   )}
                 >
-                  <td className="px-4 py-3">
+                  <td className="rt-key px-4 py-3 font-medium text-foreground">
                     {product.model} · {product.storage}
                     {product.color ? ` · ${product.color}` : ""}
                   </td>
-                  <td className="px-4 py-3">{TYPE_LABELS[product.type] ?? product.type}</td>
-                  <td className="px-4 py-3">{product.imei ?? "—"}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="Tipo" className="px-4 py-3">{TYPE_LABELS[product.type] ?? product.type}</td>
+                  <td data-label="IMEI" className="px-4 py-3">{product.imei ?? "—"}</td>
+                  <td data-label="Custo" className="px-4 py-3">
                     {(product.acquisition_cost + product.repair_cost).toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
                     })}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="rt-key px-4 py-3">
                     <Badge variant={STATUS_VARIANTS[product.status] ?? "default"}>
                       {STATUS_LABELS[product.status] ?? product.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3">{product.days_in_stock}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
+                  <td data-label="Dias em estoque" className="px-4 py-3">{product.days_in_stock}</td>
+                  <td data-label="" className="px-4 py-3">
+                    <div className="flex flex-wrap justify-end gap-2">
                       {product.status === "available" && (
                         <Button variant="ghost" size="sm" onClick={() => handleStatusChange(product, "reserved")}>
                           Reservar
@@ -307,6 +310,10 @@ export function ProductList() {
                       )}
                     </div>
                   </td>
+                  <RowToggle
+                    open={openRow === product.id}
+                    onToggle={() => setOpenRow((id) => (id === product.id ? null : product.id))}
+                  />
                 </tr>
               ))}
             </tbody>

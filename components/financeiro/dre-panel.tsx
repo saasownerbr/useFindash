@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { NetMarginCard, RevenueCard } from "@/components/finance-highlight-cards";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { createClient } from "@/lib/supabase/client";
@@ -80,7 +80,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3">
           <RevenueCard label="Receita" value={dre.revenue} />
           <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
           <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
@@ -98,11 +98,9 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
 
 function DreLine({ label, value }: { label: string; value: string }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold text-foreground">{value}</p>
-      </CardContent>
+    <Card className="p-4 md:p-5">
+      <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#808080]">{label}</p>
+      <p className="mt-2 text-lg font-bold tabular-nums text-foreground">{value}</p>
     </Card>
   );
 }

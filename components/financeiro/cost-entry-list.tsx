@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { TYPE_LABELS } from "@/components/financeiro/cost-entry-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExpandableRow } from "@/components/ui/row-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrencyBRL } from "@/lib/finance";
 import { toast } from "@/lib/toast";
@@ -96,8 +97,8 @@ export function CostEntryList({ storeId, month, reloadKey }: { storeId: string |
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      <table className="w-full text-left text-sm">
+    <div className="overflow-hidden rounded-xl bg-card shadow-card">
+      <table className="rtable w-full text-left text-sm">
         <thead className="border-b border-border bg-card text-xs uppercase text-muted-foreground">
           <tr>
             <th className="px-4 py-3">Tipo</th>
@@ -109,19 +110,19 @@ export function CostEntryList({ storeId, month, reloadKey }: { storeId: string |
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={entry.id} className="border-b border-border last:border-0">
-              <td className="px-4 py-3">
+            <ExpandableRow key={entry.id} className="border-b border-border last:border-0">
+              <td data-label="Tipo" className="px-4 py-3">
                 <Badge variant="default">{TYPE_LABELS[entry.type as keyof typeof TYPE_LABELS] ?? entry.type}</Badge>
               </td>
-              <td className="px-4 py-3">{entry.description}</td>
-              <td className="px-4 py-3">{new Date(entry.date).toLocaleDateString("pt-BR")}</td>
-              <td className="px-4 py-3">{formatCurrencyBRL(entry.amount)}</td>
-              <td className="px-4 py-3 text-right">
+              <td className="rt-key px-4 py-3 text-foreground">{entry.description || TYPE_LABELS[entry.type as keyof typeof TYPE_LABELS] || "—"}</td>
+              <td data-label="Data" className="px-4 py-3">{new Date(entry.date).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</td>
+              <td className="rt-key px-4 py-3 tabular-nums">{formatCurrencyBRL(entry.amount)}</td>
+              <td data-label="" className="px-4 py-3 text-right">
                 <Button variant="ghost" size="sm" onClick={() => setDeletingEntry(entry)}>
                   Excluir
                 </Button>
               </td>
-            </tr>
+            </ExpandableRow>
           ))}
         </tbody>
       </table>

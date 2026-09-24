@@ -79,7 +79,7 @@ export function SaleWizard() {
         ))}
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+      <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
         {step === 1 && <StepCustomer storeId={storeId} />}
         {step === 2 && (
           <StepProduct

@@ -100,7 +100,7 @@ export default function CustomerProfilePage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-foreground">{customer.name}</h1>
+            <h1 className="text-[22px] font-bold text-foreground">{customer.name}</h1>
             <ChannelBadge channel={customer.acquisition_channel} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{customer.whatsapp}</p>

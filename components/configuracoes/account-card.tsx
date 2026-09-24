@@ -29,7 +29,7 @@ export function AccountCard() {
       <dl className="grid gap-4 sm:grid-cols-3">
         <div>
           <dt className="text-xs text-muted-foreground">Email</dt>
-          <dd className="mt-1 truncate text-sm text-[#F8F8F8]">{email ?? "—"}</dd>
+          <dd className="mt-1 truncate text-sm text-[#F0F0F0]">{email ?? "—"}</dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Status da conta</dt>
@@ -41,11 +41,11 @@ export function AccountCard() {
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Data de renovação</dt>
-          <dd className="mt-1 text-sm text-[#6B7280]">Não configurado</dd>
+          <dd className="mt-1 text-sm text-[#666666]">Não configurado</dd>
         </div>
       </dl>
 
-      <div className="mt-5 flex items-center justify-between border-t border-[#2A2A2A] pt-4">
+      <div className="mt-5 flex items-center justify-between border-t border-[#242424] pt-4">
         <div>
           <p className="text-sm font-medium text-foreground" id="light-mode-label">
             Modo claro
@@ -60,7 +60,7 @@ export function AccountCard() {
           onClick={toggleTheme}
           className={cn(
             "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-            light ? "bg-[#3B82F6]" : "bg-[#2A2A2A]"
+            light ? "bg-primary" : "bg-[#242424]"
           )}
         >
           <span
