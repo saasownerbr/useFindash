@@ -5,12 +5,10 @@ const sharp = require("sharp");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const SOURCE = path.join(PUBLIC_DIR, "favicon.svg");
 
-// public/favicon.svg is the brand symbol (rounded square + "use." glyph paths),
-// so rendering never depends on fonts installed on the build machine.
+// public/favicon.svg is a text-free geometric symbol whose first element is
+// the rounded background, so it stays sharp at 16px and rendering never
+// depends on fonts installed on the build machine.
 const source = fs.readFileSync(SOURCE, "utf8");
-const [roundedSquare, ...glyphs] = source.match(/<path [^>]*\/>/g);
-const viewBox = source.match(/viewBox="([^"]+)"/)[1];
-const [x, y, w, h] = viewBox.split(/\s+/).map(Number);
 
 function sized(svg, size) {
   return svg.replace("<svg ", `<svg width="${size}" height="${size}" `);
@@ -19,7 +17,7 @@ function sized(svg, size) {
 // Tab favicons keep the rounded square; app icons are full-bleed because
 // iOS and Android apply their own mask.
 const roundedSvg = source;
-const fullBleedSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#000000"/>${glyphs.join("")}</svg>`;
+const fullBleedSvg = source.replace(/(<rect\b[^>]*?)\s+rx="[^"]*"/, "$1");
 
 function render(svg, size) {
   return sharp(Buffer.from(sized(svg, size))).png().toBuffer();
@@ -50,7 +48,7 @@ function buildIco(images) {
 }
 
 async function main() {
-  if (!roundedSquare || glyphs.length === 0) throw new Error("favicon.svg has no paths");
+  if (fullBleedSvg === roundedSvg) throw new Error("favicon.svg must start with a rounded <rect> background");
 
   const outputs = [
     ["favicon-16x16.png", roundedSvg, 16],

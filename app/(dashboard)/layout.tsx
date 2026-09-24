@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       {!isMobile && <Sidebar />}
-      <main className={`flex-1 p-8 ${isMobile ? "pb-24" : ""}`}>{children}</main>
+      <main className={`flex-1 p-8 ${isMobile ? "pb-20" : ""}`}>{children}</main>
       {isMobile && <MobileNav />}
       <Toaster />
     </div>
