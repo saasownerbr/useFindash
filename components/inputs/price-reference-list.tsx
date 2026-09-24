@@ -37,7 +37,9 @@ const NEW_ROW: Draft & { model: string; storage: string } = {
   grade_multiplier_c: "48",
 };
 
-const GRID = "grid grid-cols-[minmax(150px,1.6fr)_minmax(90px,0.9fr)_repeat(5,minmax(80px,1fr))_auto] items-center gap-2";
+// Columns are wide enough that no header or value wraps; the table scrolls sideways instead.
+const GRID =
+  "grid grid-cols-[minmax(160px,1.6fr)_minmax(120px,0.9fr)_minmax(120px,1fr)_repeat(4,minmax(96px,1fr))_auto] items-center gap-2 whitespace-nowrap";
 
 function toDraft(row: PriceReference): Draft {
   return Object.fromEntries(
@@ -174,7 +176,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
       <div className="overflow-x-auto">
-        <div className="min-w-[760px]">
+        <div className="min-w-[960px]">
           <div className={`${GRID} border-b border-[#242424] pb-2 text-xs text-muted-foreground`}>
             <span>Modelo</span>
             <span>Armazenamento</span>

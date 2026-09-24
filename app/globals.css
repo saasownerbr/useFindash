@@ -29,6 +29,13 @@
   border-color: hsl(var(--border));
 }
 
+/* No sideways page scroll on phones; wide tables scroll inside their own container.
+   clip (not hidden) keeps position: sticky working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background-color: hsl(var(--background));
   /* Body copy is #D0D0D0 at 14px; headings and figures use text-foreground (#F0F0F0). */
