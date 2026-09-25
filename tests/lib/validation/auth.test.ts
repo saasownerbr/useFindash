@@ -17,16 +17,30 @@ describe("loginSchema", () => {
   });
 });
 
-describe("signupSchema", () => {
-  const valid = { email: "dono@loja.com", password: "segredo", confirmPassword: "segredo" };
+describe("loginSchema length", () => {
+  it("accepts any existing password, even short or long ones", () => {
+    expect(loginSchema.safeParse({ email: "dono@loja.com", password: "123456" }).success).toBe(true);
+    expect(loginSchema.safeParse({ email: "dono@loja.com", password: "x".repeat(200) }).success).toBe(true);
+  });
+});
 
-  it("accepts matching passwords with at least 6 characters", () => {
+describe("signupSchema", () => {
+  const valid = { email: "dono@loja.com", password: "segredo1", confirmPassword: "segredo1" };
+
+  it("accepts matching passwords with at least 8 characters", () => {
     expect(signupSchema.safeParse(valid).success).toBe(true);
   });
 
-  it("rejects a password shorter than 6 characters", () => {
-    const result = signupSchema.safeParse({ ...valid, password: "12345", confirmPassword: "12345" });
+  it("rejects a password shorter than 8 characters", () => {
+    const result = signupSchema.safeParse({ ...valid, password: "1234567", confirmPassword: "1234567" });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts long passwords up to Supabase's 72-character limit", () => {
+    const long = "Aa1!".repeat(18);
+    expect(signupSchema.safeParse({ ...valid, password: long, confirmPassword: long }).success).toBe(true);
+    const tooLong = `${long}x`;
+    expect(signupSchema.safeParse({ ...valid, password: tooLong, confirmPassword: tooLong }).success).toBe(false);
   });
 
   it("rejects passwords that do not match, flagging the confirmation field", () => {

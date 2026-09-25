@@ -75,7 +75,7 @@ export function fullAccessUntil(result: Access): number | null {
 }
 
 // Paths a store with blocked access can still open: the plans page, its APIs, and the auth screens.
-const ALWAYS_OPEN_PATHS = ["/planos", "/api/", "/onboarding", "/login", "/signup", "/recuperar-senha", "/redefinir-senha"];
+const ALWAYS_OPEN_PATHS = ["/planos", "/api/", "/onboarding", "/login", "/signup", "/recuperar-senha", "/redefinir-senha", "/auth/"];
 
 export function requiresAccessCheck(pathname: string): boolean {
   return !ALWAYS_OPEN_PATHS.some((path) => pathname.startsWith(path));

@@ -10,7 +10,7 @@ export function authErrorMessage(error: AuthError) {
     case "email_address_invalid":
       return "Digite um email válido.";
     case "weak_password":
-      return "Senha muito fraca. Use pelo menos 6 caracteres.";
+      return "Senha muito fraca. Use pelo menos 8 caracteres, com letras, números e símbolos.";
     case "email_not_confirmed":
       return "Este email ainda não foi confirmado. Fale com o suporte.";
     case "over_request_rate_limit":

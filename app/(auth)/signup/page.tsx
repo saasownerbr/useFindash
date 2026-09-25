@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authErrorMessage } from "@/lib/auth/auth-errors";
 import { createClient } from "@/lib/supabase/client";
-import { signupSchema, type SignupInput } from "@/lib/validation/auth";
+import { signupSchema, type SignupInput, PASSWORD_HINT } from "@/lib/validation/auth";
 
 // Requires "Confirm email" to be OFF in Supabase (Authentication > Sign In / Providers > Email),
 // so signUp returns a session right away. Keep it off until the Asaas payment flow exists.
@@ -73,11 +73,18 @@ export default function SignupPage() {
             id="password"
             type="password"
             autoComplete="new-password"
-            placeholder="Mínimo de 6 caracteres"
+            placeholder="Mínimo de 8 caracteres"
+            aria-describedby="password-hint"
             className={authInputClass}
             {...register("password")}
           />
-          {errors.password && <span className="text-xs text-danger">{errors.password.message}</span>}
+          {errors.password ? (
+            <span className="text-xs text-danger">{errors.password.message}</span>
+          ) : (
+            <span id="password-hint" className="text-xs text-[#808080]">
+              {PASSWORD_HINT}
+            </span>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="confirmPassword">Confirmar senha</Label>

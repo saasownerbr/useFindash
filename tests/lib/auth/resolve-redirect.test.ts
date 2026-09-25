@@ -11,6 +11,21 @@ describe("resolveAuthRedirect", () => {
     expect(resolveAuthRedirect("/login", false, null)).toBeNull();
   });
 
+  it("lets signed-out users ask for a password reset", () => {
+    expect(resolveAuthRedirect("/recuperar-senha", false, null)).toBeNull();
+  });
+
+  it("lets the reset link open signed out or signed in, with or without a store", () => {
+    expect(resolveAuthRedirect("/redefinir-senha", false, null)).toBeNull();
+    expect(resolveAuthRedirect("/redefinir-senha", true, true)).toBeNull();
+    expect(resolveAuthRedirect("/redefinir-senha", true, false)).toBeNull();
+  });
+
+  it("lets the email link callback run signed out or signed in", () => {
+    expect(resolveAuthRedirect("/auth/callback", false, null)).toBeNull();
+    expect(resolveAuthRedirect("/auth/callback", true, true)).toBeNull();
+  });
+
   it("lets unauthenticated users reach /signup", () => {
     expect(resolveAuthRedirect("/signup", false, null)).toBeNull();
   });
