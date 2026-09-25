@@ -11,6 +11,7 @@ import { daysUntilBirthday, isInUpgradeWindow, monthsSince } from "@/lib/custome
 import { formatCurrencyBRL } from "@/lib/finance";
 import type { AlertSettingsInput } from "@/lib/validation/store-settings";
 import { whatsappLink } from "@/lib/whatsapp";
+import { stockDays } from "@/lib/urgent-actions";
 import { formatPhone } from "@/lib/phone";
 import { CustomerPhone } from "@/components/ui/customer-phone";
 
@@ -23,6 +24,7 @@ type Product = {
   grade: string | null;
   acquisition_cost: number;
   days_in_stock: number;
+  purchase_date: string | null;
   suggested_price: number | null;
 };
 
@@ -126,7 +128,7 @@ export function StockAlerts() {
           .order("sold_at", { ascending: false }),
         supabase
           .from("products")
-          .select("id, model, storage, grade, acquisition_cost, days_in_stock, suggested_price")
+          .select("id, model, storage, grade, acquisition_cost, days_in_stock, purchase_date, suggested_price")
           .eq("store_id", id)
           .eq("status", "available")
           .order("days_in_stock", { ascending: false }),
@@ -178,7 +180,11 @@ export function StockAlerts() {
       .filter((row) => row.daysLeft >= 0 && row.daysLeft <= 7)
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
-    const stale = data.products.filter((p) => p.days_in_stock > settings.stock_alert_days);
+    // Counted from the purchase date, same as the dashboard, so a device bought today is not a day behind.
+    const stale = data.products
+      .map((p) => ({ ...p, days_in_stock: stockDays(p) }))
+      .filter((p) => p.days_in_stock > settings.stock_alert_days)
+      .sort((a, b) => b.days_in_stock - a.days_in_stock);
 
     return { upgrade, birthdays, stale };
   }, [data, settings]);

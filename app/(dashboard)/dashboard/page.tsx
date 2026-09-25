@@ -19,6 +19,7 @@ import { usePeriodFilterStore } from "@/lib/period-filter-store";
 import { firstOfMonth, previousCalendarMonth, previousRange } from "@/lib/period";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
+import { stockDays } from "@/lib/urgent-actions";
 
 // Recharts is most of this page's JavaScript; loading it on demand lets the page open right away.
 const RevenueLineChart = dynamic(
@@ -146,7 +147,7 @@ export default function DashboardPage() {
           .eq("store_id", storeId)
           .not("product_id", "is", null)
           .order("sold_at", { ascending: false }),
-        supabase.from("products").select("days_in_stock").eq("store_id", storeId).eq("status", "available"),
+        supabase.from("products").select("days_in_stock, purchase_date").eq("store_id", storeId).eq("status", "available"),
         sumAccessorySales(supabase, storeId, periodStart.toISOString(), periodEnd.toISOString()),
         sumAccessorySales(supabase, storeId, prev.start.toISOString(), prev.end.toISOString()),
         sumAccessorySales(supabase, storeId, monthStartDate.toISOString(), nextMonthDate.toISOString()),
@@ -222,7 +223,7 @@ export default function DashboardPage() {
           isInUpgradeWindow(lastDeviceSale.get(c.id) ?? null, store.upgrade_alert_months ?? 20)
         ).length,
         birthdaysCount: customers.filter((c) => isBirthdayWithinDays(c.birthdate, 7)).length,
-        staleStockCount: (productsRes.data ?? []).filter((p) => p.days_in_stock > (store.stock_alert_days ?? 30)).length,
+        staleStockCount: (productsRes.data ?? []).filter((p) => stockDays(p) > (store.stock_alert_days ?? 30)).length,
       });
     }
 

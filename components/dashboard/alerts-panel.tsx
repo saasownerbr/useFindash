@@ -8,13 +8,14 @@ interface AlertCardProps {
   /** Accent color and its 10% tint, used only while there is something to act on. */
   color: string;
   tint: string;
+  href: string;
 }
 
-function AlertCard({ count, label, icon: Icon, color, tint }: AlertCardProps) {
+function AlertCard({ count, label, icon: Icon, color, tint, href }: AlertCardProps) {
   const active = count > 0;
   return (
     <Link
-      href="/estoque?tab=alertas"
+      href={href}
       className="flex items-center gap-4 rounded-xl bg-card p-4 shadow-card transition-colors hover:bg-[#1E1E1E] md:p-5"
     >
       <span
@@ -33,7 +34,7 @@ function AlertCard({ count, label, icon: Icon, color, tint }: AlertCardProps) {
   );
 }
 
-/** Fourth dashboard row: alert counts; each opens Estoque › Alertas with the full lists. */
+/** Fourth dashboard row: alert counts; each opens the page that lists them (Clientes › Ações Urgentes, Estoque › Alertas). */
 export function AlertsPanel({
   upgradeWindowCount,
   birthdaysCount,
@@ -48,6 +49,7 @@ export function AlertsPanel({
       <AlertCard
         count={upgradeWindowCount}
         label="em janela de upgrade"
+        href="/clientes?filter=upgrade"
         icon={ArrowUpCircle}
         color="#F59E0B"
         tint="rgba(245,158,11,0.10)"
@@ -55,6 +57,7 @@ export function AlertsPanel({
       <AlertCard
         count={birthdaysCount}
         label="aniversários nos próximos 7 dias"
+        href="/clientes?filter=birthday"
         icon={Gift}
         color="#10B981"
         tint="rgba(16,185,129,0.10)"
@@ -62,6 +65,7 @@ export function AlertsPanel({
       <AlertCard
         count={staleStockCount}
         label="aparelhos parados no estoque"
+        href="/estoque?tab=alertas"
         icon={AlertTriangle}
         color="#EF4444"
         tint="rgba(239,68,68,0.10)"
