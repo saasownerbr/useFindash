@@ -25,3 +25,24 @@ export function channelLabel(channel: string | null | undefined): string {
 export function channelColors(channel: string | null | undefined): { color: string; background: string } {
   return (channel && CHANNEL_COLORS[channel]) || FALLBACK;
 }
+
+export type ChannelSales = { channel: string; label: string; count: number; revenue: number };
+
+/**
+ * Sales count and revenue (device + accessories) per channel, in the usual channel order. Channels with no sale
+ * in the period are left out so the chart has no empty bars.
+ */
+export function salesByChannel(
+  sales: { sale_channel: string; sale_price: number; sale_accessories?: { quantity: number; unit_price: number }[] | null }[]
+): ChannelSales[] {
+  const totals = new Map<string, { count: number; revenue: number }>();
+  for (const sale of sales) {
+    const accessories = (sale.sale_accessories ?? []).reduce((sum, a) => sum + a.quantity * Number(a.unit_price), 0);
+    const current = totals.get(sale.sale_channel) ?? { count: 0, revenue: 0 };
+    totals.set(sale.sale_channel, { count: current.count + 1, revenue: current.revenue + Number(sale.sale_price) + accessories });
+  }
+  const order = [...Object.keys(CHANNEL_LABELS), ...Array.from(totals.keys()).filter((c) => !(c in CHANNEL_LABELS))];
+  return order
+    .filter((channel) => totals.has(channel))
+    .map((channel) => ({ channel, label: channelLabel(channel), ...totals.get(channel)! }));
+}

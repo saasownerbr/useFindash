@@ -11,6 +11,7 @@ import { ChartSkeleton } from "@/components/dashboard/skeleton-cards";
 import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
 import { sumAccessorySales } from "@/lib/accessory-sales";
+import { salesByChannel, type ChannelSales } from "@/lib/channels";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { fetchCostEntries } from "@/lib/cost-entries";
 import { buildDRE, NO_COSTS, periodCosts, type DRE } from "@/lib/dre";
@@ -24,6 +25,10 @@ import { stockDays } from "@/lib/urgent-actions";
 // Recharts is most of this page's JavaScript; loading it on demand lets the page open right away.
 const RevenueLineChart = dynamic(
   () => import("@/components/dashboard/revenue-line-chart").then((m) => m.RevenueLineChart),
+  { ssr: false, loading: ChartSkeleton }
+);
+const SalesByChannelChart = dynamic(
+  () => import("@/components/dashboard/sales-by-channel-chart").then((m) => m.SalesByChannelChart),
   { ssr: false, loading: ChartSkeleton }
 );
 const PaymentMethodsChart = dynamic(
@@ -41,10 +46,11 @@ type Sale = {
   sold_at: string;
   customer_id: string;
   payment_method: string | null;
+  sale_accessories: { quantity: number; unit_price: number }[];
 };
 
 const SALE_FIELDS =
-  "sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id, payment_method";
+  "sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id, payment_method, sale_accessories(quantity, unit_price)";
 
 const MONTH_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "short" });
 const TODAY_LABEL = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" });
@@ -69,6 +75,7 @@ interface DashboardData {
   monthRevenue: number;
   revenueByMonth: { month: string; revenue: number }[];
   paymentMethods: { pix: number; debit: number; credit: number };
+  salesByChannel: ChannelSales[];
   avgTicket: number;
   salesCount: number;
   paidTraffic: PaidTrafficMetrics;
@@ -210,6 +217,7 @@ export default function DashboardPage() {
         monthRevenue: monthDre.revenue,
         revenueByMonth,
         paymentMethods,
+        salesByChannel: salesByChannel(periodSales),
         avgTicket: calculateAverageTicket(dre.revenue, periodSales.length),
         salesCount: periodSales.length,
         paidTraffic: {
@@ -272,6 +280,8 @@ export default function DashboardPage() {
                 <PaymentMethodsChart data={data.paymentMethods} />
               </div>
             </div>
+
+            <SalesByChannelChart data={data.salesByChannel} />
 
             <MetricCards
               avgTicket={data.avgTicket}

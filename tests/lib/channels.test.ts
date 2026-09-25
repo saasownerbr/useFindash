@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CHANNEL_COLORS, channelColors, channelLabel } from "@/lib/channels";
+import { CHANNEL_COLORS, channelColors, channelLabel, salesByChannel } from "@/lib/channels";
 import { SALE_CHANNELS } from "@/lib/validation/sale";
 
 describe("channels", () => {
@@ -19,5 +19,23 @@ describe("channels", () => {
     expect(channelLabel(null)).toBe("—");
     expect(channelLabel("tiktok")).toBe("tiktok");
     expect(channelColors("tiktok").color).toBe("#9CA3AF");
+  });
+});
+
+describe("salesByChannel", () => {
+  it("counts sales and sums device + accessory revenue per channel, in channel order, skipping empty channels", () => {
+    const result = salesByChannel([
+      { sale_channel: "whatsapp", sale_price: 5000, sale_accessories: [{ quantity: 2, unit_price: 50 }] },
+      { sale_channel: "instagram", sale_price: 4000, sale_accessories: [] },
+      { sale_channel: "whatsapp", sale_price: 3000 },
+    ]);
+    expect(result).toEqual([
+      { channel: "instagram", label: "Instagram", count: 1, revenue: 4000 },
+      { channel: "whatsapp", label: "WhatsApp", count: 2, revenue: 8100 },
+    ]);
+  });
+
+  it("returns nothing when there are no sales", () => {
+    expect(salesByChannel([])).toEqual([]);
   });
 });
