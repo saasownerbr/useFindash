@@ -32,7 +32,8 @@ type SaleWizardState = {
   sellerId: string;
   paymentMethod: string;
   installments: number;
-  salePrice: number;
+  /** Total typed in step 4; null follows product + accessories automatically. */
+  saleTotal: number | null;
   setCustomer: (customer: WizardCustomer) => void;
   setProduct: (product: WizardProduct) => void;
   skipProduct: () => void;
@@ -40,7 +41,7 @@ type SaleWizardState = {
   updateAccessoryQuantity: (accessoryId: string, quantity: number) => void;
   removeAccessory: (accessoryId: string) => void;
   setDetails: (details: { saleChannel: string; sellerId: string; paymentMethod: string; installments: number }) => void;
-  setSalePrice: (salePrice: number) => void;
+  setSaleTotal: (saleTotal: number | null) => void;
   reset: () => void;
 };
 
@@ -53,31 +54,33 @@ const initialState = {
   sellerId: "",
   paymentMethod: "",
   installments: 1,
-  salePrice: 0,
+  saleTotal: null as number | null,
 };
 
 export const useSaleWizardStore = create<SaleWizardState>((set) => ({
   ...initialState,
   setCustomer: (customer) => set({ customer }),
-  setProduct: (product) => set({ product, productSkipped: false, salePrice: product?.finalPrice ?? product?.suggestedPrice ?? 0 }),
-  skipProduct: () => set({ product: null, productSkipped: true }),
+  // Changing what is sold drops a typed total, so step 4 recomputes it.
+  setProduct: (product) => set({ product, productSkipped: false, saleTotal: null }),
+  skipProduct: () => set({ product: null, productSkipped: true, saleTotal: null }),
   addAccessory: (accessory) =>
     set((state) => {
       const existingIndex = state.accessories.findIndex((a) => a.accessoryId === accessory.accessoryId);
       if (existingIndex === -1) {
-        return { accessories: [...state.accessories, accessory] };
+        return { accessories: [...state.accessories, accessory], saleTotal: null };
       }
       const updated = [...state.accessories];
       updated[existingIndex] = accessory;
-      return { accessories: updated };
+      return { accessories: updated, saleTotal: null };
     }),
   updateAccessoryQuantity: (accessoryId, quantity) =>
     set((state) => ({
       accessories: state.accessories.map((a) => (a.accessoryId === accessoryId ? { ...a, quantity } : a)),
+      saleTotal: null,
     })),
   removeAccessory: (accessoryId) =>
-    set((state) => ({ accessories: state.accessories.filter((a) => a.accessoryId !== accessoryId) })),
+    set((state) => ({ accessories: state.accessories.filter((a) => a.accessoryId !== accessoryId), saleTotal: null })),
   setDetails: (details) => set(details),
-  setSalePrice: (salePrice) => set({ salePrice }),
+  setSaleTotal: (saleTotal) => set({ saleTotal }),
   reset: () => set(initialState),
 }));

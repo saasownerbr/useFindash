@@ -20,3 +20,15 @@ describe("useSaleWizardStore addAccessory", () => {
     expect(useSaleWizardStore.getState().accessories).toEqual([{ ...accessory, quantity: 3 }]);
   });
 });
+
+describe("useSaleWizardStore saleTotal", () => {
+  beforeEach(() => {
+    useSaleWizardStore.getState().reset();
+  });
+
+  it("drops a typed total when the accessories change, so step 4 recomputes it", () => {
+    useSaleWizardStore.getState().setSaleTotal(2500);
+    useSaleWizardStore.getState().addAccessory(accessory);
+    expect(useSaleWizardStore.getState().saleTotal).toBeNull();
+  });
+});

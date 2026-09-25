@@ -8,6 +8,7 @@ import { StepCustomer } from "@/components/vendas/step-customer";
 import { StepDetails } from "@/components/vendas/step-details";
 import { StepProduct } from "@/components/vendas/step-product";
 import { StepSummary } from "@/components/vendas/step-summary";
+import { accessoriesTotal, productPrice } from "@/lib/sale-total";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,9 @@ export function SaleWizard() {
   const saleChannel = useSaleWizardStore((s) => s.saleChannel);
   const sellerId = useSaleWizardStore((s) => s.sellerId);
   const paymentMethod = useSaleWizardStore((s) => s.paymentMethod);
-  const salePrice = useSaleWizardStore((s) => s.salePrice);
+  const accessories = useSaleWizardStore((s) => s.accessories);
+  const saleTotal = useSaleWizardStore((s) => s.saleTotal);
+  const total = saleTotal ?? productPrice(product) + accessoriesTotal(accessories);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +51,7 @@ export function SaleWizard() {
   const canAdvanceFrom1 = !!customer;
   const canAdvanceFrom2 = true;
   const canAdvanceFrom3 = true;
-  const canAdvanceFrom4 = !!saleChannel && !!sellerId && !!paymentMethod && salePrice > 0;
+  const canAdvanceFrom4 = !!saleChannel && !!sellerId && !!paymentMethod && total > 0;
 
   const canAdvance =
     step === 1 ? canAdvanceFrom1 : step === 2 ? canAdvanceFrom2 : step === 3 ? canAdvanceFrom3 : canAdvanceFrom4;

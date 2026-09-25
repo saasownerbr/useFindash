@@ -29,7 +29,15 @@ describe("saleSchema", () => {
     });
     expect(result.success).toBe(true);
   });
-  it("rejects a non-positive sale price", () => {
+  it("accepts an accessory-only sale whose device price is 0", () => {
+    const result = saleSchema.safeParse({
+      ...base,
+      sale_price: "0",
+      accessories: [{ accessory_id: "44444444-4444-4444-4444-444444444444", quantity: "1", unit_price: "50" }],
+    });
+    expect(result.success).toBe(true);
+  });
+  it("rejects a sale whose total is zero", () => {
     const result = saleSchema.safeParse({
       ...base,
       product_id: "33333333-3333-3333-3333-333333333333",

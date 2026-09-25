@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import { formatCurrencyBRL } from "@/lib/finance";
+import { accessoriesTotal, productPrice, splitSaleTotal } from "@/lib/sale-total";
 import { toast } from "@/lib/toast";
 import { saleSchema } from "@/lib/validation/sale";
 
@@ -38,11 +39,13 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
     };
   }, [state.sellerId]);
 
-  const accessoriesTotal = state.accessories.reduce((sum, a) => sum + a.quantity * a.unitPrice, 0);
-  const revenue = state.salePrice + accessoriesTotal;
+  // The total from step 4, split back into the device price and accessory prices the database keeps.
+  const total = state.saleTotal ?? productPrice(state.product) + accessoriesTotal(state.accessories);
+  const { devicePrice, accessories } = splitSaleTotal(total, state.accessories);
+  const revenue = devicePrice + accessoriesTotal(accessories);
   const cmv = state.product ? state.product.acquisitionCost + state.product.repairCost : 0;
   const margin = revenue - cmv;
-  const estimatedCommission = state.salePrice * commissionRate;
+  const estimatedCommission = devicePrice * commissionRate;
 
   async function handleConfirm() {
     setSubmitError(null);
@@ -57,10 +60,10 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
       seller_id: state.sellerId,
       product_id: state.product?.id ?? null,
       sale_channel: state.saleChannel,
-      sale_price: state.salePrice,
+      sale_price: devicePrice,
       payment_method: state.paymentMethod,
       installments: state.installments,
-      accessories: state.accessories.map((a) => ({
+      accessories: accessories.map((a) => ({
         accessory_id: a.accessoryId,
         quantity: a.quantity,
         unit_price: a.unitPrice,
@@ -116,10 +119,10 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
             <span className="text-foreground">
               {state.product.model} · {state.product.storage}
             </span>
-            <span className="text-muted-foreground">{formatCurrencyBRL(state.salePrice)}</span>
+            <span className="text-muted-foreground">{formatCurrencyBRL(devicePrice)}</span>
           </div>
         )}
-        {state.accessories.map((item) => (
+        {accessories.map((item) => (
           <div
             key={item.accessoryId}
             className="flex items-center justify-between border-b border-border px-4 py-3 text-sm last:border-0"
