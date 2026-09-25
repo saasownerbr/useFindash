@@ -89,6 +89,16 @@ select {
   padding-right: 40px !important;
 }
 
+/* Desktop/tablet sidebar width; the main content's left margin follows it.
+   data-sidebar is set before first paint by SIDEBAR_BOOT_SCRIPT (lib/sidebar.ts). */
+:root {
+  --sidebar-w: 240px;
+}
+
+html[data-sidebar="collapsed"] {
+  --sidebar-w: 64px;
+}
+
 /* Mobile bottom nav: scrolls sideways without a visible scrollbar. */
 .bottom-nav {
   scrollbar-width: none;

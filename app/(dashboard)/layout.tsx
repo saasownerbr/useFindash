@@ -9,9 +9,12 @@ import { Toaster } from "@/components/ui/toaster";
 // only after a media query runs on the client.
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="min-w-0 flex-1 p-3 pb-24 md:p-8">{children}</main>
+      {/* Same 250ms ease-in-out as the sidebar's width, so the content moves with it. */}
+      <main className="min-w-0 p-3 pb-24 transition-[margin-left] duration-[250ms] ease-in-out md:ml-[var(--sidebar-w)] md:p-8">
+        {children}
+      </main>
       <MobileNav />
       <Toaster />
     </div>

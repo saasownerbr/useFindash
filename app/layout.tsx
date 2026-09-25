@@ -1,18 +1,17 @@
 import type { Metadata, Viewport } from "next";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { SIDEBAR_BOOT_SCRIPT } from "@/lib/sidebar";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "useFindash",
   description: "Gestão Inteligente para Lojistas de iPhone",
+  // ?v= busts the browser's favicon cache; bump it whenever the icons change.
   icons: {
-    icon: [
-      { url: "/favicon.svg?v=3", type: "image/svg+xml" },
-      { url: "/favicon.png?v=3", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-touch-icon.png?v=3",
+    icon: [{ url: "/favicon.svg?v=4", type: "image/svg+xml" }],
+    apple: "/apple-touch-icon.png?v=4",
   },
   manifest: "/site.webmanifest",
 };
@@ -26,10 +25,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // The boot script may add the "light" class before React hydrates.
+    // The boot scripts may add the "light" class and data-sidebar before React hydrates.
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT + SIDEBAR_BOOT_SCRIPT }} />
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>
