@@ -5,9 +5,9 @@ const sharp = require("sharp");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const SOURCE = path.join(PUBLIC_DIR, "favicon.svg");
 
-// public/favicon.svg is the "use." brand mark (copied as-is from the brand file) on a transparent background.
-// The tab icon stays transparent; home-screen app icons put the mark in
-// #F7F7F7 on a #111111 tile with 22% rounded corners.
+// public/favicon.svg is the lime brand symbol (from "useFindash 1.svg") on a transparent background.
+// The tab icon stays transparent; home-screen app icons put the symbol on a
+// #111111 tile with 22% rounded corners, at the 64% height the brand file uses.
 const source = fs.readFileSync(SOURCE);
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 const BACKDROP = "#111111";
@@ -47,7 +47,7 @@ async function main() {
     ["icon-512x512.png", 512],
   ]) {
     const icon = await sharp(tile(size))
-      .composite([{ input: await mark(size, 0.58) }])
+      .composite([{ input: await mark(size, 0.64) }])
       .png()
       .toBuffer();
     fs.writeFileSync(path.join(PUBLIC_DIR, file), icon);

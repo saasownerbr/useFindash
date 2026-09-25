@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: "Gestão Inteligente para Lojistas de iPhone",
   // ?v= busts the browser's favicon cache; bump it whenever the icons change.
   icons: {
-    icon: [{ url: "/favicon.svg?v=4", type: "image/svg+xml" }],
-    apple: "/apple-touch-icon.png?v=4",
+    icon: [{ url: "/favicon.svg?v=5", type: "image/svg+xml" }],
+    apple: "/apple-touch-icon.png?v=5",
   },
   manifest: "/site.webmanifest",
 };
