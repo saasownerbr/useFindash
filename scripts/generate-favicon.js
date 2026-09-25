@@ -5,7 +5,7 @@ const sharp = require("sharp");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const SOURCE = path.join(PUBLIC_DIR, "favicon.svg");
 
-// public/favicon.svg is the "use" brand mark on a transparent background.
+// public/favicon.svg is the "use." brand mark (copied as-is from the brand file) on a transparent background.
 // The tab icon stays transparent; home-screen app icons put the mark in
 // #F7F7F7 on a #111111 tile with 22% rounded corners.
 const source = fs.readFileSync(SOURCE);
@@ -41,8 +41,6 @@ async function mark(size, scale) {
 }
 
 async function main() {
-  fs.writeFileSync(path.join(PUBLIC_DIR, "favicon.png"), await mark(32, 0.94));
-
   for (const [file, size] of [
     ["apple-touch-icon.png", 180],
     ["icon-192x192.png", 192],
