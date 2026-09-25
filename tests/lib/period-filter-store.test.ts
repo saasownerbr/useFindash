@@ -17,8 +17,8 @@ describe("presetRange", () => {
     expect(end).toEqual(new Date(2026, 8, 24, 23, 59, 59, 999));
   });
 
-  it("goes back 15 and 90 days from today", () => {
-    expect(presetRange("15days", NOW).start).toEqual(new Date(2026, 8, 9));
-    expect(presetRange("90days", NOW).start).toEqual(new Date(2026, 5, 26));
+  it("spans 15 and 90 days counting today", () => {
+    expect(presetRange("15days", NOW).start).toEqual(new Date(2026, 8, 10));
+    expect(presetRange("90days", NOW).start).toEqual(new Date(2026, 5, 27));
   });
 });

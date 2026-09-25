@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { currentMonthValue } from "@/components/ui/month-picker";
 import { sumAccessorySales } from "@/lib/accessory-sales";
-import { buildDRE } from "@/lib/dre";
+import { buildDRE, NO_COSTS } from "@/lib/dre";
 import { formatCurrencyBRL } from "@/lib/finance";
 import { goalPace } from "@/lib/revenue-goal";
 import { createClient } from "@/lib/supabase/client";
@@ -67,7 +67,7 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
       const storeGoal = Number(storeRes.data?.monthly_revenue_goal ?? 0);
       setGoal(storeGoal);
       reset({ monthly_revenue_goal: storeGoal });
-      setRevenue(buildDRE(salesRes.data ?? [], [], accessorySales).revenue);
+      setRevenue(buildDRE(salesRes.data ?? [], NO_COSTS, accessorySales).revenue);
     });
     return () => {
       cancelled = true;

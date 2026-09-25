@@ -19,3 +19,16 @@ export function localDay(date: Date): string {
 export function firstOfMonth(date: Date): string {
   return localDay(new Date(date.getFullYear(), date.getMonth(), 1));
 }
+
+/** The last day of `date`'s month as yyyy-mm-dd. */
+export function lastOfMonth(date: Date): string {
+  return localDay(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+}
+
+/** The whole calendar month before `date`'s, from its first to its last millisecond. */
+export function previousCalendarMonth(date: Date): { start: Date; end: Date } {
+  return {
+    start: new Date(date.getFullYear(), date.getMonth() - 1, 1),
+    end: new Date(date.getFullYear(), date.getMonth(), 0, 23, 59, 59, 999),
+  };
+}

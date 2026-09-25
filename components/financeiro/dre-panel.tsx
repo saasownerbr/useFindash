@@ -7,12 +7,12 @@ import { PeriodSelector } from "@/components/period-selector";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { sumAccessorySales } from "@/lib/accessory-sales";
-import { buildDRE, type DRE } from "@/lib/dre";
+import { fetchCostEntries } from "@/lib/cost-entries";
+import { buildDRE, periodCosts, type DRE } from "@/lib/dre";
 import { calculateAverageTicket, calculateCAC, calculateROAS, formatCurrencyBRL } from "@/lib/finance";
-import { firstOfMonth, localDay } from "@/lib/period";
+import { firstOfMonth } from "@/lib/period";
 import { usePeriodFilterStore } from "@/lib/period-filter-store";
 
-type CostType = "fixed" | "variable" | "marketing" | "supplier";
 
 interface DreKpis {
   salesCount: number;
@@ -43,12 +43,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
           .eq("store_id", storeId)
           .gte("sold_at", start)
           .lte("sold_at", end),
-        supabase
-          .from("cost_entries")
-          .select("type, amount")
-          .eq("store_id", storeId)
-          .gte("date", localDay(startDate))
-          .lte("date", localDay(endDate)),
+        fetchCostEntries(supabase, storeId, startDate, endDate),
         // Paid traffic is entered per month: every month the period touches counts.
         supabase
           .from("monthly_inputs")
@@ -72,7 +67,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
       const paidSales = sales.filter((s) => s.sale_channel === "paid_traffic");
 
       setError(null);
-      setDre(buildDRE(sales, (costsRes.data ?? []) as { type: CostType; amount: number }[], accessorySales));
+      setDre(buildDRE(sales, periodCosts(costsRes.entries, startDate, endDate), accessorySales));
       setKpis({
         salesCount: sales.length,
         paidSalesCount: paidSales.length,
@@ -104,10 +99,18 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
             <RevenueCard label="Receita" value={dre.revenue} />
             <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
             <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
-            <DreLine label="Custos fixos" value={formatCurrencyBRL(dre.costsByType.fixed)} />
+            <DreLine
+              label="Custos fixos"
+              value={formatCurrencyBRL(dre.costsByType.fixed)}
+              note="Proporcional ao período: 1/30 do mês por dia; mês inteiro conta 100%"
+            />
             <DreLine label="Custos variáveis" value={formatCurrencyBRL(dre.costsByType.variable)} />
             <DreLine label="Marketing" value={formatCurrencyBRL(dre.costsByType.marketing)} />
-            <DreLine label="Fornecedor" value={formatCurrencyBRL(dre.costsByType.supplier)} />
+            <DreLine
+              label="Compras de fornecedor"
+              value={formatCurrencyBRL(dre.costsByType.supplier)}
+              note="Não entra na margem: o custo do aparelho já conta no CMV quando ele é vendido"
+            />
             <DreLine label="Comissões" value={formatCurrencyBRL(dre.commissions)} />
             <NetMarginCard value={dre.netMargin} />
           </div>

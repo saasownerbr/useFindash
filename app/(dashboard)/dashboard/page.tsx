@@ -12,10 +12,11 @@ import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
-import { buildDRE, type DRE } from "@/lib/dre";
+import { fetchCostEntries } from "@/lib/cost-entries";
+import { buildDRE, NO_COSTS, periodCosts, type DRE } from "@/lib/dre";
 import { calculateAverageTicket, calculateCAC, calculateRetentionRate } from "@/lib/finance";
 import { usePeriodFilterStore } from "@/lib/period-filter-store";
-import { previousRange } from "@/lib/period";
+import { firstOfMonth, previousCalendarMonth, previousRange } from "@/lib/period";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 
@@ -29,7 +30,6 @@ const PaymentMethodsChart = dynamic(
   { ssr: false, loading: ChartSkeleton }
 );
 
-type CostType = "fixed" | "variable" | "marketing" | "supplier";
 type Sale = {
   sale_price: number;
   acquisition_cost: number;
@@ -45,16 +45,14 @@ type Sale = {
 const SALE_FIELDS =
   "sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sold_at, customer_id, payment_method";
 
-const MONTH_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "short", timeZone: "UTC" });
+const MONTH_LABEL = new Intl.DateTimeFormat("pt-BR", { month: "short" });
 const TODAY_LABEL = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
+/** Calendar month in local (store) time, so a sale at 22:00 on the 30th stays in its month. */
 function monthKey(date: Date) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function isoDay(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function within(sale: Sale, start: Date, end: Date) {
   const t = new Date(sale.sold_at).getTime();
@@ -65,6 +63,7 @@ interface DashboardData {
   storeName: string;
   dre: DRE;
   previousDre: DRE;
+  previousSalesCount: number;
   goal: number;
   monthRevenue: number;
   revenueByMonth: { month: string; revenue: number }[];
@@ -84,7 +83,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [noStore, setNoStore] = useState(false);
 
-  const { startDate, endDate } = usePeriodFilterStore();
+  const { periodType, startDate, endDate } = usePeriodFilterStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -101,11 +100,17 @@ export default function DashboardPage() {
       const now = new Date();
       const periodEnd = endDate ?? now;
       const periodStart = startDate ?? new Date(now.getFullYear(), now.getMonth(), 1);
-      const prev = previousRange(periodStart, periodEnd);
+      // "Este mês" compares with last month; other periods with the same number of days just before.
+      // Both ends inclusive, like the current period.
+      const sameLength = previousRange(periodStart, periodEnd);
+      const prev =
+        periodType === "month"
+          ? previousCalendarMonth(periodStart)
+          : { start: sameLength.start, end: new Date(sameLength.end.getTime() - 1) };
 
-      const monthStartDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-      const nextMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-      const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+      const monthStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
       const earliest = prev.start < sixMonthsAgo ? prev.start : sixMonthsAgo;
 
       // Everything in one parallel round (Supabase is ~300 ms away from Brazil).
@@ -127,18 +132,13 @@ export default function DashboardPage() {
           .eq("id", storeId)
           .single(),
         supabase.from("sales").select(SALE_FIELDS).eq("store_id", storeId).gte("sold_at", earliest.toISOString()),
-        supabase
-          .from("cost_entries")
-          .select("type, amount, date")
-          .eq("store_id", storeId)
-          .gte("date", isoDay(prev.start))
-          .lte("date", isoDay(periodEnd)),
+        fetchCostEntries(supabase, storeId, prev.start, periodEnd),
         supabase.from("customers").select("id, birthdate").eq("store_id", storeId),
         supabase
           .from("monthly_inputs")
           .select("paid_traffic_investment")
           .eq("store_id", storeId)
-          .eq("month", isoDay(monthStartDate))
+          .eq("month", firstOfMonth(now))
           .maybeSingle(),
         supabase
           .from("sales")
@@ -159,17 +159,14 @@ export default function DashboardPage() {
       }
 
       const sales = (salesRes.data ?? []) as Sale[];
-      const costs = (costsRes.data ?? []) as { type: CostType; amount: number; date: string }[];
       const periodSales = sales.filter((s) => within(s, periodStart, periodEnd));
-      const previousSales = sales.filter((s) => within(s, prev.start, new Date(prev.end.getTime() - 1)));
-      const costsIn = (start: Date, end: Date) =>
-        costs.filter((c) => c.date >= isoDay(start) && c.date <= isoDay(end));
+      const previousSales = sales.filter((s) => within(s, prev.start, prev.end));
 
       const currentMonth = monthKey(now);
       const monthSales = sales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
 
       const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
-        const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5 + i, 1));
+        const date = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
         const key = monthKey(date);
         return {
           month: MONTH_LABEL.format(date).replace(".", ""),
@@ -198,14 +195,16 @@ export default function DashboardPage() {
         if (!lastDeviceSale.has(sale.customer_id)) lastDeviceSale.set(sale.customer_id, sale.sold_at);
       }
       const store = storeRes.data;
-      const monthDre = buildDRE(monthSales, [], accessoriesMonth);
-      const dre = buildDRE(periodSales, costsIn(periodStart, periodEnd), accessoriesNow);
+      const monthDre = buildDRE(monthSales, NO_COSTS, accessoriesMonth);
+      // Same functions and inputs as the DRE (Financeiro), so both agree for any period.
+      const dre = buildDRE(periodSales, periodCosts(costsRes.entries, periodStart, periodEnd), accessoriesNow);
 
       setError(null);
       setData({
         storeName: store.name,
         dre,
-        previousDre: buildDRE(previousSales, costsIn(prev.start, new Date(prev.end.getTime() - 86400000)), accessoriesPrev),
+        previousDre: buildDRE(previousSales, periodCosts(costsRes.entries, prev.start, prev.end), accessoriesPrev),
+        previousSalesCount: previousSales.length,
         goal: Number(store.monthly_revenue_goal ?? 0),
         monthRevenue: monthDre.revenue,
         revenueByMonth,
@@ -231,7 +230,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [startDate, endDate]);
+  }, [periodType, startDate, endDate]);
 
   return (
     <PageContainer>
@@ -256,7 +255,12 @@ export default function DashboardPage() {
           <DashboardSkeleton />
         ) : (
           <>
-            <KpiCards dre={data.dre} previous={data.previousDre} />
+            <KpiCards
+              dre={data.dre}
+              previous={data.previousDre}
+              salesCount={data.salesCount}
+              previousSalesCount={data.previousSalesCount}
+            />
 
             <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-5">
               <div className="lg:col-span-3">
@@ -291,9 +295,9 @@ export default function DashboardPage() {
 function DashboardSkeleton() {
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-[112px] animate-pulse rounded-xl bg-card" />
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-[112px] animate-pulse rounded-xl bg-card last:col-span-2 xl:last:col-span-1" />
         ))}
       </div>
       <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-5">

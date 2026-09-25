@@ -19,15 +19,16 @@ export function presetRange(type: Exclude<PeriodType, "custom">, now = new Date(
   switch (type) {
     case "today":
       return { start: startOfToday, end: endOfToday };
+    // "15 dias" and "90 dias" count today as one of the days.
     case "15days":
-      return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 15), end: endOfToday };
+      return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14), end: endOfToday };
     case "month":
       return {
         start: new Date(now.getFullYear(), now.getMonth(), 1),
         end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
       };
     case "90days":
-      return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90), end: endOfToday };
+      return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89), end: endOfToday };
   }
 }
 

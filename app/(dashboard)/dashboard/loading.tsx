@@ -8,9 +8,9 @@ export default function DashboardLoading() {
         </div>
         <div className="h-8 w-80 max-w-full animate-pulse rounded-full bg-card" />
       </div>
-      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-[112px] animate-pulse rounded-xl bg-card" />
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-[112px] animate-pulse rounded-xl bg-card last:col-span-2 xl:last:col-span-1" />
         ))}
       </div>
       <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-5">

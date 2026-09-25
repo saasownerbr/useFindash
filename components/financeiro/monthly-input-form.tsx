@@ -7,7 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MonthPicker } from "@/components/ui/month-picker";
+import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import { monthlyInputSchema, type MonthlyInputInput } from "@/lib/validation/monthly-input";
@@ -23,7 +23,7 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
   } = useForm<MonthlyInputInput>({
     resolver: zodResolver(monthlyInputSchema),
     defaultValues: {
-      month: new Date().toISOString().slice(0, 7),
+      month: currentMonthValue(),
       paid_traffic_investment: 0,
       leads_instagram: 0,
       leads_whatsapp: 0,
@@ -34,7 +34,7 @@ export function MonthlyInputForm({ storeId }: { storeId: string | null }) {
     let cancelled = false;
     async function loadExisting() {
       if (!storeId) return;
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      const currentMonth = currentMonthValue();
       const supabase = createClient();
       const { data } = await supabase
         .from("monthly_inputs")
