@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { SettingsCard } from "@/components/configuracoes/settings-card";
+import { SubscriptionSection } from "@/components/configuracoes/subscription-section";
 import { createClient } from "@/lib/supabase/client";
 import { applyTheme, currentTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -26,24 +27,12 @@ export function AccountCard() {
 
   return (
     <SettingsCard title="Minha Conta">
-      <dl className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <dt className="text-xs text-muted-foreground">Email</dt>
-          <dd className="mt-1 truncate text-sm text-[#F0F0F0]">{email ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Status da conta</dt>
-          <dd className="mt-1">
-            <span className="inline-flex rounded-md bg-[rgba(16,185,129,0.1)] px-2 py-0.5 text-xs font-medium text-[#10B981]">
-              Ativo
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Data de renovação</dt>
-          <dd className="mt-1 text-sm text-[#666666]">Não configurado</dd>
-        </div>
-      </dl>
+      <div>
+        <p className="text-xs text-muted-foreground">Email</p>
+        <p className="mt-1 truncate text-sm text-[#F0F0F0]">{email ?? "—"}</p>
+      </div>
+
+      <SubscriptionSection />
 
       <div className="mt-5 flex items-center justify-between border-t border-[#242424] pt-4">
         <div>

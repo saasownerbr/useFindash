@@ -14,6 +14,10 @@ describe("middleware matcher", () => {
     expect(matches("/api/cron/update-stock-days")).toBe(false);
   });
 
+  it("does not intercept webhooks (they auth via their own token header)", () => {
+    expect(matches("/api/webhooks/asaas")).toBe(false);
+  });
+
   it("still intercepts normal app and other api routes", () => {
     expect(matches("/dashboard")).toBe(true);
     expect(matches("/api/sellers")).toBe(true);

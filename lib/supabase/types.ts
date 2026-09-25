@@ -260,6 +260,84 @@ export type Database = {
           },
         ]
       }
+      payment_events: {
+        Row: {
+          asaas_event_id: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          status: string | null
+          subscription_id: string | null
+          value: number | null
+        }
+        Insert: {
+          asaas_event_id?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          asaas_event_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          asaas_billing_type: string | null
+          created_at: string | null
+          description: string | null
+          duration_months: number
+          id: string
+          interval: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+        }
+        Insert: {
+          asaas_billing_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_months: number
+          id?: string
+          interval?: string | null
+          is_active?: boolean | null
+          name: string
+          price: number
+        }
+        Update: {
+          asaas_billing_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_months?: number
+          id?: string
+          interval?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+        }
+        Relationships: [
+        ]
+      }
       products: {
         Row: {
           acquisition_cost: number
@@ -492,6 +570,69 @@ export type Database = {
             foreignKeyName: "store_users_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          asaas_customer_id: string | null
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string | null
+          status: string | null
+          store_id: string | null
+          trial_end: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },

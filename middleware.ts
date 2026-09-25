@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { ACCESS_CACHE_MS, ACCESS_COOKIE, createAccessCookie, hasCachedAccess } from "@/lib/access-cookie";
 import { resolveAuthRedirect } from "@/lib/auth/resolve-redirect";
+import { checkAccess } from "@/lib/subscription";
+import { fullAccessUntil, requiresAccessCheck } from "@/lib/subscription-access";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const HAS_STORE_COOKIE = "uf_has_store";
@@ -37,7 +40,28 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const redirectTo = resolveAuthRedirect(request.nextUrl.pathname, !!userId, hasStore);
+  let redirectTo = resolveAuthRedirect(request.nextUrl.pathname, !!userId, hasStore);
+
+  // Stores without an active trial or plan only reach /planos. A cached full-access cookie skips the query.
+  let accessCookie: { value: string; maxAge: number } | null = null;
+  if (!redirectTo && userId && hasStore && requiresAccessCheck(request.nextUrl.pathname)) {
+    const cached = await hasCachedAccess(request.cookies.get(ACCESS_COOKIE)?.value, userId);
+    if (!cached) {
+      const access = await checkAccess(userId, supabase);
+      if (access.access === "blocked") {
+        redirectTo = "/planos";
+      } else {
+        const now = Date.now();
+        const until = Math.min(now + ACCESS_CACHE_MS, fullAccessUntil(access) ?? now + ACCESS_CACHE_MS);
+        if (access.access === "full" && until > now) {
+          accessCookie = {
+            value: await createAccessCookie(userId, until),
+            maxAge: Math.ceil((until - now) / 1000),
+          };
+        }
+      }
+    }
+  }
 
   let result = response;
   if (redirectTo) {
@@ -59,6 +83,16 @@ export async function middleware(request: NextRequest) {
     });
   }
 
+  if (accessCookie) {
+    result.cookies.set(ACCESS_COOKIE, accessCookie.value, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+      maxAge: accessCookie.maxAge,
+    });
+  }
+
   return result;
 }
 
@@ -66,6 +100,7 @@ export const config = {
   // Cron routes authenticate via the CRON_SECRET header, not a Supabase
   // session — Vercel's scheduler never has a logged-in user, so this
   // middleware must not redirect it to /login before the route handler's
-  // own verifyCronSecret() check ever runs.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|site.webmanifest|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // own verifyCronSecret() check ever runs. Webhooks (Asaas) authenticate
+  // with their own token header for the same reason.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|site.webmanifest|api/cron|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

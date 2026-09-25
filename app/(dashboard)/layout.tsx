@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { SubscriptionBanner } from "@/components/assinatura/subscription-banner";
 import { MobileNav } from "@/components/mobile-nav";
 import { Sidebar } from "@/components/sidebar";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,6 +12,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
+      <div className="transition-[margin-left] duration-[250ms] ease-in-out md:ml-[var(--sidebar-w)]">
+        <SubscriptionBanner />
+      </div>
       {/* Same 250ms ease-in-out as the sidebar's width, so the content moves with it. */}
       <main className="min-w-0 p-3 pb-24 transition-[margin-left] duration-[250ms] ease-in-out md:ml-[var(--sidebar-w)] md:p-8">
         {children}
