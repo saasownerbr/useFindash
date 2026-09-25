@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { ModelCombobox } from "@/components/ui/model-combobox";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/supabase/types";
 import { ACCESSORY_CATEGORIES, accessorySchema, type AccessoryInput } from "@/lib/validation/accessory";
@@ -34,6 +34,7 @@ const DEFAULT_VALUES: AccessoryInput = {
 export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, onSaved }: AccessoryFormDialogProps) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -42,6 +43,27 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
     resolver: zodResolver(accessorySchema),
     defaultValues: DEFAULT_VALUES,
   });
+
+  // Suggestions: the preset list plus any category the store has typed before.
+  const [categories, setCategories] = useState<string[]>([...ACCESSORY_CATEGORIES]);
+
+  useEffect(() => {
+    if (!open || !storeId) return;
+    let cancelled = false;
+    createClient()
+      .from("accessories")
+      .select("category")
+      .eq("store_id", storeId)
+      .not("category", "is", null)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const custom = (data ?? []).map((row) => row.category?.trim() ?? "").filter(Boolean);
+        setCategories(Array.from(new Set([...ACCESSORY_CATEGORIES, ...custom])));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, storeId]);
 
   useEffect(() => {
     if (!open) return;
@@ -59,11 +81,6 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
     }
   }, [open, accessory, reset]);
 
-  const legacyCategory =
-    accessory?.category && !(ACCESSORY_CATEGORIES as readonly string[]).includes(accessory.category)
-      ? accessory.category
-      : null;
-
   async function onSubmit(data: AccessoryInput) {
     if (!storeId) {
       setError("root", { message: "Não foi possível identificar a loja. Recarregue a página." });
@@ -74,7 +91,8 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
 
     const payload = {
       name: data.name,
-      category: data.category || null,
+      // Free text: whatever was typed is saved as is, suggestion or not.
+      category: data.category?.trim() || null,
       quantity: data.quantity,
       cost: data.cost,
       sale_price: data.salePrice,
@@ -109,16 +127,19 @@ export function AccessoryFormDialog({ open, onOpenChange, storeId, accessory, on
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="category">Categoria (opcional)</Label>
-            <Select id="category" {...register("category")}>
-              <option value="">Sem categoria</option>
-              {ACCESSORY_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-              {/* Keeps a category typed before the fixed list existed. */}
-              {legacyCategory && <option value={legacyCategory}>{legacyCategory}</option>}
-            </Select>
+            <Controller
+              control={control}
+              name="category"
+              render={({ field }) => (
+                <ModelCombobox
+                  id="category"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  models={categories}
+                  placeholder="Escolha uma sugestão ou digite a sua"
+                />
+              )}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

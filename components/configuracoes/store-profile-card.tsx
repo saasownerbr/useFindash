@@ -54,9 +54,6 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
           <Input id="store-name" {...register("name")} />
           {errors.name && <span className="text-xs text-danger">{errors.name.message}</span>}
         </div>
-        <p className="self-center text-xs text-muted-foreground">
-          A meta de faturamento agora fica em Financeiro › Meta.
-        </p>
         <div className="flex justify-end sm:col-span-2">
           <Button type="submit" disabled={isSubmitting || !storeId}>
             {isSubmitting ? "Salvando..." : "Salvar"}
