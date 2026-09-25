@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateAccess, requiresAccessCheck } from "@/lib/subscription-access";
+import { evaluateAccess, fullAccessUntil, isOwnerEmail, requiresAccessCheck } from "@/lib/subscription-access";
 
 const NOW = new Date("2026-09-25T12:00:00Z");
 const days = (n: number) => new Date(NOW.getTime() + n * 86_400_000).toISOString();
@@ -60,5 +60,18 @@ describe("requiresAccessCheck", () => {
     expect(requiresAccessCheck("/planos")).toBe(false);
     expect(requiresAccessCheck("/api/subscription/monthly")).toBe(false);
     expect(requiresAccessCheck("/login")).toBe(false);
+  });
+});
+
+describe("owner access", () => {
+  it("recognizes the owner email regardless of case or spaces", () => {
+    expect(isOwnerEmail("luanuliana8@gmail.com")).toBe(true);
+    expect(isOwnerEmail(" LuanUliana8@Gmail.com ")).toBe(true);
+    expect(isOwnerEmail("someone@gmail.com")).toBe(false);
+    expect(isOwnerEmail(null)).toBe(false);
+  });
+
+  it("never caches the owner's access past the normal window", () => {
+    expect(fullAccessUntil({ access: "full", type: "owner" })).toBeNull();
   });
 });

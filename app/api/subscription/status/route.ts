@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { loadSubscription } from "@/lib/subscription";
-import { evaluateAccess } from "@/lib/subscription-access";
+import { evaluateAccess, isOwnerEmail } from "@/lib/subscription-access";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,6 @@ export async function GET() {
     plan: sub?.plans ? { name: sub.plans.name, interval: sub.plans.interval } : null,
     trial_end: sub?.trial_end ?? null,
     current_period_end: sub?.current_period_end ?? null,
-    access: evaluateAccess(sub),
+    access: isOwnerEmail(user.email) ? { access: "full", type: "owner" } : evaluateAccess(sub),
   });
 }

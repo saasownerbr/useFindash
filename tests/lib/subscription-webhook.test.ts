@@ -61,3 +61,13 @@ describe("subscriptionUpdateForEvent", () => {
     expect(subscriptionUpdateForEvent({ event: "PAYMENT_CREATED", payment: { id: "p" } }, base, "monthly", NOW)).toBeNull();
   });
 });
+
+describe("checkAccess", () => {
+  it("gives the owner full access without reading the subscription", async () => {
+    const { checkAccess } = await import("@/lib/subscription");
+    const from = vi.fn();
+    const supabase = { from } as never;
+    expect(await checkAccess("u1", supabase, "luanuliana8@gmail.com")).toEqual({ access: "full", type: "owner" });
+    expect(from).not.toHaveBeenCalled();
+  });
+});

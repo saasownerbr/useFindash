@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  const { response, userId, supabase } = await updateSession(request);
+  const { response, userId, email, supabase } = await updateSession(request);
 
   // Once a user has a store it stays that way, so remember it in a cookie
   // instead of querying store_users on every navigation. The cookie only
@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
   if (!redirectTo && userId && hasStore && requiresAccessCheck(request.nextUrl.pathname)) {
     const cached = await hasCachedAccess(request.cookies.get(ACCESS_COOKIE)?.value, userId);
     if (!cached) {
-      const access = await checkAccess(userId, supabase);
+      const access = await checkAccess(userId, supabase, email);
       if (access.access === "blocked") {
         redirectTo = "/planos";
       } else {

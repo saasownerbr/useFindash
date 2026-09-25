@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { asaasFetch, brazilDate, currentSubscriptionPayment, findOrCreateCustomer, type AsaasPayment } from "@/lib/asaas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
-import { evaluateAccess, type Access } from "@/lib/subscription-access";
+import { evaluateAccess, isOwnerEmail, type Access } from "@/lib/subscription-access";
 
 type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
 export type PlanInterval = "monthly" | "annual";
@@ -33,7 +33,17 @@ export async function loadSubscription(
 
 export type StoreSubscription = Subscription & { plans: { name: string; interval: string | null } | null };
 
-export async function checkAccess(userId: string, supabase?: SupabaseClient<Database>): Promise<Access> {
+/**
+ * Access for a user. Pass the email when it is already known (the middleware reads it from the verified JWT);
+ * otherwise it is looked up with the given client. The owner email never depends on subscription data.
+ */
+export async function checkAccess(
+  userId: string,
+  supabase?: SupabaseClient<Database>,
+  email?: string | null
+): Promise<Access> {
+  const userEmail = email !== undefined ? email : supabase ? (await supabase.auth.getUser()).data.user?.email : null;
+  if (isOwnerEmail(userEmail)) return { access: "full", type: "owner" };
   return evaluateAccess(await loadSubscription(userId, supabase));
 }
 
@@ -51,6 +61,7 @@ export async function startCheckout(
 ): Promise<string> {
   if (!process.env.ASAAS_API_KEY) throw new CheckoutError("Pagamentos indisponíveis no momento", 503);
   if (!user.email) throw new CheckoutError("Sua conta não tem email", 400);
+  if (isOwnerEmail(user.email)) throw new CheckoutError("Esta é a conta proprietária: o acesso já é permanente", 409);
 
   const { data: membership } = await supabase
     .from("store_users")

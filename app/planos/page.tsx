@@ -75,9 +75,12 @@ export default function PlanosPage() {
           <PlanCard
             featured
             badge="Melhor custo"
-            price="R$ 2.364"
+            price="R$ 1.891,20"
             period="/ano"
-            notes={["Equivale a R$ 197/mês", "Parcele em até 12x no cartão"]}
+            discount="20% OFF"
+            notes={["Equivale a R$ 157,60/mês"]}
+            compareAt="De R$ 2.364,00"
+            footnote="Parcele em até 12x no cartão"
             cta="Assinar anualmente"
             loading={loading === "annual"}
             disabled={loading !== null}
@@ -107,6 +110,9 @@ function PlanCard({
   price,
   period,
   notes,
+  discount,
+  compareAt,
+  footnote,
   cta,
   loading,
   disabled,
@@ -117,6 +123,11 @@ function PlanCard({
   price: string;
   period: string;
   notes?: string[];
+  /** Small red pill beside the price. */
+  discount?: string;
+  /** Struck-through original price. */
+  compareAt?: string;
+  footnote?: string;
   cta: string;
   loading: boolean;
   disabled: boolean;
@@ -138,12 +149,21 @@ function PlanCard({
         {badge}
       </span>
 
-      <p className="mt-6 flex items-baseline gap-1">
-        <span className="text-[48px] font-bold leading-none text-foreground">{price}</span>
-        <span className="text-[20px] text-[#9CA3AF]">{period}</span>
+      <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="flex items-baseline gap-1">
+          <span className="text-[40px] font-bold leading-none text-foreground sm:text-[48px]">{price}</span>
+          <span className="text-[20px] text-[#9CA3AF]">{period}</span>
+        </span>
+        {discount && (
+          <span className="self-center rounded-[999px] bg-[#EF4444] px-2 py-0.5 text-[11px] font-bold leading-4 text-[#FFFFFF]">
+            {discount}
+          </span>
+        )}
       </p>
-      <div className="mt-3 min-h-[44px] space-y-1 text-[13px] text-muted-foreground">
+      <div className="mt-3 min-h-[66px] space-y-1 text-[13px] text-muted-foreground">
         {notes?.map((note) => <p key={note}>{note}</p>)}
+        {compareAt && <p className="text-[#6B7280] line-through">{compareAt}</p>}
+        {footnote && <p>{footnote}</p>}
       </div>
 
       <Button

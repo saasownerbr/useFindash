@@ -35,6 +35,8 @@ export function SubscriptionSection() {
         }
       />
     );
+  } else if (status.access.access === "full" && status.access.type === "owner") {
+    body = <Row title="Conta proprietária" detail="Acesso completo e permanente, sem cobrança." action={null} />;
   } else if (status.access.access === "full" && status.access.type === "trial") {
     const days = status.access.daysLeft === 1 ? "1 dia restante" : `${status.access.daysLeft} dias restantes`;
     body = (

@@ -10,11 +10,19 @@ export interface SubscriptionSnapshot {
 }
 
 export type Access =
+  | { access: "full"; type: "owner" }
   | { access: "full"; type: "trial"; daysLeft: number; until: string }
   | { access: "full"; type: "paid"; until: string | null }
   | { access: "warning"; overdueDays: number }
   | { access: "limited"; overdueDays: number }
   | { access: "blocked" };
+
+/** The SaaS owner: always full access, whatever the database says. */
+export const OWNER_EMAIL = "luanuliana8@gmail.com";
+
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  return email?.trim().toLowerCase() === OWNER_EMAIL;
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Overdue up to this many days keeps full access with a warning; after it, access is limited. */
@@ -70,7 +78,7 @@ export function evaluateAccess(sub: SubscriptionSnapshot | null, now: Date = new
 
 /** Until when a "full" result can be trusted without asking the database again. */
 export function fullAccessUntil(result: Access): number | null {
-  if (result.access !== "full") return null;
+  if (result.access !== "full" || result.type === "owner") return null;
   return result.until ? new Date(result.until).getTime() : null;
 }
 
