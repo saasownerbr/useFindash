@@ -17,7 +17,7 @@ import { getClientStoreId } from "@/lib/supabase/client-store";
 import { isInUpgradeWindow } from "@/lib/customer-alerts";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
-import { formatPhone } from "@/lib/phone";
+import { CustomerPhone } from "@/components/ui/customer-phone";
 
 type Customer = Tables<"customers">;
 
@@ -245,7 +245,9 @@ export function CustomerList() {
                     onClick={() => router.push(`/clientes/${customer.id}`)}
                   >
                     <td className="rt-key px-4 py-3 font-medium text-foreground">{customer.name}</td>
-                    <td data-label="WhatsApp" className="px-4 py-3">{formatPhone(customer.whatsapp)}</td>
+                    <td data-label="WhatsApp" className="px-4 py-3">
+                      <CustomerPhone phone={customer.whatsapp} name={customer.name} />
+                    </td>
                     <td data-label="Canal" className="px-4 py-3">
                       <ChannelBadge channel={customer.acquisition_channel} />
                     </td>

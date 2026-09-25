@@ -13,6 +13,7 @@ import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import type { Tables } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { formatPhone } from "@/lib/phone";
+import { CustomerPhone } from "@/components/ui/customer-phone";
 
 type Customer = Tables<"customers">;
 type CustomerSale = { sold_at: string; products: { model: string } | null };
@@ -62,7 +63,7 @@ function CustomerPreview({
         </span>
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold text-foreground">{customer.name}</p>
-          <p className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</p>
+          <CustomerPhone phone={customer.whatsapp} name={customer.name} className="text-sm text-muted-foreground" />
         </div>
       </div>
 

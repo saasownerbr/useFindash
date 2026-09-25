@@ -12,6 +12,7 @@ import { formatCurrencyBRL } from "@/lib/finance";
 import type { AlertSettingsInput } from "@/lib/validation/store-settings";
 import { whatsappLink } from "@/lib/whatsapp";
 import { formatPhone } from "@/lib/phone";
+import { CustomerPhone } from "@/components/ui/customer-phone";
 
 type Customer = { id: string; name: string; whatsapp: string; birthdate: string | null };
 type DeviceSale = { customer_id: string; sold_at: string; products: { model: string } | null };
@@ -206,7 +207,9 @@ export function StockAlerts() {
         {lists.upgrade.map(({ customer, sale }) => (
           <ExpandableRow key={customer.id} className={ROW}>
             <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{formatPhone(customer.whatsapp)}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>
+              <CustomerPhone phone={customer.whatsapp} name={customer.name} />
+            </td>
             <td data-label="Modelo comprado" className={CELL}>{sale.products?.model ?? "—"}</td>
             <td data-label="Data da compra" className={`${CELL} text-muted-foreground`}>{DATE.format(new Date(sale.sold_at))}</td>
             <td data-label="Meses desde a compra" className={`${CELL} tabular-nums`}>{monthsSince(sale.sold_at)}</td>
@@ -230,7 +233,9 @@ export function StockAlerts() {
         {lists.birthdays.map(({ customer, daysLeft }) => (
           <ExpandableRow key={customer.id} className={ROW}>
             <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{formatPhone(customer.whatsapp)}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>
+              <CustomerPhone phone={customer.whatsapp} name={customer.name} />
+            </td>
             <td data-label="Aniversário" className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
             <td data-label="Dias restantes" className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
             <td className={`rt-key ${CELL} text-right`}>
