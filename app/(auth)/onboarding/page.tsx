@@ -18,10 +18,7 @@ export default function OnboardingPage() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<OnboardingInput>({
-    resolver: zodResolver(onboardingSchema),
-    defaultValues: { monthlyRevenueGoal: 0 },
-  });
+  } = useForm<OnboardingInput>({ resolver: zodResolver(onboardingSchema) });
 
   async function onSubmit(data: OnboardingInput) {
     const supabase = createClient();
@@ -37,7 +34,7 @@ export default function OnboardingPage() {
     const { error } = await supabase.rpc("create_store_with_owner", {
       store_name: data.storeName,
       owner_name: data.ownerName,
-      monthly_goal: data.monthlyRevenueGoal,
+      monthly_goal: 0,
       store_cnpj: data.cnpj,
     });
 
@@ -71,16 +68,9 @@ export default function OnboardingPage() {
             {errors.storeName && <span className="text-xs text-danger">{errors.storeName.message}</span>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="cnpj">CNPJ (opcional)</Label>
-            <Input id="cnpj" placeholder="00.000.000/0000-00" {...register("cnpj")} />
+            <Label htmlFor="cnpj">CPF ou CNPJ (opcional)</Label>
+            <Input id="cnpj" inputMode="numeric" placeholder="Digite o CPF ou o CNPJ" {...register("cnpj")} />
             {errors.cnpj && <span className="text-xs text-danger">{errors.cnpj.message}</span>}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="monthlyRevenueGoal">Meta de faturamento mensal (R$)</Label>
-            <Input id="monthlyRevenueGoal" type="number" min={0} step="0.01" {...register("monthlyRevenueGoal")} />
-            {errors.monthlyRevenueGoal && (
-              <span className="text-xs text-danger">{errors.monthlyRevenueGoal.message}</span>
-            )}
           </div>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Criando..." : "Criar loja"}

@@ -67,6 +67,8 @@ export default function PlanosPage() {
             badge="Flexibilidade total"
             price="R$ 197"
             period="/mês"
+            notes={["Renovação automática todo mês", "Cobrança no cartão de crédito"]}
+            footnote="Sem fidelidade: cancele quando quiser"
             cta="Assinar mensalmente"
             loading={loading === "monthly"}
             disabled={loading !== null}

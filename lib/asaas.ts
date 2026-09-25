@@ -1,13 +1,30 @@
 // Server-only Asaas API client. Docs: https://docs.asaas.com/reference
 
-const BASE_URL =
-  process.env.ASAAS_ENVIRONMENT === "production" ? "https://api.asaas.com/api/v3" : "https://sandbox.asaas.com/api/v3";
+const PRODUCTION_URL = "https://api.asaas.com/api/v3";
+const SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
+
+/** The key as pasted in the dashboard, without stray quotes or whitespace. */
+export function asaasApiKey(raw: string | undefined = process.env.ASAAS_API_KEY): string {
+  return (raw ?? "").trim().replace(/^["']|["']$/g, "");
+}
+
+/**
+ * Asaas keys carry their environment ($aact_prod_… or $aact_hmlg_…), and a key sent to the other environment fails
+ * with invalid_environment. So the key decides; ASAAS_ENVIRONMENT only matters for keys without that marker.
+ */
+export function asaasBaseUrl(key: string = asaasApiKey(), environment = process.env.ASAAS_ENVIRONMENT): string {
+  if (key.startsWith("$aact_prod_")) return PRODUCTION_URL;
+  if (key.startsWith("$aact_hmlg_")) return SANDBOX_URL;
+  const env = (environment ?? "").trim().replace(/^["']|["']$/g, "").toLowerCase();
+  return ["production", "prod", "producao", "produção"].includes(env) ? PRODUCTION_URL : SANDBOX_URL;
+}
 
 export async function asaasFetch<T = unknown>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const key = asaasApiKey();
+  const res = await fetch(`${asaasBaseUrl(key)}${path}`, {
     ...options,
     headers: {
-      access_token: process.env.ASAAS_API_KEY!,
+      access_token: key,
       "Content-Type": "application/json",
       // Asaas rejects requests without a User-Agent.
       "User-Agent": "useFindash",
@@ -33,21 +50,31 @@ interface AsaasList<T> {
   data: T[];
 }
 
-/** Reuses the Asaas customer with this email, or creates one. */
-export async function findOrCreateCustomer(input: { name: string; email: string; cpfCnpj?: string | null }) {
-  const found = await asaasFetch<AsaasList<{ id: string }>>(`/customers?email=${encodeURIComponent(input.email)}`);
-  if (found.data[0]) return found.data[0].id;
+/**
+ * The Asaas customer to bill: the one already linked to the store, else the one with this email, else a new one.
+ * Asaas only charges customers with a CPF/CNPJ, so an existing customer gets the store's document too.
+ */
+export async function ensureCustomer(input: {
+  customerId?: string | null;
+  name: string;
+  email: string;
+  cpfCnpj: string;
+}): Promise<string> {
+  const body = JSON.stringify({ name: input.name, email: input.email, cpfCnpj: input.cpfCnpj.replace(/\D/g, "") });
 
-  const created = await asaasFetch<{ id: string }>("/customers", {
-    method: "POST",
-    body: JSON.stringify({
-      name: input.name,
-      email: input.email,
-      cpfCnpj: input.cpfCnpj?.replace(/\D/g, "") || undefined,
-      notificationDisabled: false,
-    }),
-  });
-  return created.id;
+  let id = input.customerId ?? null;
+  if (!id) {
+    const found = await asaasFetch<AsaasList<{ id: string }>>(`/customers?email=${encodeURIComponent(input.email)}`);
+    id = found.data[0]?.id ?? null;
+  }
+  if (id) {
+    // Current docs update with PUT; older accounts of the v3 API only accept POST on the same path.
+    await asaasFetch(`/customers/${id}`, { method: "PUT", body }).catch(() =>
+      asaasFetch(`/customers/${id}`, { method: "POST", body })
+    );
+    return id;
+  }
+  return (await asaasFetch<{ id: string }>("/customers", { method: "POST", body })).id;
 }
 
 /** The charge the customer should pay now: the oldest overdue/pending one, else the latest. */

@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+import { optionalCpfCnpjField } from "@/lib/validation/cnpj";
+
 // "Minha Loja" card in Configurações.
 export const storeProfileSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome da loja"),
+  cnpj: optionalCpfCnpjField,
 });
 
 export type StoreProfileInput = z.infer<typeof storeProfileSchema>;

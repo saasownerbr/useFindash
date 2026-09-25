@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { asaasFetch, brazilDate, currentSubscriptionPayment, findOrCreateCustomer, type AsaasPayment } from "@/lib/asaas";
+import { asaasFetch, brazilDate, currentSubscriptionPayment, ensureCustomer, type AsaasPayment } from "@/lib/asaas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 import { evaluateAccess, isOwnerEmail, type Access } from "@/lib/subscription-access";
+import { isValidCpfCnpj } from "@/lib/validation/cnpj";
 
 type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
 export type PlanInterval = "monthly" | "annual";
@@ -88,9 +89,15 @@ export async function startCheckout(
   }
 
   const store = membership.stores as { name: string; cnpj: string | null } | null;
-  const customerId =
-    existing?.asaas_customer_id ??
-    (await findOrCreateCustomer({ name: store?.name ?? user.email, email: user.email, cpfCnpj: store?.cnpj }));
+  if (!store?.cnpj || !isValidCpfCnpj(store.cnpj)) {
+    throw new CheckoutError("Informe o CPF ou CNPJ da loja em Configurações > Minha Loja para assinar.", 400);
+  }
+  const customerId = await ensureCustomer({
+    customerId: existing?.asaas_customer_id,
+    name: store.name,
+    email: user.email,
+    cpfCnpj: store.cnpj,
+  });
 
   // A checkout started earlier and abandoned would keep charging (monthly) or stay open (annual): drop it first.
   await cancelOpenCharges(existing);

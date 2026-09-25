@@ -1,9 +1,12 @@
 "use client";
 
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { SettingsCard } from "@/components/configuracoes/settings-card";
 import { SubscriptionSection } from "@/components/configuracoes/subscription-section";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { applyTheme, currentTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -11,6 +14,8 @@ import { cn } from "@/lib/utils";
 export function AccountCard() {
   const [email, setEmail] = useState<string | null>(null);
   const [light, setLight] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setLight(currentTheme() === "light");
@@ -18,6 +23,13 @@ export function AccountCard() {
       .auth.getSession()
       .then(({ data }) => setEmail(data.session?.user.email ?? null));
   }, []);
+
+  async function signOut() {
+    setSigningOut(true);
+    await createClient().auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
 
   function toggleTheme() {
     const next = !light;
@@ -59,6 +71,17 @@ export function AccountCard() {
             )}
           />
         </button>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#242424] pt-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">Sair da conta</p>
+          <p className="text-xs text-muted-foreground">Encerra a sessão neste navegador.</p>
+        </div>
+        <Button variant="danger" size="sm" onClick={signOut} disabled={signingOut}>
+          <LogOut className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+          {signingOut ? "Saindo..." : "Sair"}
+        </Button>
       </div>
     </SettingsCard>
   );

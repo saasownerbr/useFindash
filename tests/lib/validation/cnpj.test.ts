@@ -25,3 +25,15 @@ describe("isValidCnpjFormat", () => {
     expect(isValidCnpjFormat("123456780001955")).toBe(false);
   });
 });
+
+describe("isValidCpfCnpj", () => {
+  it("checks CPF and CNPJ check digits", async () => {
+    const { isValidCpfCnpj, formatCpfCnpj } = await import("@/lib/validation/cnpj");
+    expect(isValidCpfCnpj("529.982.247-25")).toBe(true);
+    expect(isValidCpfCnpj("11.222.333/0001-81")).toBe(true);
+    expect(isValidCpfCnpj("111.111.111-11")).toBe(false);
+    expect(isValidCpfCnpj("11.222.333/0001-82")).toBe(false);
+    expect(formatCpfCnpj("52998224725")).toBe("529.982.247-25");
+    expect(formatCpfCnpj("11222333000181")).toBe("11.222.333/0001-81");
+  });
+});
