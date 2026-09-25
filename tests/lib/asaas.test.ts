@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { asaasApiKey, asaasBaseUrl } from "@/lib/asaas";
 
-const PROD = "https://api.asaas.com/api/v3";
+const PROD = "https://api.asaas.com/v3";
 const SANDBOX = "https://sandbox.asaas.com/api/v3";
 
 describe("asaasBaseUrl", () => {

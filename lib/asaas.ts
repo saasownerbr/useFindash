@@ -1,6 +1,7 @@
 // Server-only Asaas API client. Docs: https://docs.asaas.com/reference
 
-const PRODUCTION_URL = "https://api.asaas.com/api/v3";
+// Production has no /api segment (api.asaas.com/api/v3 answers 404); the sandbox keeps it.
+const PRODUCTION_URL = "https://api.asaas.com/v3";
 const SANDBOX_URL = "https://sandbox.asaas.com/api/v3";
 
 /** The key as pasted in the dashboard, without stray quotes or whitespace. */
@@ -32,7 +33,10 @@ export async function asaasFetch<T = unknown>(path: string, options?: RequestIni
     },
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    // Method, path and status make an empty-bodied failure (401/404) readable in the logs. No key in here.
+    throw new Error(`Asaas ${options?.method ?? "GET"} ${path.split("?")[0]} -> ${res.status}: ${await res.text()}`);
+  }
   return res.json();
 }
 
