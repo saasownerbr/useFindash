@@ -33,7 +33,7 @@ describe("computeScore", () => {
     expect(computeScore({ ...perfect, service: "third_party" }).score).toBe(90);
   });
 
-  it("never goes below zero", () => {
+  it("goes negative when serious defects pile up", () => {
     const worst: CheckupAnswers = {
       screen: "cracked_unusable",
       battery: "below_80",
@@ -43,7 +43,40 @@ describe("computeScore", () => {
       icloud: "removed",
       service: "third_party",
     };
-    expect(computeScore(worst).score).toBe(0);
+    // -15 -10 -20 -15 -20 - 5 of third-party parts
+    expect(computeScore(worst).score).toBe(-85);
+    expect(computeScore(worst).critical).toBe(true);
+  });
+
+  it("subtracts points for each serious defect", () => {
+    expect(computeScore({ ...perfect, screen: "cracked_unusable" }).score).toBe(50);
+    expect(computeScore({ ...perfect, battery: "below_80" }).score).toBe(60);
+    expect(computeScore({ ...perfect, biometrics: "broken" }).score).toBe(55);
+    expect(computeScore({ ...perfect, camera: "broken" }).score).toBe(68);
+    expect(computeScore({ ...perfect, body: "heavy_dent" }).score).toBe(67);
+  });
+
+  it("scores a flawless device with a heavy dent at 67, grade B", () => {
+    // 30 screen + 25 battery + 20 biometrics + 12 cameras - 20 heavy dent
+    const result = computeScore({ ...perfect, body: "heavy_dent" });
+    expect(result.score).toBe(67);
+    expect(gradeFromScore(result.score)).toBe("B");
+    expect(result.critical).toBe(false);
+  });
+
+  it("does not flag critical damage before the checkup is finished", () => {
+    expect(computeScore(EMPTY_ANSWERS).critical).toBe(false);
+  });
+
+  it("takes 50 points off an active iCloud account on top of blocking it", () => {
+    const result = computeScore({ ...perfect, icloud: "active" });
+    expect(result.score).toBe(45);
+    expect(result.blocked).toBe(true);
+  });
+
+  it("flags critical damage below 10 points", () => {
+    expect(computeScore({ ...perfect, screen: "cracked_unusable", biometrics: "broken", body: "heavy_dent" }).critical).toBe(true);
+    expect(computeScore(perfect).critical).toBe(false);
   });
 
   it("reports partial progress and iCloud blocking", () => {
@@ -65,6 +98,7 @@ describe("gradeFromScore", () => {
     expect(gradeFromScore(54)).toBe("C");
     expect(gradeFromScore(35)).toBe("C");
     expect(gradeFromScore(34)).toBe("sucata");
+    expect(gradeFromScore(-40)).toBe("sucata");
   });
 });
 
@@ -127,7 +161,7 @@ describe("computePricing", () => {
       referencePrice: 5000,
       grade: "sucata",
       multipliers: DEFAULT_MULTIPLIERS,
-      repairTotal: 0,
+      repairTotal: 800,
       minMargin: 0.2,
       offerPrice: null,
     });

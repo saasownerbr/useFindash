@@ -18,6 +18,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** Items sharing a group sit together; the sidebar draws a separator between groups. */
   group: "overview" | "operation" | "management" | "account";
+  /** Shown but not navigable (e.g. a module outside the store's plan). */
+  disabled?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [

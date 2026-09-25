@@ -29,6 +29,18 @@ export function MobileNav() {
       <div className="flex min-w-max flex-row items-center">
         {NAV_ITEMS.map((item) => {
           const active = pendingHref ? pendingHref === item.href : isActiveRoute(pathname, item.href);
+          if (item.disabled) {
+            return (
+              <span
+                key={item.href}
+                aria-disabled="true"
+                className="flex min-h-[56px] min-w-[56px] cursor-not-allowed flex-col items-center justify-center gap-1 px-3 text-[#404040]"
+              >
+                <item.icon className="h-[22px] w-[22px]" aria-hidden />
+                <span className="whitespace-nowrap text-[10px] font-normal">{item.label}</span>
+              </span>
+            );
+          }
           return (
             <Link
               key={item.href}
@@ -41,12 +53,12 @@ export function MobileNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 // 56px minimum touch area; only the color marks the active module.
-                "flex min-h-[56px] min-w-[56px] flex-col items-center justify-center gap-1 px-3",
-                active ? "text-primary" : "text-[#606060]"
+                "flex min-h-[56px] min-w-[56px] flex-col items-center justify-center gap-1 px-3 transition-colors duration-150 ease-in-out",
+                active ? "text-primary" : "text-[#606060] hover:text-[#D0D0D0]"
               )}
             >
               <item.icon className="h-[22px] w-[22px]" aria-hidden />
-              <span className={cn("whitespace-nowrap text-[10px]", active ? "font-semibold" : "font-medium")}>
+              <span className={cn("whitespace-nowrap text-[10px]", active ? "font-semibold" : "font-normal")}>
                 {item.label}
               </span>
             </Link>

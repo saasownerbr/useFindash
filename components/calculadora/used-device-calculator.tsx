@@ -153,7 +153,7 @@ export function UsedDeviceCalculator() {
     setAnswers((prev) => ({ ...prev, [key]: value }));
 
   const battery = toNumber(batteryPercent);
-  const { score, answered, total, complete, blocked } = computeScore(answers);
+  const { score, answered, total, complete, blocked, critical } = computeScore(answers);
   const grade = gradeFromScore(score);
   const repairs = suggestedRepairs(answers, battery);
 
@@ -391,6 +391,7 @@ export function UsedDeviceCalculator() {
           answered={answered}
           total={total}
           blocked={blocked}
+          critical={critical}
           referencePrice={reference}
           multiplier={pricing.multiplier}
           resalePrice={pricing.resalePrice}

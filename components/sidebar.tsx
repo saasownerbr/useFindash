@@ -15,7 +15,14 @@ import { Logo, LogoMark } from "@/components/ui/logo";
 const WHEN_COLLAPSED_HIDE = "[[data-sidebar=collapsed]_&]:hidden";
 const WHEN_EXPANDED_HIDE = "hidden [[data-sidebar=collapsed]_&]:block";
 const LABEL = "transition-opacity duration-[250ms] ease-in-out [[data-sidebar=collapsed]_&]:opacity-0";
-const ROW = "flex w-full items-center gap-3 whitespace-nowrap rounded-[10px] border-l-2 px-[10px] py-2.5 text-sm transition-colors";
+const ROW = "flex w-full items-center gap-3 whitespace-nowrap rounded-[10px] border-l-[3px] px-[10px] py-2.5 text-sm transition-all duration-150 ease-in-out";
+
+// Four states that never look alike: active (lime bar, white text), inactive (mid gray, clearly clickable),
+// hover (lighter text, faint background, gray bar) and disabled (dark gray, no hover).
+const ACTIVE = "border-l-primary bg-[rgba(218,232,120,0.10)] font-semibold text-[#F0F0F0]";
+const INACTIVE =
+  "cursor-pointer border-l-transparent font-normal text-[#808080] hover:border-l-[#404040] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#D0D0D0]";
+const DISABLED = "cursor-not-allowed border-l-transparent font-normal text-[#404040]";
 
 interface Tip {
   label: string;
@@ -67,24 +74,32 @@ export function Sidebar() {
             return (
               <Fragment key={item.href}>
                 {newGroup && <div role="separator" className="my-2 border-b border-[#1E1E1E]" />}
-                <Link
-                  href={item.href}
-                  prefetch={true}
-                  aria-current={active ? "page" : undefined}
-                  onMouseEnter={showTip(item.label)}
-                  onMouseLeave={hideTip}
-                  onFocus={showTip(item.label)}
-                  onBlur={hideTip}
-                  className={cn(
-                    ROW,
-                    active
-                      ? "border-l-primary bg-[rgba(218,232,120,0.08)] font-semibold text-primary"
-                      : "border-l-transparent font-medium text-[#606060] hover:bg-card hover:text-[#D0D0D0]"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className={LABEL}>{item.label}</span>
-                </Link>
+                {item.disabled ? (
+                  <span
+                    aria-disabled="true"
+                    onMouseEnter={showTip(item.label)}
+                    onMouseLeave={hideTip}
+                    className={cn(ROW, DISABLED)}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" aria-hidden />
+                    <span className={LABEL}>{item.label}</span>
+                  </span>
+                ) : (
+                  <Link
+                    href={item.href}
+                    prefetch={true}
+                    aria-current={active ? "page" : undefined}
+                    onMouseEnter={showTip(item.label)}
+                    onMouseLeave={hideTip}
+                    onFocus={showTip(item.label)}
+                    onBlur={hideTip}
+                    className={cn(ROW, active ? ACTIVE : INACTIVE)}
+                  >
+                    {/* The icon takes the text color, except on the active item where it is lime. */}
+                    <item.icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} aria-hidden />
+                    <span className={LABEL}>{item.label}</span>
+                  </Link>
+                )}
               </Fragment>
             );
           })}
@@ -100,7 +115,7 @@ export function Sidebar() {
             onMouseLeave={hideTip}
             onFocus={showTip("Expandir menu")}
             onBlur={hideTip}
-            className={cn(ROW, "border-l-transparent font-medium text-[#606060] hover:bg-card hover:text-[#D0D0D0]")}
+            className={cn(ROW, INACTIVE)}
           >
             <ChevronLeft className={cn("h-4 w-4 shrink-0", WHEN_COLLAPSED_HIDE)} aria-hidden />
             <ChevronRight className={cn("h-4 w-4 shrink-0", WHEN_EXPANDED_HIDE)} aria-hidden />

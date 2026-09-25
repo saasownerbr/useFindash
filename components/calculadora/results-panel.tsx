@@ -44,7 +44,7 @@ function ScoreRing({ score }: { score: number }) {
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - Math.min(score, 100) / 100)}
+          strokeDashoffset={circumference * (1 - Math.min(Math.max(score, 0), 100) / 100)}
           style={{ transition: "stroke-dashoffset 300ms ease, stroke 300ms ease" }}
         />
       </svg>
@@ -64,6 +64,7 @@ export interface ResultsPanelProps {
   answered: number;
   total: number;
   blocked: boolean;
+  critical: boolean;
   referencePrice: number;
   multiplier: number;
   resalePrice: number;
@@ -83,6 +84,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
   const hasPrice = props.referencePrice > 0;
   const incomplete = props.answered < props.total;
   const worthBuying = props.maxPurchaseCost > 0;
+  const scrap = props.grade === "sucata";
 
   return (
     <div className="space-y-4">
@@ -93,6 +95,13 @@ export function ResultsPanel(props: ResultsPanelProps) {
             <p className="font-semibold text-danger">Aparelho bloqueado — não recomendado para compra</p>
             <p className="mt-1 text-[#FCA5A5]">A conta iCloud está ativa. Só avalie de novo depois que o cliente remover a conta.</p>
           </div>
+        </div>
+      )}
+
+      {props.critical && !props.blocked && (
+        <div role="alert" className="flex gap-3 rounded-xl border border-danger/60 bg-danger/10 p-4 text-sm">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-danger" />
+          <p className="font-semibold text-danger">Aparelho com dano crítico — não recomendado para compra</p>
         </div>
       )}
 
@@ -124,7 +133,7 @@ export function ResultsPanel(props: ResultsPanelProps) {
               !hasPrice ? "text-foreground" : worthBuying ? "text-success" : "text-danger"
             )}
           >
-            {hasPrice ? (worthBuying ? formatCurrencyBRL(props.maxPurchaseCost) : "Não compensa") : "—"}
+            {hasPrice ? (scrap ? formatCurrencyBRL(0) : worthBuying ? formatCurrencyBRL(props.maxPurchaseCost) : "Não compensa") : "—"}
           </p>
         </div>
       </div>
