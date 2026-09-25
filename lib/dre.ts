@@ -38,11 +38,17 @@ function dayNumber(day: string): number {
  * Costs that belong to [start, end], the same way for the dashboard and the DRE:
  * - fixed: each month the period touches contributes (days of the period in that month / 30) of that month's
  *   fixed entries, capped at 100%; a month the period fully covers always counts 100%. "Hoje" is 1/30, "15 dias"
- *   15/30, "Este mês" 100%, 90 days about three months.
+ *   15/30 (split across months when it crosses one), 90 days about three months. `wholeMonths` charges 100% of
+ *   every month touched: "Este mês" runs from the 1st to today but carries the whole month, like the monthly DRE.
  * - variable, marketing and supplier: the entries dated inside the period.
  * `entries` must include every entry of the months the period touches (fixed costs are dated anywhere in them).
  */
-export function periodCosts(entries: CostEntryForPeriod[], start: Date, end: Date): CostsByType {
+export function periodCosts(
+  entries: CostEntryForPeriod[],
+  start: Date,
+  end: Date,
+  { wholeMonths = false }: { wholeMonths?: boolean } = {}
+): CostsByType {
   const startDay = localDay(start);
   const endDay = localDay(end);
   const costs = { ...NO_COSTS };
@@ -67,7 +73,7 @@ export function periodCosts(entries: CostEntryForPeriod[], start: Date, end: Dat
     const to = endDay < monthLast ? endDay : monthLast;
     const days = dayNumber(to) - dayNumber(from) + 1;
     const coversMonth = from === monthFirst && to === monthLast;
-    const share = coversMonth ? 1 : Math.min(1, days / DAYS_PER_MONTH);
+    const share = wholeMonths || coversMonth ? 1 : Math.min(1, days / DAYS_PER_MONTH);
     costs.fixed += monthFixed * share;
   }
 

@@ -22,7 +22,7 @@ interface DreKpis {
 }
 
 export function DrePanel({ storeId }: { storeId: string | null }) {
-  const { startDate, endDate } = usePeriodFilterStore();
+  const { periodType, startDate, endDate } = usePeriodFilterStore();
   const [dre, setDre] = useState<DRE | null>(null);
   const [kpis, setKpis] = useState<DreKpis | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,9 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
       const paidSales = sales.filter((s) => s.sale_channel === "paid_traffic");
 
       setError(null);
-      setDre(buildDRE(sales, periodCosts(costsRes.entries, startDate, endDate), accessorySales));
+      setDre(
+        buildDRE(sales, periodCosts(costsRes.entries, startDate, endDate, { wholeMonths: periodType === "month" }), accessorySales)
+      );
       setKpis({
         salesCount: sales.length,
         paidSalesCount: paidSales.length,
@@ -79,7 +81,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
     return () => {
       cancelled = true;
     };
-  }, [storeId, startDate, endDate]);
+  }, [storeId, periodType, startDate, endDate]);
 
   return (
     <div className="space-y-6">

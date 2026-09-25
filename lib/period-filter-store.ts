@@ -11,7 +11,7 @@ interface PeriodFilterState {
   setPeriod: (type: PeriodType, start?: Date, end?: Date) => void;
 }
 
-/** [start, end] for a preset, relative to `now`. "Este mês" is the whole calendar month, not just the days so far. */
+/** [start, end] for a preset, relative to `now`. Every preset ends at the close of today; "Este mês" starts on the 1st. */
 export function presetRange(type: Exclude<PeriodType, "custom">, now = new Date()): { start: Date; end: Date } {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   // Ends at the close of today, so sales made after the page opened still count.
@@ -23,10 +23,7 @@ export function presetRange(type: Exclude<PeriodType, "custom">, now = new Date(
     case "15days":
       return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14), end: endOfToday };
     case "month":
-      return {
-        start: new Date(now.getFullYear(), now.getMonth(), 1),
-        end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
-      };
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: endOfToday };
     case "90days":
       return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89), end: endOfToday };
   }

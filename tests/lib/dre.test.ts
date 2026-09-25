@@ -81,9 +81,21 @@ describe("periodCosts", () => {
     expect(costs.variable).toBe(200);
   });
 
-  it("'Este mês' carries 100% of the month, like the monthly DRE", () => {
+  it("'Este mês' runs to today but carries 100% of the month's fixed costs, like the monthly DRE", () => {
     const { start, end } = presetRange("month", NOW);
-    expect(periodCosts(SEPTEMBER, start, end)).toEqual({ fixed: 3000, variable: 200, marketing: 0, supplier: 20000 });
+    expect(periodCosts(SEPTEMBER, start, end, { wholeMonths: true })).toEqual({ fixed: 3000, variable: 200, marketing: 0, supplier: 20000 });
+    // Without the option the same 1-24 Sep window would be prorated (24/30).
+    expect(periodCosts(SEPTEMBER, start, end).fixed).toBe(2400);
+  });
+
+  it("'15 dias' across two months prorates each month's own fixed costs", () => {
+    const entries: CostEntryForPeriod[] = [
+      { type: "fixed", amount: 10000, date: "2026-09-01" },
+      { type: "fixed", amount: 8000, date: "2026-10-01" },
+    ];
+    const { start, end } = presetRange("15days", new Date(2026, 9, 2, 10, 0)); // 18 Sep to 2 Oct
+    // 13 days of September (13/30 × 10.000 = 4.333,33) + 2 days of October (2/30 × 8.000 = 533,33).
+    expect(periodCosts(entries, start, end).fixed).toBeCloseTo(4866.67, 2);
   });
 
   it("counts a whole short month as 100% (February has 28 days)", () => {

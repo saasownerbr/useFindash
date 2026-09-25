@@ -205,7 +205,11 @@ export default function DashboardPage() {
       const store = storeRes.data;
       const monthDre = buildDRE(monthSales, NO_COSTS, accessoriesMonth);
       // Same functions and inputs as the DRE (Financeiro), so both agree for any period.
-      const dre = buildDRE(periodSales, periodCosts(costsRes.entries, periodStart, periodEnd), accessoriesNow);
+      const dre = buildDRE(
+        periodSales,
+        periodCosts(costsRes.entries, periodStart, periodEnd, { wholeMonths: periodType === "month" }),
+        accessoriesNow
+      );
 
       setError(null);
       setData({
