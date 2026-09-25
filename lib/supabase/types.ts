@@ -263,6 +263,7 @@ export type Database = {
       products: {
         Row: {
           acquisition_cost: number
+          brand: string
           checkup_data: Json | null
           color: string | null
           created_at: string
@@ -284,6 +285,7 @@ export type Database = {
         }
         Insert: {
           acquisition_cost: number
+          brand?: string
           checkup_data?: Json | null
           color?: string | null
           created_at?: string
@@ -305,6 +307,7 @@ export type Database = {
         }
         Update: {
           acquisition_cost?: number
+          brand?: string
           checkup_data?: Json | null
           color?: string | null
           created_at?: string
@@ -459,6 +462,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          phone: string | null
           role: string
           store_id: string
           user_id: string
@@ -468,6 +472,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          phone?: string | null
           role: string
           store_id: string
           user_id: string
@@ -477,6 +482,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          phone?: string | null
           role?: string
           store_id?: string
           user_id?: string
