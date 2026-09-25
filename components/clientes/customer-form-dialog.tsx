@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatPhone } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
@@ -45,6 +46,7 @@ export function CustomerFormDialog({ open, onOpenChange, storeId, customer, onSa
     handleSubmit,
     reset,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema),
@@ -57,7 +59,7 @@ export function CustomerFormDialog({ open, onOpenChange, storeId, customer, onSa
     if (customer) {
       reset({
         name: customer.name,
-        whatsapp: customer.whatsapp,
+        whatsapp: formatPhone(customer.whatsapp),
         birthdate: customer.birthdate ?? "",
         acquisition_channel: (customer.acquisition_channel as CustomerInput["acquisition_channel"]) ?? "instagram",
       });
@@ -133,7 +135,13 @@ export function CustomerFormDialog({ open, onOpenChange, storeId, customer, onSa
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="whatsapp">WhatsApp</Label>
-            <Input id="whatsapp" placeholder="11999998888" {...register("whatsapp")} />
+            <Input
+              id="whatsapp"
+              type="tel"
+              placeholder="(11) 9 9999-8888"
+              // Any typing is accepted; it is tidied into (XX) X XXXX-XXXX when the field is left.
+              {...register("whatsapp", { onBlur: (e) => setValue("whatsapp", formatPhone(e.target.value)) })}
+            />
             {errors.whatsapp && <span className="text-xs text-danger">{errors.whatsapp.message}</span>}
           </div>
 

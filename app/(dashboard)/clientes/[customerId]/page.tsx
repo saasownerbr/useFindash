@@ -12,6 +12,7 @@ import { getClientStoreId } from "@/lib/supabase/client-store";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { formatCurrencyBRL } from "@/lib/finance";
 import type { Tables } from "@/lib/supabase/types";
+import { formatPhone } from "@/lib/phone";
 
 type Customer = Tables<"customers">;
 type Sale = Tables<"sales">;
@@ -103,7 +104,7 @@ export default function CustomerProfilePage() {
             <h1 className="text-[22px] font-bold text-foreground">{customer.name}</h1>
             <ChannelBadge channel={customer.acquisition_channel} />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{customer.whatsapp}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</p>
         </div>
         <Button variant="secondary" onClick={() => router.push("/clientes")}>
           Voltar

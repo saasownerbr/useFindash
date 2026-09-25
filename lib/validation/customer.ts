@@ -1,14 +1,12 @@
 import { z } from "zod";
 
+import { requiredPhone } from "@/lib/validation/phone";
+
 export const ACQUISITION_CHANNELS = ["instagram", "whatsapp", "pdv", "referral", "paid_traffic"] as const;
 
 export const customerSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome do cliente"),
-  whatsapp: z
-    .string()
-    .trim()
-    .min(10, "Informe um WhatsApp válido com DDD")
-    .regex(/^\d+$/, "Use apenas números, com DDD"),
+  whatsapp: requiredPhone,
   birthdate: z
     .string()
     .trim()

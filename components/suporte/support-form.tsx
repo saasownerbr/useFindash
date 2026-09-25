@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/toast";
-import { SUPPORT_MESSAGE_MAX, formatWhatsapp, supportSchema, type SupportInput } from "@/lib/validation/support";
+import { formatPhone } from "@/lib/phone";
+import { SUPPORT_MESSAGE_MAX, supportSchema, type SupportInput } from "@/lib/validation/support";
 import { cn } from "@/lib/utils";
 
 export function SupportForm() {
@@ -72,12 +73,15 @@ export function SupportForm() {
             <Input
               id="whatsapp"
               type="tel"
-              inputMode="numeric"
               autoComplete="tel-national"
-              placeholder="(11) 99999-9999"
+              placeholder="(11) 9 9999-9999"
               value={field.value}
-              onChange={(e) => field.onChange(formatWhatsapp(e.target.value))}
-              onBlur={field.onBlur}
+              // Typed freely; tidied into (XX) X XXXX-XXXX when the field is left.
+              onChange={(e) => field.onChange(e.target.value)}
+              onBlur={() => {
+                field.onChange(formatPhone(field.value));
+                field.onBlur();
+              }}
             />
           )}
         />

@@ -12,6 +12,7 @@ import { escapeOrFilterValue } from "@/lib/supabase/filters";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
 import type { Tables } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
+import { formatPhone } from "@/lib/phone";
 
 type Customer = Tables<"customers">;
 type CustomerSale = { sold_at: string; products: { model: string } | null };
@@ -61,7 +62,7 @@ function CustomerPreview({
         </span>
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold text-foreground">{customer.name}</p>
-          <p className="text-sm text-muted-foreground">{customer.whatsapp}</p>
+          <p className="text-sm text-muted-foreground">{formatPhone(customer.whatsapp)}</p>
         </div>
       </div>
 
@@ -190,7 +191,7 @@ export function StepCustomer({ storeId }: { storeId: string | null }) {
                 onClick={() => setPreview(result)}
               >
                 <span className="truncate font-medium text-foreground">{result.name}</span>
-                <span className="shrink-0 text-muted-foreground">{result.whatsapp}</span>
+                <span className="shrink-0 text-muted-foreground">{formatPhone(result.whatsapp)}</span>
               </button>
             ))}
           </div>

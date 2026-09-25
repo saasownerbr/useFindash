@@ -11,6 +11,7 @@ import { daysUntilBirthday, isInUpgradeWindow, monthsSince } from "@/lib/custome
 import { formatCurrencyBRL } from "@/lib/finance";
 import type { AlertSettingsInput } from "@/lib/validation/store-settings";
 import { whatsappLink } from "@/lib/whatsapp";
+import { formatPhone } from "@/lib/phone";
 
 type Customer = { id: string; name: string; whatsapp: string; birthdate: string | null };
 type DeviceSale = { customer_id: string; sold_at: string; products: { model: string } | null };
@@ -205,13 +206,13 @@ export function StockAlerts() {
         {lists.upgrade.map(({ customer, sale }) => (
           <ExpandableRow key={customer.id} className={ROW}>
             <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{formatPhone(customer.whatsapp)}</td>
             <td data-label="Modelo comprado" className={CELL}>{sale.products?.model ?? "—"}</td>
             <td data-label="Data da compra" className={`${CELL} text-muted-foreground`}>{DATE.format(new Date(sale.sold_at))}</td>
             <td data-label="Meses desde a compra" className={`${CELL} tabular-nums`}>{monthsSince(sale.sold_at)}</td>
             <td className={`rt-key ${CELL} text-right`}>
               <WhatsAppButton
-                phone={customer.whatsapp}
+                phone={formatPhone(customer.whatsapp)}
                 message={`Oi ${customer.name.split(" ")[0]}! Já faz um tempo desde o seu ${sale.products?.model ?? "iPhone"}. Temos ótimas condições para upgrade, quer ver?`}
               />
             </td>
@@ -229,11 +230,11 @@ export function StockAlerts() {
         {lists.birthdays.map(({ customer, daysLeft }) => (
           <ExpandableRow key={customer.id} className={ROW}>
             <td className={`rt-key ${CELL} font-medium text-foreground`}>{customer.name}</td>
-            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{customer.whatsapp}</td>
+            <td data-label="WhatsApp" className={`${CELL} text-muted-foreground`}>{formatPhone(customer.whatsapp)}</td>
             <td data-label="Aniversário" className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
             <td data-label="Dias restantes" className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
             <td className={`rt-key ${CELL} text-right`}>
-              <WhatsAppButton phone={customer.whatsapp} message={`Feliz aniversário, ${customer.name.split(" ")[0]}!`} />
+              <WhatsAppButton phone={formatPhone(customer.whatsapp)} message={`Feliz aniversário, ${customer.name.split(" ")[0]}!`} />
             </td>
           </ExpandableRow>
         ))}

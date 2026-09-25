@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       role: parsed.data.role,
       commission_rate: parsed.data.commission_rate,
       name: parsed.data.name,
+      phone: parsed.data.phone || null,
     })
     .select("id")
     .single();

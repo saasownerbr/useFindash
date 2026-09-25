@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isInUpgradeWindow } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { formatPhone } from "@/lib/phone";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
         const lastSale = latestSaleByCustomer.get(customer.id);
         const model = lastSale?.model ?? "produto";
         const date = lastSale ? new Date(lastSale.sold_at).toLocaleDateString("pt-BR") : "—";
-        return `<li>${customer.name} — ${model} — ${date} — ${customer.whatsapp}</li>`;
+        return `<li>${customer.name} — ${model} — ${date} — ${formatPhone(customer.whatsapp)}</li>`;
       })
       .join("");
 

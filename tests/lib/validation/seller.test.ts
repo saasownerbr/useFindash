@@ -23,4 +23,11 @@ describe("sellerSchema", () => {
       false
     );
   });
+  it("takes an optional phone in any format and keeps the digits", () => {
+    const base = { name: "Ana", email: "", role: "seller" as const, commission_rate: 0.05 };
+    const withPhone = sellerSchema.safeParse({ ...base, phone: "11 98765-4321" });
+    expect(withPhone.success && withPhone.data.phone).toBe("11987654321");
+    expect(sellerSchema.safeParse({ ...base, phone: "" }).success).toBe(true);
+    expect(sellerSchema.safeParse({ ...base, phone: "9876" }).success).toBe(false);
+  });
 });

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatPhone } from "@/lib/phone";
 import { toast } from "@/lib/toast";
 import { sellerSchema, type SellerInput } from "@/lib/validation/seller";
 
@@ -25,7 +26,7 @@ interface SellerFormDialogProps {
   onSaved: () => void;
 }
 
-const DEFAULT_VALUES: SellerInput = { name: "", email: "", role: "seller", commission_rate: 0 };
+const DEFAULT_VALUES: SellerInput = { name: "", email: "", phone: "", role: "seller", commission_rate: 0 };
 
 /** Invites a new seller; existing sellers are edited inline in the list. */
 export function SellerFormDialog({ open, onOpenChange, storeId, onSaved }: SellerFormDialogProps) {
@@ -34,6 +35,7 @@ export function SellerFormDialog({ open, onOpenChange, storeId, onSaved }: Selle
     handleSubmit,
     reset,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SellerInput>({
     resolver: zodResolver(sellerSchema),
@@ -94,6 +96,17 @@ export function SellerFormDialog({ open, onOpenChange, storeId, onSaved }: Selle
             <p className="text-xs text-muted-foreground">
               Um convite será enviado por email para que o vendedor defina sua senha.
             </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="phone">WhatsApp (opcional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="(11) 9 9999-8888"
+              {...register("phone", { onBlur: (e) => setValue("phone", formatPhone(e.target.value)) })}
+            />
+            {errors.phone && <span className="text-xs text-danger">{errors.phone.message}</span>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

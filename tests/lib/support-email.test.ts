@@ -20,7 +20,7 @@ describe("buildSupportEmail", () => {
     expect(html).toContain("Nova mensagem de suporte recebida");
     expect(html).toContain("<strong>Nome da loja:</strong> iPlace Centro");
     expect(html).toContain("<strong>Email do usuário:</strong> dono@loja.com");
-    expect(html).toContain("<strong>WhatsApp informado:</strong> (11) 99999-8888");
+    expect(html).toContain("<strong>WhatsApp informado:</strong> (11) 9 9999-8888");
     expect(html).toContain("O estoque não carrega.<br />Já tentei sair e entrar.");
     expect(html).toContain("<strong>Data e hora:</strong> 24/09/2026, 12:30 (horário de Brasília)");
   });

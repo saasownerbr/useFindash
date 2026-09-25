@@ -1,4 +1,4 @@
-import { formatWhatsapp } from "@/lib/validation/support";
+import { formatPhone } from "@/lib/phone";
 
 function escapeHtml(value: string) {
   return value
@@ -23,7 +23,7 @@ export function buildSupportEmail({ storeName, userEmail, whatsapp, message, sen
   const rows: [string, string][] = [
     ["Nome da loja", escapeHtml(storeName)],
     ["Email do usuário", escapeHtml(userEmail)],
-    ["WhatsApp informado", escapeHtml(formatWhatsapp(whatsapp))],
+    ["WhatsApp informado", escapeHtml(formatPhone(whatsapp))],
     ["Mensagem", escapeHtml(message).replace(/\n/g, "<br />")],
     ["Data e hora", `${timestamp} (horário de Brasília)`],
   ];

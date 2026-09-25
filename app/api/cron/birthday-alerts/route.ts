@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isBirthdayWithinDays } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { formatPhone } from "@/lib/phone";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const rows = upcoming
       .map((customer) => {
         const date = customer.birthdate ? new Date(customer.birthdate).toLocaleDateString("pt-BR") : "—";
-        return `<li>${customer.name} — aniversário em ${date} — ${customer.whatsapp}</li>`;
+        return `<li>${customer.name} — aniversário em ${date} — ${formatPhone(customer.whatsapp)}</li>`;
       })
       .join("");
 

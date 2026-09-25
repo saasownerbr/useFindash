@@ -7,19 +7,21 @@ import { ROLE_LABELS, SellerFormDialog } from "@/components/configuracoes/seller
 import { SettingsCard } from "@/components/configuracoes/settings-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatPhone, phoneDigits } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
 
 type Seller = Tables<"store_users">;
-type Draft = { name: string; commission: string };
+type Draft = { name: string; phone: string; commission: string };
 
 const toDraft = (s: Seller): Draft => ({
   name: s.name,
+  phone: formatPhone(s.phone),
   commission: String(Math.round(s.commission_rate * 1000) / 10),
 });
 
-/** Name and commission edit in place and save when the field loses focus. */
+/** Name, WhatsApp and commission edit in place and save when the field loses focus. */
 export function SellerList({ storeId }: { storeId: string | null }) {
   const [sellers, setSellers] = useState<Seller[] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
@@ -55,9 +57,15 @@ export function SellerList({ storeId }: { storeId: string | null }) {
     const draft = drafts[seller.id];
     if (!draft) return;
     const name = draft.name.trim();
+    const phone = phoneDigits(draft.phone);
     const percent = Number(draft.commission.replace(",", "."));
-    if (name === seller.name && percent / 100 === seller.commission_rate) return;
+    if (name === seller.name && phone === (seller.phone ?? "") && percent / 100 === seller.commission_rate) return;
 
+    if (phone && !/^\d{10,11}$/.test(phone)) {
+      toast.error("Informe o WhatsApp com DDD, ou deixe em branco.");
+      setDrafts((d) => ({ ...d, [seller.id]: toDraft(seller) }));
+      return;
+    }
     if (!name || !Number.isFinite(percent) || percent < 0 || percent > 100) {
       toast.error("Informe um nome e uma comissão entre 0% e 100%.");
       setDrafts((d) => ({ ...d, [seller.id]: toDraft(seller) }));
@@ -66,7 +74,7 @@ export function SellerList({ storeId }: { storeId: string | null }) {
 
     const { data, error: updateError } = await createClient()
       .from("store_users")
-      .update({ name, commission_rate: percent / 100 })
+      .update({ name, phone: phone || null, commission_rate: percent / 100 })
       .eq("id", seller.id)
       .select("*")
       .single();
@@ -77,6 +85,7 @@ export function SellerList({ storeId }: { storeId: string | null }) {
       return;
     }
     setSellers((list) => list?.map((s) => (s.id === data.id ? data : s)) ?? null);
+    setDrafts((d) => ({ ...d, [data.id]: toDraft(data) }));
     toast.success(`${data.name} atualizado`);
   }
 
@@ -109,7 +118,7 @@ export function SellerList({ storeId }: { storeId: string | null }) {
   return (
     <SettingsCard
       title="Vendedores"
-      description="Nome e comissão de cada vendedor. As alterações salvam ao sair do campo."
+      description="Nome, WhatsApp e comissão de cada vendedor. As alterações salvam ao sair do campo."
       action={
         <Button size="sm" onClick={() => setFormOpen(true)} disabled={!storeId}>
           Adicionar vendedor
@@ -128,14 +137,18 @@ export function SellerList({ storeId }: { storeId: string | null }) {
         <p className="text-sm text-muted-foreground">Nenhum vendedor cadastrado ainda.</p>
       ) : (
         <div className="divide-y divide-[#242424]">
-          <div className="hidden grid-cols-[minmax(0,1fr)_140px_auto] gap-3 pb-2 text-xs text-muted-foreground sm:grid">
+          <div className="hidden grid-cols-[minmax(0,1fr)_170px_120px_auto] gap-3 pb-2 text-xs text-muted-foreground sm:grid">
             <span>Nome</span>
+            <span>WhatsApp</span>
             <span>Comissão (%)</span>
             <span className="sr-only">Ações</span>
           </div>
           {sellers.map((seller) => (
-            <div key={seller.id} className="grid grid-cols-[minmax(0,1fr)_110px_auto] items-center gap-3 py-2 sm:grid-cols-[minmax(0,1fr)_140px_auto]">
-              <div className="flex min-w-0 items-center gap-2">
+            <div
+              key={seller.id}
+              className="grid grid-cols-2 items-center gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_170px_120px_auto] sm:gap-3"
+            >
+              <div className="col-span-2 flex min-w-0 items-center gap-2 sm:col-span-1">
                 <Input
                   aria-label={`Nome de ${seller.name}`}
                   value={drafts[seller.id]?.name ?? ""}
@@ -150,6 +163,18 @@ export function SellerList({ storeId }: { storeId: string | null }) {
                 )}
               </div>
               <Input
+                aria-label={`WhatsApp de ${seller.name}`}
+                type="tel"
+                placeholder="WhatsApp"
+                value={drafts[seller.id]?.phone ?? ""}
+                onChange={(e) => setDraft(seller.id, { phone: e.target.value })}
+                onBlur={(e) => {
+                  setDraft(seller.id, { phone: formatPhone(e.target.value) });
+                  saveSeller(seller);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              />
+              <Input
                 aria-label={`Comissão de ${seller.name} (%)`}
                 type="number"
                 inputMode="decimal"
@@ -161,7 +186,7 @@ export function SellerList({ storeId }: { storeId: string | null }) {
                 onBlur={() => saveSeller(seller)}
                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
               />
-              <Button variant="ghost" size="sm" onClick={() => setDeletingSeller(seller)}>
+              <Button variant="ghost" size="sm" className="col-span-2 justify-self-end sm:col-span-1" onClick={() => setDeletingSeller(seller)}>
                 Remover
               </Button>
             </div>
