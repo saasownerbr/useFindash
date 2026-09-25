@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ProductFormDialog } from "@/components/estoque/product-form-dialog";
+import { XiaomiFormDialog } from "@/components/estoque/xiaomi-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,9 +40,11 @@ export function ProductList() {
   const [storeResolved, setStoreResolved] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingXiaomi, setEditingXiaomi] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +112,7 @@ export function ProductList() {
 
     if (statusFilter) query = query.eq("status", statusFilter);
     if (typeFilter) query = query.eq("type", typeFilter);
+    if (brandFilter) query = query.eq("brand", brandFilter);
     if (modelFilter) query = query.ilike("model", `%${modelFilter}%`);
 
     const { data, error: fetchError } = await query;
@@ -125,7 +129,7 @@ export function ProductList() {
 
     setError(null);
     setProducts(data ?? []);
-  }, [storeId, storeResolved, statusFilter, typeFilter, modelFilter]);
+  }, [storeId, storeResolved, statusFilter, typeFilter, brandFilter, modelFilter]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -200,6 +204,14 @@ export function ProductList() {
             </Select>
           </div>
           <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Marca</span>
+            <Select value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)} className="w-40">
+              <option value="">Todas</option>
+              <option value="apple">Apple</option>
+              <option value="xiaomi">Xiaomi</option>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Modelo</span>
             <Input
               placeholder="Buscar por modelo"
@@ -259,6 +271,11 @@ export function ProductList() {
                   <td className="rt-key px-4 py-3 font-medium text-foreground">
                     {product.model} · {product.storage}
                     {product.color ? ` · ${product.color}` : ""}
+                    {product.brand === "xiaomi" && (
+                      <Badge variant="primary" className="ml-2 align-middle">
+                        Xiaomi
+                      </Badge>
+                    )}
                   </td>
                   <td data-label="Tipo" className="px-4 py-3">{TYPE_LABELS[product.type] ?? product.type}</td>
                   <td data-label="IMEI" className="px-4 py-3">{product.imei ?? "—"}</td>
@@ -290,6 +307,10 @@ export function ProductList() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
+                          if (product.brand === "xiaomi") {
+                            setEditingXiaomi(product);
+                            return;
+                          }
                           setEditingProduct(product);
                           setFormOpen(true);
                         }}
@@ -326,6 +347,14 @@ export function ProductList() {
         onOpenChange={setFormOpen}
         storeId={storeId}
         product={editingProduct}
+        onSaved={loadProducts}
+      />
+
+      <XiaomiFormDialog
+        open={!!editingXiaomi}
+        onOpenChange={(open) => !open && setEditingXiaomi(null)}
+        storeId={storeId}
+        product={editingXiaomi}
         onSaved={loadProducts}
       />
 
