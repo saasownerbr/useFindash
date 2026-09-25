@@ -238,7 +238,7 @@ export default function DashboardPage() {
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-[20px] font-bold text-foreground">
-              {data ? `Olá, ${data.storeName} 👋` : "Olá 👋"}
+              {data ? `Olá, ${data.storeName}` : "Olá"}
             </h1>
             <p className="mt-1 text-[13px] capitalize text-muted-foreground">{TODAY_LABEL.format(new Date())}</p>
           </div>

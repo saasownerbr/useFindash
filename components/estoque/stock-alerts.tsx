@@ -233,7 +233,7 @@ export function StockAlerts() {
             <td data-label="Aniversário" className={CELL}>{DAY_MONTH.format(new Date(customer.birthdate))}</td>
             <td data-label="Dias restantes" className={`${CELL} tabular-nums`}>{daysLeft === 0 ? "Hoje" : daysLeft}</td>
             <td className={`rt-key ${CELL} text-right`}>
-              <WhatsAppButton phone={customer.whatsapp} message={`Feliz aniversário, ${customer.name.split(" ")[0]}! 🎉`} />
+              <WhatsAppButton phone={customer.whatsapp} message={`Feliz aniversário, ${customer.name.split(" ")[0]}!`} />
             </td>
           </ExpandableRow>
         ))}
