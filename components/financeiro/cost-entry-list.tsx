@@ -9,12 +9,16 @@ import { Button } from "@/components/ui/button";
 import { ExpandableRow } from "@/components/ui/row-toggle";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrencyBRL } from "@/lib/finance";
+import { localDay } from "@/lib/period";
+import { usePeriodFilterStore } from "@/lib/period-filter-store";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
 
 type CostEntry = Tables<"cost_entries">;
 
-export function CostEntryList({ storeId, month, reloadKey }: { storeId: string | null; month: string; reloadKey: number }) {
+/** Cost entries dated inside the shared period filter. */
+export function CostEntryList({ storeId, reloadKey }: { storeId: string | null; reloadKey: number }) {
+  const { startDate, endDate } = usePeriodFilterStore();
   const [entries, setEntries] = useState<CostEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<CostEntry | null>(null);
@@ -23,7 +27,7 @@ export function CostEntryList({ storeId, month, reloadKey }: { storeId: string |
   const loadGenerationRef = useRef(0);
 
   const load = useCallback(async () => {
-    if (!storeId) {
+    if (!storeId || !startDate || !endDate) {
       setEntries([]);
       return;
     }
@@ -33,7 +37,8 @@ export function CostEntryList({ storeId, month, reloadKey }: { storeId: string |
       .from("cost_entries")
       .select("*")
       .eq("store_id", storeId)
-      .eq("month", `${month}-01`)
+      .gte("date", localDay(startDate))
+      .lte("date", localDay(endDate))
       .order("date", { ascending: false });
 
     if (generation !== loadGenerationRef.current) return;
@@ -45,7 +50,7 @@ export function CostEntryList({ storeId, month, reloadKey }: { storeId: string |
     }
     setError(null);
     setEntries(data ?? []);
-  }, [storeId, month]);
+  }, [storeId, startDate, endDate]);
 
   useEffect(() => {
     load();

@@ -9,3 +9,13 @@ export function percentChange(current: number, previous: number): number | null 
   if (previous === 0) return null;
   return (current - previous) / Math.abs(previous);
 }
+
+/** yyyy-mm-dd in local time, for date columns (cost_entries.date, monthly_inputs.month). */
+export function localDay(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** The first day of `date`'s month as yyyy-mm-dd, the key monthly_inputs uses. */
+export function firstOfMonth(date: Date): string {
+  return localDay(new Date(date.getFullYear(), date.getMonth(), 1));
+}

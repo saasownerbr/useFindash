@@ -7,8 +7,7 @@ import { CostEntryList } from "@/components/financeiro/cost-entry-list";
 import { DrePanel } from "@/components/financeiro/dre-panel";
 import { MonthlyInputForm } from "@/components/financeiro/monthly-input-form";
 import { RevenueGoalPanel } from "@/components/financeiro/revenue-goal-panel";
-import { Label } from "@/components/ui/label";
-import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
+import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
 import { TabBar } from "@/components/ui/tab-bar";
 import { getClientStoreId } from "@/lib/supabase/client-store";
@@ -25,7 +24,6 @@ type TabKey = (typeof TABS)[number]["key"];
 export default function FinanceiroPage() {
   const [tab, setTab] = useState<TabKey>("dre");
   const [storeId, setStoreId] = useState<string | null>(null);
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [reloadKey, setReloadKey] = useState(0);
 
   // /financeiro?tab=trafego comes from the dashboard's CAC card.
@@ -51,7 +49,7 @@ export default function FinanceiroPage() {
     <PageContainer>
       <div>
         <h1 className="text-[22px] font-bold text-foreground">Financeiro</h1>
-        <p className="mt-1 text-[13px] text-muted-foreground">DRE mensal, lançamentos, tráfego pago e meta de faturamento.</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">DRE, lançamentos, tráfego pago e meta de faturamento.</p>
 
       <TabBar className="mt-6" tabs={TABS} value={tab} onChange={setTab} />
 
@@ -59,12 +57,9 @@ export default function FinanceiroPage() {
         {tab === "dre" && <DrePanel storeId={storeId} />}
         {tab === "lancamentos" && (
           <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="lancamentos-month">Mês</Label>
-              <MonthPicker id="lancamentos-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
-            </div>
+            <PeriodSelector />
             <CostEntryForm storeId={storeId} onSaved={() => setReloadKey((k) => k + 1)} />
-            <CostEntryList storeId={storeId} month={month} reloadKey={reloadKey} />
+            <CostEntryList storeId={storeId} reloadKey={reloadKey} />
           </div>
         )}
         {tab === "trafego" && <MonthlyInputForm storeId={storeId} />}

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  calculateAverageTicket,
   calculateCMV,
   calculateGrossMargin,
   calculateNetMargin,
@@ -88,5 +89,14 @@ describe("formatCurrencyBRL", () => {
   });
   it("formats zero", () => {
     expect(formatCurrencyBRL(0)).toBe("R$ 0,00");
+  });
+});
+
+describe("calculateAverageTicket", () => {
+  it("divides revenue by the number of sales", () => {
+    expect(calculateAverageTicket(9000, 3)).toBe(3000);
+  });
+  it("is 0 when there are no sales", () => {
+    expect(calculateAverageTicket(0, 0)).toBe(0);
   });
 });

@@ -3,104 +3,161 @@
 import { useEffect, useState } from "react";
 
 import { NetMarginCard, RevenueCard } from "@/components/finance-highlight-cards";
+import { PeriodSelector } from "@/components/period-selector";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
 import { createClient } from "@/lib/supabase/client";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { buildDRE, type DRE } from "@/lib/dre";
-import { formatCurrencyBRL } from "@/lib/finance";
+import { calculateAverageTicket, calculateCAC, calculateROAS, formatCurrencyBRL } from "@/lib/finance";
+import { firstOfMonth, localDay } from "@/lib/period";
+import { usePeriodFilterStore } from "@/lib/period-filter-store";
 
-function monthRange(month: string) {
-  const start = `${month}-01`;
-  const [year, mon] = month.split("-").map(Number);
-  const nextMonth = mon === 12 ? `${year + 1}-01` : `${year}-${String(mon + 1).padStart(2, "0")}`;
-  return { start, end: `${nextMonth}-01` };
+type CostType = "fixed" | "variable" | "marketing" | "supplier";
+
+interface DreKpis {
+  salesCount: number;
+  paidSalesCount: number;
+  paidRevenue: number;
+  investment: number;
 }
 
 export function DrePanel({ storeId }: { storeId: string | null }) {
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const { startDate, endDate } = usePeriodFilterStore();
   const [dre, setDre] = useState<DRE | null>(null);
+  const [kpis, setKpis] = useState<DreKpis | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!storeId) return;
-      const { start, end } = monthRange(month);
+      if (!storeId || !startDate || !endDate) return;
+      const start = startDate.toISOString();
+      const end = endDate.toISOString();
       const supabase = createClient();
 
-      const [{ data: sales, error: salesError }, { data: costEntries, error: costError }, accessorySales] =
-        await Promise.all([
-          supabase
-            .from("sales")
-            .select("id, acquisition_cost, repair_cost, gross_margin, commission_amount")
-            .eq("store_id", storeId)
-            .gte("sold_at", start)
-            .lt("sold_at", end),
-          supabase.from("cost_entries").select("type, amount").eq("store_id", storeId).eq("month", start),
-          sumAccessorySales(supabase, storeId, start, end),
-        ]);
+      // One parallel round (Supabase is ~300 ms away from Brazil).
+      const [salesRes, costsRes, inputsRes, accessorySales] = await Promise.all([
+        supabase
+          .from("sales")
+          .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sale_accessories(quantity, unit_price)")
+          .eq("store_id", storeId)
+          .gte("sold_at", start)
+          .lte("sold_at", end),
+        supabase
+          .from("cost_entries")
+          .select("type, amount")
+          .eq("store_id", storeId)
+          .gte("date", localDay(startDate))
+          .lte("date", localDay(endDate)),
+        // Paid traffic is entered per month: every month the period touches counts.
+        supabase
+          .from("monthly_inputs")
+          .select("paid_traffic_investment")
+          .eq("store_id", storeId)
+          .gte("month", firstOfMonth(startDate))
+          .lte("month", firstOfMonth(endDate)),
+        sumAccessorySales(supabase, storeId, start, end),
+      ]);
 
       if (cancelled) return;
 
-      if (salesError || costError) {
-        setError("Não foi possível carregar o DRE deste mês.");
+      if (salesRes.error || costsRes.error) {
+        setError("Não foi possível carregar o DRE deste período.");
         return;
       }
 
+      const sales = salesRes.data ?? [];
+      const saleRevenue = (s: (typeof sales)[number]) =>
+        Number(s.sale_price) + s.sale_accessories.reduce((sum, a) => sum + a.quantity * Number(a.unit_price), 0);
+      const paidSales = sales.filter((s) => s.sale_channel === "paid_traffic");
+
       setError(null);
-      setDre(
-        buildDRE(
-          sales ?? [],
-          (costEntries ?? []) as { type: "fixed" | "variable" | "marketing" | "supplier"; amount: number }[],
-          accessorySales
-        )
-      );
+      setDre(buildDRE(sales, (costsRes.data ?? []) as { type: CostType; amount: number }[], accessorySales));
+      setKpis({
+        salesCount: sales.length,
+        paidSalesCount: paidSales.length,
+        paidRevenue: paidSales.reduce((sum, s) => sum + saleRevenue(s), 0),
+        investment: (inputsRes.data ?? []).reduce((sum, row) => sum + Number(row.paid_traffic_investment), 0),
+      });
     }
     load();
     return () => {
       cancelled = true;
     };
-  }, [storeId, month]);
+  }, [storeId, startDate, endDate]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="dre-month">Mês</Label>
-        <MonthPicker id="dre-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
-      </div>
+      <PeriodSelector />
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      {!dre ? (
+      {!dre || !kpis ? (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-12 animate-pulse rounded-md bg-card" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3">
-          <RevenueCard label="Receita" value={dre.revenue} />
-          <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
-          <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
-          <DreLine label="Custos fixos" value={formatCurrencyBRL(dre.costsByType.fixed)} />
-          <DreLine label="Custos variáveis" value={formatCurrencyBRL(dre.costsByType.variable)} />
-          <DreLine label="Marketing" value={formatCurrencyBRL(dre.costsByType.marketing)} />
-          <DreLine label="Fornecedor" value={formatCurrencyBRL(dre.costsByType.supplier)} />
-          <DreLine label="Comissões" value={formatCurrencyBRL(dre.commissions)} />
-          <NetMarginCard value={dre.netMargin} />
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3">
+            <RevenueCard label="Receita" value={dre.revenue} />
+            <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
+            <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
+            <DreLine label="Custos fixos" value={formatCurrencyBRL(dre.costsByType.fixed)} />
+            <DreLine label="Custos variáveis" value={formatCurrencyBRL(dre.costsByType.variable)} />
+            <DreLine label="Marketing" value={formatCurrencyBRL(dre.costsByType.marketing)} />
+            <DreLine label="Fornecedor" value={formatCurrencyBRL(dre.costsByType.supplier)} />
+            <DreLine label="Comissões" value={formatCurrencyBRL(dre.commissions)} />
+            <NetMarginCard value={dre.netMargin} />
+          </div>
+
+          <section className="space-y-3">
+            <h2 className="text-[13px] font-semibold text-foreground">Indicadores</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
+              <DreLine
+                label="Ticket médio"
+                value={kpis.salesCount > 0 ? formatCurrencyBRL(calculateAverageTicket(dre.revenue, kpis.salesCount)) : "Sem dados"}
+                note={`${kpis.salesCount} ${kpis.salesCount === 1 ? "venda" : "vendas"} no período`}
+              />
+              <DreLine
+                label="CAC Tráfego Pago"
+                value={
+                  kpis.investment <= 0
+                    ? "Sem dados"
+                    : kpis.paidSalesCount > 0
+                      ? formatCurrencyBRL(calculateCAC(kpis.investment, kpis.paidSalesCount))
+                      : "Sem vendas"
+                }
+                note={
+                  kpis.investment > 0
+                    ? `${formatCurrencyBRL(kpis.investment)} investidos · ${kpis.paidSalesCount} ${kpis.paidSalesCount === 1 ? "venda" : "vendas"} de tráfego pago`
+                    : "Registre o investimento em Tráfego e leads"
+                }
+              />
+              <DreLine
+                label="ROAS"
+                value={
+                  kpis.investment > 0
+                    ? `${calculateROAS(kpis.paidRevenue, kpis.investment).toFixed(1)}x`
+                    : "Sem dados"
+                }
+                note={kpis.investment > 0 ? `${formatCurrencyBRL(kpis.paidRevenue)} em vendas de tráfego pago` : "Registre o investimento em Tráfego e leads"}
+              />
+            </div>
+          </section>
+        </>
       )}
     </div>
   );
 }
 
-function DreLine({ label, value }: { label: string; value: string }) {
+function DreLine({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <Card className="p-4 md:p-5">
       <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#808080]">{label}</p>
       <p className="mt-2 text-lg font-bold tabular-nums text-foreground">{value}</p>
+      {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
     </Card>
   );
 }

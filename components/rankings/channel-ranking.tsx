@@ -17,5 +17,5 @@ export function ChannelRanking({ rows }: { rows: ChannelRankRow[] }) {
       ),
     }));
 
-  return <RankingList title="Canais" items={items} emptyMessage="Nenhuma venda neste mês." />;
+  return <RankingList title="Canais" items={items} emptyMessage="Nenhuma venda neste período." />;
 }

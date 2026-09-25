@@ -26,6 +26,12 @@ export function calculateROAS(paidTrafficRevenue: number, paidTrafficInvestment:
   return paidTrafficRevenue / paidTrafficInvestment;
 }
 
+/** Revenue per sale; 0 when there are no sales. */
+export function calculateAverageTicket(revenue: number, salesCount: number): number {
+  if (salesCount <= 0) return 0;
+  return revenue / salesCount;
+}
+
 export function calculateRetentionRate(customers: { salesCountInPeriod: number }[]): number {
   if (customers.length === 0) return 0;
   const returning = customers.filter((c) => c.salesCountInPeriod > 1).length;

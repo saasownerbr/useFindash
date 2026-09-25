@@ -13,7 +13,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { sumAccessorySales } from "@/lib/accessory-sales";
 import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { buildDRE, type DRE } from "@/lib/dre";
-import { calculateCAC, calculateRetentionRate } from "@/lib/finance";
+import { calculateAverageTicket, calculateCAC, calculateRetentionRate } from "@/lib/finance";
 import { usePeriodFilterStore } from "@/lib/period-filter-store";
 import { previousRange } from "@/lib/period";
 import { createClient } from "@/lib/supabase/client";
@@ -69,8 +69,8 @@ interface DashboardData {
   monthRevenue: number;
   revenueByMonth: { month: string; revenue: number }[];
   paymentMethods: { pix: number; debit: number; credit: number };
-  avgLtv: number;
-  customersCount: number;
+  avgTicket: number;
+  salesCount: number;
   paidTraffic: PaidTrafficMetrics;
   retentionRate: number;
   buyersCount: number;
@@ -133,7 +133,7 @@ export default function DashboardPage() {
           .eq("store_id", storeId)
           .gte("date", isoDay(prev.start))
           .lte("date", isoDay(periodEnd)),
-        supabase.from("customers").select("id, ltv, birthdate").eq("store_id", storeId),
+        supabase.from("customers").select("id, birthdate").eq("store_id", storeId),
         supabase
           .from("monthly_inputs")
           .select("paid_traffic_investment")
@@ -199,18 +199,19 @@ export default function DashboardPage() {
       }
       const store = storeRes.data;
       const monthDre = buildDRE(monthSales, [], accessoriesMonth);
+      const dre = buildDRE(periodSales, costsIn(periodStart, periodEnd), accessoriesNow);
 
       setError(null);
       setData({
         storeName: store.name,
-        dre: buildDRE(periodSales, costsIn(periodStart, periodEnd), accessoriesNow),
+        dre,
         previousDre: buildDRE(previousSales, costsIn(prev.start, new Date(prev.end.getTime() - 86400000)), accessoriesPrev),
         goal: Number(store.monthly_revenue_goal ?? 0),
         monthRevenue: monthDre.revenue,
         revenueByMonth,
         paymentMethods,
-        avgLtv: customers.length > 0 ? customers.reduce((sum, c) => sum + Number(c.ltv), 0) / customers.length : 0,
-        customersCount: customers.length,
+        avgTicket: calculateAverageTicket(dre.revenue, periodSales.length),
+        salesCount: periodSales.length,
         paidTraffic: {
           cac: calculateCAC(investment, paidTrafficSalesCount),
           salesCount: paidTrafficSalesCount,
@@ -268,8 +269,8 @@ export default function DashboardPage() {
             </div>
 
             <MetricCards
-              avgLtv={data.avgLtv}
-              customersCount={data.customersCount}
+              avgTicket={data.avgTicket}
+              salesCount={data.salesCount}
               paidTraffic={data.paidTraffic}
               retentionRate={data.retentionRate}
               buyersCount={data.buyersCount}

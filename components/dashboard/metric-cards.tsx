@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Megaphone, Repeat, UserRound } from "lucide-react";
+import { Megaphone, Receipt, Repeat } from "lucide-react";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { formatCurrencyBRL } from "@/lib/finance";
@@ -10,16 +10,16 @@ export interface PaidTrafficMetrics {
   investment: number;
 }
 
-/** Third dashboard row: CAC, LTV and retention, each with a line of context. */
+/** Third dashboard row: CAC, average ticket and retention, each with a line of context. */
 export function MetricCards({
-  avgLtv,
-  customersCount,
+  avgTicket,
+  salesCount,
   paidTraffic,
   retentionRate,
   buyersCount,
 }: {
-  avgLtv: number;
-  customersCount: number;
+  avgTicket: number;
+  salesCount: number;
   paidTraffic: PaidTrafficMetrics;
   retentionRate: number;
   buyersCount: number;
@@ -41,10 +41,10 @@ export function MetricCards({
         }
       />
       <KpiCard
-        label="LTV médio"
-        icon={UserRound}
-        value={formatCurrencyBRL(avgLtv)}
-        footer={`Média de ${customersCount} ${customersCount === 1 ? "cliente" : "clientes"} da base`}
+        label="Ticket médio"
+        icon={Receipt}
+        value={salesCount > 0 ? formatCurrencyBRL(avgTicket) : "—"}
+        footer={`Receita do período dividida por ${salesCount} ${salesCount === 1 ? "venda" : "vendas"}`}
       />
       <KpiCard
         label="Taxa de retenção"

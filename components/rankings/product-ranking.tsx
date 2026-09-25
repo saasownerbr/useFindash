@@ -16,5 +16,5 @@ export function ProductRanking({ rows }: { rows: ProductRankRow[] }) {
       ),
     }));
 
-  return <RankingList title="Produtos" items={items} emptyMessage="Nenhum aparelho vendido neste mês." />;
+  return <RankingList title="Produtos" items={items} emptyMessage="Nenhum aparelho vendido neste período." />;
 }

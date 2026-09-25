@@ -19,5 +19,5 @@ export function SellerRanking({ rows }: { rows: SellerRankRow[] }) {
       right: <span className="tabular-nums text-[#10B981]">Comissão {formatCurrencyBRL(row.totalCommission)}</span>,
     }));
 
-  return <RankingList title="Vendedores" items={items} emptyMessage="Nenhuma venda neste mês." />;
+  return <RankingList title="Vendedores" items={items} emptyMessage="Nenhuma venda neste período." />;
 }

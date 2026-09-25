@@ -23,8 +23,8 @@ function monthBounds(value: string) {
 
 const PRESETS: { key: Exclude<PeriodType, "custom">; label: string }[] = [
   { key: "today", label: "Hoje" },
+  { key: "15days", label: "15 dias" },
   { key: "month", label: "Este mês" },
-  { key: "30days", label: "30 dias" },
   { key: "90days", label: "90 dias" },
 ];
 
@@ -32,7 +32,10 @@ const PILL = "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] 
 const PILL_ACTIVE = "bg-primary font-bold text-primary-foreground";
 const PILL_IDLE = "bg-card font-medium text-muted-foreground hover:text-foreground";
 
-/** Period pills for the dashboard: presets plus a custom month range. */
+/**
+ * Period pills shared by every module that filters by date (dashboard, DRE, lançamentos, rankings):
+ * presets plus a custom month range. The choice is global, so it carries across modules.
+ */
 export function PeriodSelector() {
   const { periodType, startDate, endDate, setPeriod } = usePeriodFilterStore();
   const [customOpen, setCustomOpen] = useState(false);

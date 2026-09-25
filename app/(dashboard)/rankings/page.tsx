@@ -5,22 +5,15 @@ import { useEffect, useState } from "react";
 import { ChannelRanking } from "@/components/rankings/channel-ranking";
 import { ProductRanking } from "@/components/rankings/product-ranking";
 import { SellerRanking } from "@/components/rankings/seller-ranking";
-import { Label } from "@/components/ui/label";
-import { MonthPicker, currentMonthValue } from "@/components/ui/month-picker";
+import { PeriodSelector } from "@/components/period-selector";
 import { PageContainer } from "@/components/ui/page-container";
+import { usePeriodFilterStore } from "@/lib/period-filter-store";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
 import { rankChannels, rankProducts, rankSellers, type ChannelRankRow, type ProductRankRow, type SellerRankRow } from "@/lib/rankings";
 
-function monthRange(month: string) {
-  const start = `${month}-01`;
-  const [year, mon] = month.split("-").map(Number);
-  const nextMonth = mon === 12 ? `${year + 1}-01` : `${year}-${String(mon + 1).padStart(2, "0")}`;
-  return { start, end: `${nextMonth}-01` };
-}
-
 export default function RankingsPage() {
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const { startDate, endDate } = usePeriodFilterStore();
   const [sellerRows, setSellerRows] = useState<SellerRankRow[]>([]);
   const [productRows, setProductRows] = useState<ProductRankRow[]>([]);
   const [channelRows, setChannelRows] = useState<ChannelRankRow[]>([]);
@@ -34,27 +27,26 @@ export default function RankingsPage() {
       setLoading(true);
       const supabase = createClient();
       const storeId = await getClientStoreId();
-      if (!storeId || cancelled) {
+      if (!storeId || !startDate || !endDate || cancelled) {
         setLoading(false);
         return;
       }
 
-      const { start, end } = monthRange(month);
 
       const [salesRes, sellersRes] = await Promise.all([
         supabase
           .from("sales")
           .select("id, seller_id, sale_price, gross_margin, commission_amount, sale_channel, products(model, storage), sale_accessories(quantity)")
           .eq("store_id", storeId)
-          .gte("sold_at", start)
-          .lt("sold_at", end),
+          .gte("sold_at", startDate.toISOString())
+          .lte("sold_at", endDate.toISOString()),
         supabase.from("store_users").select("id, name").eq("store_id", storeId),
       ]);
 
       if (cancelled) return;
 
       if (salesRes.error || sellersRes.error) {
-        setError("Não foi possível carregar os rankings deste mês.");
+        setError("Não foi possível carregar os rankings deste período.");
         setLoading(false);
         return;
       }
@@ -84,7 +76,7 @@ export default function RankingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [month]);
+  }, [startDate, endDate]);
 
   return (
     <PageContainer>
@@ -94,10 +86,7 @@ export default function RankingsPage() {
           <p className="mt-1 text-[13px] text-muted-foreground">Desempenho de vendedores, produtos e canais.</p>
         </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="rankings-month">Mês</Label>
-        <MonthPicker id="rankings-month" value={month} onChange={(v) => setMonth(v || currentMonthValue())} />
-      </div>
+      <PeriodSelector />
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
