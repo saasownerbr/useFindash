@@ -6,6 +6,7 @@ import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isBirthdayWithinDays } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { formatPhone } from "@/lib/phone";
+import { emailFrom } from "@/lib/welcome-email";
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
       .join("");
 
     await resend.emails.send({
-      from: "useFindash <alertas@usefindash.vercel.app>",
+      from: emailFrom(),
       to: ownerEmails,
       subject: `Aniversariantes dos próximos 7 dias — ${store.name}`,
       html: `<p>Aniversariantes dos próximos 7 dias:</p><ul>${rows}</ul>`,

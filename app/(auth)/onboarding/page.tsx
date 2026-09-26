@@ -43,6 +43,9 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Fire and forget: a failed welcome email must never hold the owner back from the dashboard.
+    void fetch("/api/onboarding/welcome", { method: "POST", keepalive: true }).catch(() => {});
+
     router.replace("/dashboard");
   }
 
