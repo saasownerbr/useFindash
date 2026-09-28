@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Trophy,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Calculadora", href: "/calculadora", icon: Calculator, group: "operation" },
   // Straight to the wizard: /vendas only redirects there, which costs a second round trip per tap.
   { label: "Vendas", href: "/vendas/nova", icon: ShoppingCart, group: "operation" },
+  { label: "Assistência", href: "/assistencia", icon: Wrench, group: "operation" },
   { label: "Clientes", href: "/clientes", icon: Users, group: "operation" },
   { label: "Financeiro", href: "/financeiro", icon: DollarSign, group: "management" },
   { label: "Inputs", href: "/inputs", icon: SlidersHorizontal, group: "management" },

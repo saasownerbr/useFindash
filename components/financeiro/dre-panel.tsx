@@ -12,10 +12,12 @@ import { buildDRE, periodCosts, type DRE } from "@/lib/dre";
 import { calculateAverageTicket, calculateCAC, calculateROAS, formatCurrencyBRL } from "@/lib/finance";
 import { firstOfMonth } from "@/lib/period";
 import { usePeriodFilterStore } from "@/lib/period-filter-store";
+import { fetchServiceRevenue } from "@/lib/service-revenue";
 
 
 interface DreKpis {
   salesCount: number;
+  serviceCount: number;
   paidSalesCount: number;
   paidRevenue: number;
   investment: number;
@@ -36,7 +38,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
       const supabase = createClient();
 
       // One parallel round (Supabase is ~300 ms away from Brazil).
-      const [salesRes, costsRes, inputsRes, accessorySales] = await Promise.all([
+      const [salesRes, costsRes, inputsRes, accessorySales, serviceSales] = await Promise.all([
         supabase
           .from("sales")
           .select("id, sale_price, acquisition_cost, repair_cost, gross_margin, commission_amount, sale_channel, sale_accessories(quantity, unit_price)")
@@ -52,6 +54,7 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
           .gte("month", firstOfMonth(startDate))
           .lte("month", firstOfMonth(endDate)),
         sumAccessorySales(supabase, storeId, start, end),
+        fetchServiceRevenue(supabase, storeId, start, end),
       ]);
 
       if (cancelled) return;
@@ -68,10 +71,16 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
 
       setError(null);
       setDre(
-        buildDRE(sales, periodCosts(costsRes.entries, startDate, endDate, { wholeMonths: periodType === "month" }), accessorySales)
+        buildDRE(
+          sales,
+          periodCosts(costsRes.entries, startDate, endDate, { wholeMonths: periodType === "month" }),
+          accessorySales,
+          serviceSales
+        )
       );
       setKpis({
         salesCount: sales.length,
+        serviceCount: serviceSales.count,
         paidSalesCount: paidSales.length,
         paidRevenue: paidSales.reduce((sum, s) => sum + saleRevenue(s), 0),
         investment: (inputsRes.data ?? []).reduce((sum, row) => sum + Number(row.paid_traffic_investment), 0),
@@ -99,6 +108,12 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3">
             <RevenueCard label="Receita" value={dre.revenue} />
+            <DreLine label="Receita de vendas" value={formatCurrencyBRL(dre.salesRevenue)} note="Aparelhos e acessórios" />
+            <DreLine
+              label="Receita de Assistência Técnica"
+              value={formatCurrencyBRL(dre.serviceRevenue)}
+              note={`${kpis.serviceCount} ${kpis.serviceCount === 1 ? "serviço concluído" : "serviços concluídos"} · peças entram no CMV`}
+            />
             <DreLine label="CMV" value={formatCurrencyBRL(dre.cmv)} />
             <DreLine label="Margem bruta" value={`${formatCurrencyBRL(dre.grossMargin)} (${(dre.grossMarginPct * 100).toFixed(1)}%)`} />
             <DreLine
@@ -122,8 +137,12 @@ export function DrePanel({ storeId }: { storeId: string | null }) {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
               <DreLine
                 label="Ticket médio"
-                value={kpis.salesCount > 0 ? formatCurrencyBRL(calculateAverageTicket(dre.revenue, kpis.salesCount)) : "Sem dados"}
-                note={`${kpis.salesCount} ${kpis.salesCount === 1 ? "venda" : "vendas"} no período`}
+                value={
+                  kpis.salesCount + kpis.serviceCount > 0
+                    ? formatCurrencyBRL(calculateAverageTicket(dre.revenue, kpis.salesCount + kpis.serviceCount))
+                    : "Sem dados"
+                }
+                note={`${kpis.salesCount} ${kpis.salesCount === 1 ? "venda" : "vendas"}${kpis.serviceCount > 0 ? ` e ${kpis.serviceCount} ${kpis.serviceCount === 1 ? "serviço" : "serviços"}` : ""} no período`}
               />
               <DreLine
                 label="CAC Tráfego Pago"

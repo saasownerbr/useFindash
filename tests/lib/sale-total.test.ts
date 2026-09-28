@@ -7,7 +7,7 @@ const pelicula = { quantity: 1, unitPrice: 100 };
 
 describe("productPrice", () => {
   it("prefers the final price, then the suggested one", () => {
-    const base = { id: "p", model: "iPhone 13", storage: "128GB", color: null, imei: null, grade: null, acquisitionCost: 0, repairCost: 0 };
+    const base = { id: "p", brand: "apple", model: "iPhone 13", storage: "128GB", color: null, imei: null, grade: null, acquisitionCost: 0, repairCost: 0 };
     expect(productPrice({ ...base, finalPrice: 3000, suggestedPrice: 2800 })).toBe(3000);
     expect(productPrice({ ...base, finalPrice: null, suggestedPrice: 2800 })).toBe(2800);
     expect(productPrice(null)).toBe(0);
@@ -17,7 +17,7 @@ describe("productPrice", () => {
 describe("splitSaleTotal", () => {
   it("keeps accessory prices and gives the device the rest", () => {
     expect(accessoriesTotal([capinha, pelicula])).toBe(200);
-    expect(splitSaleTotal(3200, [capinha, pelicula])).toEqual({ devicePrice: 3000, accessories: [capinha, pelicula] });
+    expect(splitSaleTotal(3200, [capinha, pelicula])).toEqual({ devicePrice: 3000, accessories: [capinha, pelicula], service: 0 });
   });
 
   it("puts a discount on the device", () => {
@@ -28,5 +28,18 @@ describe("splitSaleTotal", () => {
     const { devicePrice, accessories } = splitSaleTotal(150, [capinha, pelicula]);
     expect(devicePrice).toBe(0);
     expect(accessoriesTotal(accessories)).toBe(150);
+  });
+
+  it("keeps a technical-assistance total out of the device price, so it is not counted twice", () => {
+    // R$ 3.000 device + R$ 200 accessories + R$ 600 service = R$ 3.800.
+    expect(splitSaleTotal(3800, [capinha, pelicula], 600)).toEqual({ devicePrice: 3000, accessories: [capinha, pelicula], service: 600 });
+    // A R$ 100 discount lands on the device.
+    expect(splitSaleTotal(3700, [capinha, pelicula], 600).devicePrice).toBe(2900);
+  });
+
+  it("scales accessories and service when the total is below both", () => {
+    const split = splitSaleTotal(400, [pelicula], 700);
+    expect(split.devicePrice).toBe(0);
+    expect(accessoriesTotal(split.accessories) + split.service).toBeCloseTo(400);
   });
 });

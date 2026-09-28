@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
+import { CPF_CNPJ_IN_USE_MESSAGE, isCpfCnpjInUse } from "@/lib/validation/cnpj";
 import { onboardingSchema, type OnboardingInput } from "@/lib/validation/onboarding";
 
 export default function OnboardingPage() {
@@ -31,6 +32,12 @@ export default function OnboardingPage() {
       return;
     }
 
+    // One store (and one free trial) per CPF/CNPJ.
+    if (data.cnpj && (await isCpfCnpjInUse(data.cnpj))) {
+      setError("cnpj", { message: CPF_CNPJ_IN_USE_MESSAGE });
+      return;
+    }
+
     const { error } = await supabase.rpc("create_store_with_owner", {
       store_name: data.storeName,
       owner_name: data.ownerName,
@@ -39,6 +46,10 @@ export default function OnboardingPage() {
     });
 
     if (error) {
+      if (error.message.includes("cpf_cnpj_in_use")) {
+        setError("cnpj", { message: CPF_CNPJ_IN_USE_MESSAGE });
+        return;
+      }
       setError("root", { message: "Não foi possível criar a loja. Tente novamente." });
       return;
     }

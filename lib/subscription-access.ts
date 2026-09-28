@@ -18,7 +18,7 @@ export type Access =
   | { access: "blocked" };
 
 /** The SaaS owner: always full access, whatever the database says. */
-export const OWNER_EMAIL = "luanuliana8@gmail.com";
+export const OWNER_EMAIL = "saas.owner.br@gmail.com";
 
 export function isOwnerEmail(email: string | null | undefined): boolean {
   return email?.trim().toLowerCase() === OWNER_EMAIL;

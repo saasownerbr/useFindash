@@ -1,6 +1,8 @@
 const PUBLIC_PATHS = ["/login", "/signup", "/recuperar-senha"];
 // The reset link lands on /auth/callback signed out, which signs in and continues to /redefinir-senha.
-const ANY_SESSION_PATHS = ["/redefinir-senha", "/auth/callback"];
+// API routes answer with JSON and check the session themselves (password recovery runs signed out, the CPF/CNPJ
+// check runs before the store exists), so a page redirect never applies to them.
+const ANY_SESSION_PATHS = ["/redefinir-senha", "/auth/callback", "/api/"];
 
 export function resolveAuthRedirect(
   pathname: string,

@@ -1,3 +1,5 @@
+import { emailParagraph, escapeHtml, renderEmail } from "@/lib/email-layout";
+
 /**
  * Sender for customer-facing email. Resend only delivers from a domain verified in the account,
  * so byfindash.com.br must stay verified there; RESEND_FROM_EMAIL overrides it per environment.
@@ -10,10 +12,6 @@ export function emailFrom() {
 
 export const WELCOME_EMAIL_SUBJECT = "Bem-vindo ao useFindash";
 
-function escapeHtml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
 /** Subject and HTML body of the email a new owner gets once their store is created. */
 export function buildWelcomeEmail({ ownerName, storeName, appUrl }: { ownerName: string; storeName: string; appUrl: string }) {
   const firstName = escapeHtml(ownerName.trim().split(/\s+/)[0] ?? "");
@@ -21,12 +19,17 @@ export function buildWelcomeEmail({ ownerName, storeName, appUrl }: { ownerName:
 
   return {
     subject: WELCOME_EMAIL_SUBJECT,
-    html: [
-      `<h2>Olá, ${firstName}!</h2>`,
-      `<p>A loja <strong>${escapeHtml(storeName)}</strong> está pronta no useFindash.</p>`,
-      "<p>Seu período de teste de 7 dias já começou. Cadastre o estoque, registre as vendas e acompanhe o lucro real da loja no painel.</p>",
-      `<p><a href="${dashboardUrl}">Abrir o painel</a></p>`,
-      "<p>Dúvidas? Responda este email ou use o suporte dentro do sistema.</p>",
-    ].join("\n"),
+    html: renderEmail({
+      preheader: "Sua loja está pronta e o teste grátis de 7 dias já começou.",
+      title: firstName ? `Olá, ${firstName}!` : "Olá!",
+      bodyHtml: [
+        emailParagraph(`A loja <strong style="color:#F0F0F0;">${escapeHtml(storeName)}</strong> está pronta no useFindash.`),
+        emailParagraph(
+          "Seu período de teste de <strong style=\"color:#dae878;\">7 dias</strong> já começou. Cadastre o estoque, registre as vendas e acompanhe o lucro real da loja no painel."
+        ),
+      ].join(""),
+      cta: { label: "Abrir o painel", url: dashboardUrl },
+      footnoteHtml: "Dúvidas? Responda este email ou use o Suporte dentro do sistema.",
+    }),
   };
 }

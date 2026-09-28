@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
+import { buildUpgradeAlertEmail } from "@/lib/alert-emails";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isInUpgradeWindow } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
-import { formatPhone } from "@/lib/phone";
 import { emailFrom } from "@/lib/welcome-email";
 
 export async function GET(request: NextRequest) {
@@ -19,15 +19,18 @@ export async function GET(request: NextRequest) {
   const { data: stores } = await admin.from("stores").select("id, name, upgrade_alert_months");
   const emailById = await listAllUserEmails(admin);
   let emailsSent = 0;
+  let failures = 0;
 
   for (const store of stores ?? []) {
     const { data: customers } = await admin.from("customers").select("id, name, whatsapp").eq("store_id", store.id);
     if (!customers || customers.length === 0) continue;
 
+    // Only device sales: an accessory bought later does not restart the upgrade clock.
     const { data: sales } = await admin
       .from("sales")
       .select("customer_id, sold_at, products(model)")
       .eq("store_id", store.id)
+      .not("product_id", "is", null)
       .order("sold_at", { ascending: false });
 
     const latestSaleByCustomer = new Map<string, { sold_at: string; model: string | null }>();
@@ -50,23 +53,22 @@ export async function GET(request: NextRequest) {
     const ownerEmails = await getStoreOwnerEmails(admin, store.id, emailById);
     if (ownerEmails.length === 0) continue;
 
-    const rows = inWindow
-      .map((customer) => {
-        const lastSale = latestSaleByCustomer.get(customer.id);
-        const model = lastSale?.model ?? "produto";
-        const date = lastSale ? new Date(lastSale.sold_at).toLocaleDateString("pt-BR") : "—";
-        return `<li>${customer.name} — ${model} — ${date} — ${formatPhone(customer.whatsapp)}</li>`;
+    const { subject, html } = buildUpgradeAlertEmail(
+      store.name,
+      inWindow.map((customer) => {
+        const lastSale = latestSaleByCustomer.get(customer.id)!;
+        return { name: customer.name, whatsapp: customer.whatsapp, model: lastSale.model, soldAt: lastSale.sold_at };
       })
-      .join("");
+    );
 
-    await resend.emails.send({
-      from: emailFrom(),
-      to: ownerEmails,
-      subject: `Clientes em janela de upgrade — ${store.name}`,
-      html: `<p>Clientes em janela de upgrade:</p><ul>${rows}</ul>`,
-    });
+    const { error } = await resend.emails.send({ from: emailFrom(), to: ownerEmails, subject, html });
+    if (error) {
+      failures += 1;
+      console.error("Upgrade alert email error:", store.id, error);
+      continue;
+    }
     emailsSent += 1;
   }
 
-  return NextResponse.json({ ok: true, emailsSent });
+  return NextResponse.json({ ok: failures === 0, emailsSent, failures });
 }

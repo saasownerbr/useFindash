@@ -66,8 +66,12 @@ export function StepAccessories({ storeId }: { storeId: string | null }) {
                     min={1}
                     max={accessory.quantity}
                     value={quantities[accessory.id] ?? 1}
+                    // Never more than what is in stock.
                     onChange={(e) =>
-                      setQuantities((prev) => ({ ...prev, [accessory.id]: Number(e.target.value) }))
+                      setQuantities((prev) => ({
+                        ...prev,
+                        [accessory.id]: Math.min(accessory.quantity, Math.max(0, Math.floor(Number(e.target.value) || 0))),
+                      }))
                     }
                     className="w-20"
                   />
@@ -81,6 +85,7 @@ export function StepAccessories({ storeId }: { storeId: string | null }) {
                         name: accessory.name,
                         quantity: Math.min(Math.max(1, quantities[accessory.id] ?? 1), accessory.quantity),
                         unitPrice: accessory.sale_price,
+                        unitCost: Number(accessory.cost),
                         availableQuantity: accessory.quantity,
                       })
                     }

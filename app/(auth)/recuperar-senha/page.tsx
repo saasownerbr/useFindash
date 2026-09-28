@@ -9,12 +9,7 @@ import { AuthCard, authInputClass } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authErrorMessage } from "@/lib/auth/auth-errors";
-import { createClient } from "@/lib/supabase/client";
 import { recoverPasswordSchema, type RecoverPasswordInput } from "@/lib/validation/auth";
-
-// Must be in Supabase > Authentication > URL Configuration > Redirect URLs.
-const PASSWORD_RESET_REDIRECT = "https://www.byfindash.com.br/auth/callback";
 
 export default function RecoverPasswordPage() {
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -33,11 +28,15 @@ export default function RecoverPasswordPage() {
   }, [setValue]);
 
   async function onSubmit(data: RecoverPasswordInput) {
-    const { error } = await createClient().auth.resetPasswordForEmail(data.email, {
-      redirectTo: PASSWORD_RESET_REDIRECT,
-    });
-    if (error) {
-      setError("root", { message: authErrorMessage(error) });
+    // Sent by our API (Portuguese template via Resend), not by Supabase's default English email.
+    const response = await fetch("/api/auth/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: data.email }),
+    }).catch(() => null);
+    if (!response?.ok) {
+      const body = await response?.json().catch(() => null);
+      setError("root", { message: body?.error ?? "Não foi possível enviar o link. Tente novamente." });
       return;
     }
     setSentTo(data.email);

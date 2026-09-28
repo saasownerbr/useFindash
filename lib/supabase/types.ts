@@ -454,6 +454,92 @@ export type Database = {
           },
         ]
       }
+      sale_services: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          customer_id: string | null
+          device_description: string
+          id: string
+          labor_cost: number
+          notes: string | null
+          parts_cost: number
+          parts_replaced: Json
+          sale_id: string | null
+          seller_id: string | null
+          service_type: string
+          status: string
+          store_id: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_description: string
+          id?: string
+          labor_cost?: number
+          notes?: string | null
+          parts_cost?: number
+          parts_replaced?: Json
+          sale_id?: string | null
+          seller_id?: string | null
+          service_type: string
+          status?: string
+          store_id: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_description?: string
+          id?: string
+          labor_cost?: number
+          notes?: string | null
+          parts_cost?: number
+          parts_replaced?: Json
+          sale_id?: string | null
+          seller_id?: string | null
+          service_type?: string
+          status?: string
+          store_id?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_services_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_services_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_services_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "store_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_services_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           acquisition_cost: number
@@ -694,6 +780,10 @@ export type Database = {
           p_store_id: string
         }
         Returns: string
+      }
+      cpf_cnpj_in_use: {
+        Args: { document: string; exclude_store?: string }
+        Returns: boolean
       }
       create_store_with_owner: {
         Args: {

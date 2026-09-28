@@ -1,13 +1,5 @@
+import { escapeHtml, renderEmail } from "@/lib/email-layout";
 import { formatPhone } from "@/lib/phone";
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 export interface SupportEmailInput {
   storeName: string;
@@ -30,9 +22,16 @@ export function buildSupportEmail({ storeName, userEmail, whatsapp, message, sen
 
   return {
     subject: `[Suporte useFindash] ${storeName}`,
-    html: [
-      "<h2>Nova mensagem de suporte recebida</h2>",
-      ...rows.map(([label, value]) => `<p><strong>${label}:</strong> ${value}</p>`),
-    ].join("\n"),
+    html: renderEmail({
+      preheader: `Mensagem de ${userEmail}`,
+      title: "Nova mensagem de suporte recebida",
+      bodyHtml: rows
+        .map(
+          ([label, value]) =>
+            `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#D0D0D0;"><strong>${label}:</strong> ${value}</p>`
+        )
+        .join("\n"),
+      footnoteHtml: "Responda este email para falar direto com o usuário (Reply-To).",
+    }),
   };
 }

@@ -67,7 +67,7 @@ describe("checkAccess", () => {
     const { checkAccess } = await import("@/lib/subscription");
     const from = vi.fn();
     const supabase = { from } as never;
-    expect(await checkAccess("u1", supabase, "luanuliana8@gmail.com")).toEqual({ access: "full", type: "owner" });
+    expect(await checkAccess("u1", supabase, "saas.owner.br@gmail.com")).toEqual({ access: "full", type: "owner" });
     expect(from).not.toHaveBeenCalled();
   });
 });

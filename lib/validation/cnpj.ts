@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const CPF_CNPJ_IN_USE_MESSAGE = "Este CPF/CNPJ já está cadastrado em outra loja. Fale com o suporte se for o seu.";
+
+/** Whether another store already uses this CPF/CNPJ (checked on the server; RLS hides other stores). */
+export async function isCpfCnpjInUse(document: string): Promise<boolean> {
+  const response = await fetch("/api/stores/document-check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document }),
+  }).catch(() => null);
+  if (!response?.ok) return false;
+  return Boolean((await response.json().catch(() => null))?.inUse);
+}
+
 export function normalizeCnpj(value: string): string {
   return value.replace(/\D/g, "");
 }

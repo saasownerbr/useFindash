@@ -7,17 +7,20 @@ import { fullAccessUntil, requiresAccessCheck } from "@/lib/subscription-access"
 import { updateSession } from "@/lib/supabase/middleware";
 
 const HAS_STORE_COOKIE = "uf_has_store";
+const PRODUCTION_HOST = "www.byfindash.com.br";
 
 export async function middleware(request: NextRequest) {
-  // Preview deployment URLs redirect to the fixed production URL.
+  // Deployment URLs (*-singlehub.vercel.app) and the old usefindash.vercel.app alias redirect to the production domain.
+  // A 308 keeps the method, so a POST to an old URL is not turned into a GET.
   const host = request.headers.get("host") ?? "";
-  const isPreviewer = host.includes("singlehub.vercel.app") && host !== "usefindash.vercel.app";
+  const isPreviewer = host.endsWith("-singlehub.vercel.app") || host === "usefindash.vercel.app";
 
   if (isPreviewer) {
     const url = request.nextUrl.clone();
-    url.host = "usefindash.vercel.app";
+    url.protocol = "https:";
+    url.host = PRODUCTION_HOST;
     url.port = "";
-    return NextResponse.redirect(url, { status: 301 });
+    return NextResponse.redirect(url, { status: 308 });
   }
 
   const { response, userId, email, supabase } = await updateSession(request);

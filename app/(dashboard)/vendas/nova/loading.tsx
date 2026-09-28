@@ -10,7 +10,7 @@ export default function NovaVendaLoading() {
 
       {/* Steps */}
       <div className="flex items-center gap-2">
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex flex-1 items-center gap-2">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-4 w-20" />

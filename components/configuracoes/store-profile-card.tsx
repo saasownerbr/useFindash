@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
-import { formatCpfCnpj } from "@/lib/validation/cnpj";
+import { CPF_CNPJ_IN_USE_MESSAGE, formatCpfCnpj, isCpfCnpjInUse } from "@/lib/validation/cnpj";
 import { storeProfileSchema, type StoreProfileInput } from "@/lib/validation/store-settings";
 
 export function StoreProfileCard({ storeId }: { storeId: string | null }) {
@@ -18,6 +18,7 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<StoreProfileInput>({
     resolver: zodResolver(storeProfileSchema),
@@ -42,11 +43,16 @@ export function StoreProfileCard({ storeId }: { storeId: string | null }) {
 
   async function onSubmit(data: StoreProfileInput) {
     if (!storeId) return;
+    if (data.cnpj && (await isCpfCnpjInUse(data.cnpj))) {
+      setError("cnpj", { message: CPF_CNPJ_IN_USE_MESSAGE });
+      return;
+    }
     const { error } = await createClient()
       .from("stores")
       .update({ name: data.name, cnpj: data.cnpj ?? null })
       .eq("id", storeId);
-    if (error) toast.error("Não foi possível salvar. Só donos e administradores podem alterar a loja.");
+    if (error?.message.includes("cpf_cnpj_in_use")) setError("cnpj", { message: CPF_CNPJ_IN_USE_MESSAGE });
+    else if (error) toast.error("Não foi possível salvar. Só donos e administradores podem alterar a loja.");
     else toast.success("Dados da loja salvos");
   }
 

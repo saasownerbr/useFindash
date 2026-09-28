@@ -65,9 +65,10 @@ describe("requiresAccessCheck", () => {
 
 describe("owner access", () => {
   it("recognizes the owner email regardless of case or spaces", () => {
-    expect(isOwnerEmail("luanuliana8@gmail.com")).toBe(true);
-    expect(isOwnerEmail(" LuanUliana8@Gmail.com ")).toBe(true);
+    expect(isOwnerEmail("saas.owner.br@gmail.com")).toBe(true);
+    expect(isOwnerEmail(" Saas.Owner.BR@Gmail.com ")).toBe(true);
     expect(isOwnerEmail("someone@gmail.com")).toBe(false);
+    expect(isOwnerEmail("luanuliana8@gmail.com")).toBe(false);
     expect(isOwnerEmail(null)).toBe(false);
   });
 

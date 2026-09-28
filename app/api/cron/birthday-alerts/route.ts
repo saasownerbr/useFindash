@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
+import { buildBirthdayAlertEmail } from "@/lib/alert-emails";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStoreOwnerEmails, listAllUserEmails } from "@/lib/store-owners";
 import { isBirthdayWithinDays } from "@/lib/customer-alerts";
 import { verifyCronSecret } from "@/lib/cron-auth";
-import { formatPhone } from "@/lib/phone";
 import { emailFrom } from "@/lib/welcome-email";
 
 export async function GET(request: NextRequest) {
@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const { data: stores } = await admin.from("stores").select("id, name");
   const emailById = await listAllUserEmails(admin);
   let emailsSent = 0;
+  let failures = 0;
 
   for (const store of stores ?? []) {
     const { data: customers } = await admin
@@ -33,21 +34,19 @@ export async function GET(request: NextRequest) {
     const ownerEmails = await getStoreOwnerEmails(admin, store.id, emailById);
     if (ownerEmails.length === 0) continue;
 
-    const rows = upcoming
-      .map((customer) => {
-        const date = customer.birthdate ? new Date(customer.birthdate).toLocaleDateString("pt-BR") : "—";
-        return `<li>${customer.name} — aniversário em ${date} — ${formatPhone(customer.whatsapp)}</li>`;
-      })
-      .join("");
+    const { subject, html } = buildBirthdayAlertEmail(
+      store.name,
+      upcoming.map((customer) => ({ name: customer.name, whatsapp: customer.whatsapp, birthdate: customer.birthdate! }))
+    );
 
-    await resend.emails.send({
-      from: emailFrom(),
-      to: ownerEmails,
-      subject: `Aniversariantes dos próximos 7 dias — ${store.name}`,
-      html: `<p>Aniversariantes dos próximos 7 dias:</p><ul>${rows}</ul>`,
-    });
+    const { error } = await resend.emails.send({ from: emailFrom(), to: ownerEmails, subject, html });
+    if (error) {
+      failures += 1;
+      console.error("Birthday alert email error:", store.id, error);
+      continue;
+    }
     emailsSent += 1;
   }
 
-  return NextResponse.json({ ok: true, emailsSent });
+  return NextResponse.json({ ok: failures === 0, emailsSent, failures });
 }

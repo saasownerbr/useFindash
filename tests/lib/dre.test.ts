@@ -23,6 +23,8 @@ describe("buildDRE", () => {
   it("returns all zeros for an empty month, never NaN", () => {
     const dre = buildDRE([], NO_COSTS);
     expect(dre).toEqual({
+      salesRevenue: 0,
+      serviceRevenue: 0,
       revenue: 0,
       cmv: 0,
       grossMargin: 0,
@@ -127,5 +129,36 @@ describe("dashboard 'Hoje' scenario", () => {
     expect(dre.grossMarginPct).toBeCloseTo(0.3);
     // 1.500 − 100 of rent for the day − 120 of today's variable costs; the R$ 20.000 stock purchase is not subtracted.
     expect(dre.netMargin).toBe(1280);
+  });
+});
+
+describe("technical assistance in the DRE", () => {
+  it("adds the service total to revenue and only the parts to CMV (labor has no cost)", () => {
+    const sale = { acquisition_cost: 2000, repair_cost: 0, gross_margin: 1000, commission_amount: 0 };
+    // Service: R$ 450 of parts + R$ 150 of labor.
+    const dre = buildDRE([sale], NO_COSTS, { revenue: 0, cost: 0 }, { revenue: 600, cost: 450 });
+    expect(dre.salesRevenue).toBe(3000);
+    expect(dre.serviceRevenue).toBe(600);
+    expect(dre.revenue).toBe(3600);
+    expect(dre.cmv).toBe(2450);
+    expect(dre.grossMargin).toBe(1150);
+  });
+});
+
+describe("CMV follows the sale, not the purchase", () => {
+  it("a device bought in September and sold in October has its cost in October only", () => {
+    // sales rows freeze the device cost at sale time and are dated by sold_at; the September purchase is a supplier
+    // entry, shown but never part of CMV.
+    const septemberPurchase: CostEntryForPeriod[] = [{ type: "supplier", amount: 2000, date: "2026-09-10" }];
+    const september = buildDRE([], periodCosts(septemberPurchase, new Date(2026, 8, 1), new Date(2026, 8, 30, 23, 59)));
+    const october = buildDRE(
+      [{ acquisition_cost: 2000, repair_cost: 150, gross_margin: 850, commission_amount: 0 }],
+      periodCosts([], new Date(2026, 9, 1), new Date(2026, 9, 31, 23, 59))
+    );
+    expect(september.cmv).toBe(0);
+    expect(september.costsByType.supplier).toBe(2000);
+    expect(september.netMargin).toBe(0);
+    expect(october.cmv).toBe(2150);
+    expect(october.revenue).toBe(3000);
   });
 });

@@ -5,6 +5,10 @@ export type CostType = "fixed" | "variable" | "marketing" | "supplier";
 export type CostsByType = Record<CostType, number>;
 
 export type DRE = {
+  /** Devices and accessories. */
+  salesRevenue: number;
+  /** Finished technical-assistance services (parts + labor). */
+  serviceRevenue: number;
   revenue: number;
   cmv: number;
   grossMargin: number;
@@ -21,6 +25,8 @@ type SaleForDRE = {
   commission_amount: number | null;
 };
 type AccessorySalesForDRE = { revenue: number; cost: number };
+/** Finished services: revenue is parts + labor, cost is the parts (labor has no CMV). */
+type ServiceSalesForDRE = { revenue: number; cost: number };
 export type CostEntryForPeriod = { type: CostType; amount: number; date: string };
 
 export const NO_COSTS: CostsByType = { fixed: 0, variable: 0, marketing: 0, supplier: 0 };
@@ -89,19 +95,34 @@ export function periodCosts(
  * CMV is only what the sold items cost (acquisition + repair, plus accessory cost). Supplier entries are stock
  * purchases: that money reaches the result through CMV when the device sells, so it is shown but never
  * subtracted again. Net margin = revenue − CMV − fixed − variable − marketing − commissions.
+ *
+ * Technical assistance ("Receita de Assistência Técnica") adds its total to revenue and its parts to CMV.
  */
 export function buildDRE(
   sales: SaleForDRE[],
   costs: CostsByType,
-  accessorySales: AccessorySalesForDRE = { revenue: 0, cost: 0 }
+  accessorySales: AccessorySalesForDRE = { revenue: 0, cost: 0 },
+  serviceSales: ServiceSalesForDRE = { revenue: 0, cost: 0 }
 ): DRE {
   const deviceCmv = calculateCMV(sales);
   const deviceGrossMargin = calculateGrossMargin(sales);
-  const revenue = deviceCmv + deviceGrossMargin + accessorySales.revenue;
-  const cmv = deviceCmv + accessorySales.cost;
+  const salesRevenue = deviceCmv + deviceGrossMargin + accessorySales.revenue;
+  const serviceRevenue = serviceSales.revenue;
+  const revenue = salesRevenue + serviceRevenue;
+  const cmv = deviceCmv + accessorySales.cost + serviceSales.cost;
   const grossMargin = revenue - cmv;
   const commissions = sales.reduce((sum, s) => sum + Number(s.commission_amount ?? 0), 0);
   const netMargin = grossMargin - costs.fixed - costs.variable - costs.marketing - commissions;
   const grossMarginPct = revenue > 0 ? grossMargin / revenue : 0;
-  return { revenue, cmv, grossMargin, grossMarginPct, commissions, costsByType: { ...costs }, netMargin };
+  return {
+    salesRevenue,
+    serviceRevenue,
+    revenue,
+    cmv,
+    grossMargin,
+    grossMarginPct,
+    commissions,
+    costsByType: { ...costs },
+    netMargin,
+  };
 }

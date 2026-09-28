@@ -5,10 +5,11 @@ import { buildSupportEmail } from "@/lib/support-email";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveStoreId } from "@/lib/supabase/store";
 import { supportSchema } from "@/lib/validation/support";
+import { emailFrom } from "@/lib/welcome-email";
 
-// Resend only sends from verified domains; until one is set up, its shared
-// sender works for the account owner's inbox (which is where SUPPORT_EMAIL points).
-const DEFAULT_FROM = "useFindash <onboarding@resend.dev>";
+// Support mail goes out from the verified byfindash.com.br sender (SUPPORT_FROM_EMAIL overrides it) to SUPPORT_EMAIL,
+// with Reply-To set to the user so answering reaches them directly.
+const DEFAULT_SUPPORT_EMAIL = "saas.owner.br@gmail.com";
 
 export async function POST(request: NextRequest) {
   const parsed = supportSchema.safeParse(await request.json().catch(() => null));
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  const supportEmail = process.env.SUPPORT_EMAIL;
+  const supportEmail = process.env.SUPPORT_EMAIL || DEFAULT_SUPPORT_EMAIL;
   if (!supportEmail || !process.env.RESEND_API_KEY) {
     console.error("Support email: SUPPORT_EMAIL or RESEND_API_KEY is not set");
     return NextResponse.json({ error: "Suporte não configurado" }, { status: 500 });
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
   });
 
   const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
-    from: process.env.SUPPORT_FROM_EMAIL || DEFAULT_FROM,
+    from: process.env.SUPPORT_FROM_EMAIL || emailFrom(),
     to: supportEmail,
     replyTo: user.email,
     subject,

@@ -54,3 +54,11 @@ describe("resolveAuthRedirect", () => {
     expect(resolveAuthRedirect("/onboarding", true, false)).toBeNull();
   });
 });
+
+describe("API routes", () => {
+  it("are never redirected: they answer JSON and check the session themselves", () => {
+    expect(resolveAuthRedirect("/api/auth/recover", false, null)).toBeNull();
+    expect(resolveAuthRedirect("/api/stores/document-check", true, false)).toBeNull();
+    expect(resolveAuthRedirect("/api/support", true, true)).toBeNull();
+  });
+});

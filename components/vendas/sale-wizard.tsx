@@ -7,23 +7,26 @@ import { StepAccessories } from "@/components/vendas/step-accessories";
 import { StepCustomer } from "@/components/vendas/step-customer";
 import { StepDetails } from "@/components/vendas/step-details";
 import { StepProduct } from "@/components/vendas/step-product";
+import { StepService } from "@/components/vendas/step-service";
 import { StepSummary } from "@/components/vendas/step-summary";
 import { accessoriesTotal, productPrice } from "@/lib/sale-total";
 import { getClientStoreId } from "@/lib/supabase/client-store";
-import { useSaleWizardStore } from "@/lib/sale-wizard-store";
+import { useSaleWizardStore, wizardServiceTotal } from "@/lib/sale-wizard-store";
+import { resolveServiceType } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
   { key: 1, label: "Cliente" },
   { key: 2, label: "Produto" },
   { key: 3, label: "Acessórios" },
-  { key: 4, label: "Detalhes" },
-  { key: 5, label: "Resumo" },
+  { key: 4, label: "Assistência" },
+  { key: 5, label: "Detalhes" },
+  { key: 6, label: "Resumo" },
 ] as const;
 
 export function SaleWizard() {
   const [storeId, setStoreId] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   const customer = useSaleWizardStore((s) => s.customer);
   const product = useSaleWizardStore((s) => s.product);
@@ -33,8 +36,9 @@ export function SaleWizard() {
   const sellerId = useSaleWizardStore((s) => s.sellerId);
   const paymentMethod = useSaleWizardStore((s) => s.paymentMethod);
   const accessories = useSaleWizardStore((s) => s.accessories);
+  const service = useSaleWizardStore((s) => s.service);
   const saleTotal = useSaleWizardStore((s) => s.saleTotal);
-  const total = saleTotal ?? productPrice(product) + accessoriesTotal(accessories);
+  const total = saleTotal ?? productPrice(product) + accessoriesTotal(accessories) + wizardServiceTotal(service);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,13 +55,26 @@ export function SaleWizard() {
   const canAdvanceFrom1 = !!customer;
   const canAdvanceFrom2 = true;
   const canAdvanceFrom3 = true;
-  const canAdvanceFrom4 = !!saleChannel && !!sellerId && !!paymentMethod && total > 0;
+  // The service step is optional; once switched on it needs the device and what was done.
+  const canAdvanceFromService =
+    !service.enabled ||
+    (service.deviceDescription.trim() !== "" && resolveServiceType(service.serviceType, service.customServiceType) !== "");
+  const canAdvanceFromDetails = !!saleChannel && !!sellerId && !!paymentMethod && total > 0;
 
   const canAdvance =
-    step === 1 ? canAdvanceFrom1 : step === 2 ? canAdvanceFrom2 : step === 3 ? canAdvanceFrom3 : canAdvanceFrom4;
+    step === 1
+      ? canAdvanceFrom1
+      : step === 2
+        ? canAdvanceFrom2
+        : step === 3
+          ? canAdvanceFrom3
+          : step === 4
+            ? canAdvanceFromService
+            : canAdvanceFromDetails;
 
   return (
     <div className="space-y-6">
+      <div>
       <div className="flex items-center gap-2">
         {STEPS.map((s, index) => (
           <div key={s.key} className="flex flex-1 items-center gap-2">
@@ -71,7 +88,7 @@ export function SaleWizard() {
             </div>
             <span
               className={cn(
-                "hidden text-sm sm:inline",
+                "hidden whitespace-nowrap text-sm xl:inline",
                 step === s.key ? "text-foreground" : "text-muted-foreground"
               )}
             >
@@ -80,6 +97,11 @@ export function SaleWizard() {
             {index < STEPS.length - 1 && <div className="h-px flex-1 bg-border" />}
           </div>
         ))}
+      </div>
+      {/* Six labels only fit side by side on wide screens; below that the current one is spelled out. */}
+      <p className="mt-2 text-xs text-muted-foreground xl:hidden">
+        Passo {step} de {STEPS.length} · <span className="text-foreground">{STEPS[step - 1].label}</span>
+      </p>
       </div>
 
       <div className="rounded-xl bg-card shadow-card p-4 md:p-5">
@@ -94,11 +116,12 @@ export function SaleWizard() {
           />
         )}
         {step === 3 && <StepAccessories storeId={storeId} />}
-        {step === 4 && <StepDetails storeId={storeId} />}
-        {step === 5 && <StepSummary storeId={storeId} />}
+        {step === 4 && <StepService />}
+        {step === 5 && <StepDetails storeId={storeId} />}
+        {step === 6 && <StepSummary storeId={storeId} />}
       </div>
 
-      {step < 5 && (
+      {step < 6 && (
         <div className="flex justify-between">
           <Button variant="secondary" disabled={step === 1} onClick={() => setStep((s) => (s - 1) as typeof step)}>
             Voltar
@@ -111,9 +134,9 @@ export function SaleWizard() {
           </Button>
         </div>
       )}
-      {step === 5 && (
+      {step === 6 && (
         <div className="flex justify-start">
-          <Button variant="secondary" onClick={() => setStep(4)}>
+          <Button variant="secondary" onClick={() => setStep(5)}>
             Voltar
           </Button>
         </div>

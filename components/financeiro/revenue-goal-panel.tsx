@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { currentMonthValue } from "@/components/ui/month-picker";
 import { sumAccessorySales } from "@/lib/accessory-sales";
+import { fetchServiceRevenue } from "@/lib/service-revenue";
 import { buildDRE, NO_COSTS } from "@/lib/dre";
 import { formatCurrencyBRL } from "@/lib/finance";
 import { goalPace } from "@/lib/revenue-goal";
@@ -62,12 +63,13 @@ export function RevenueGoalPanel({ storeId }: { storeId: string | null }) {
         .gte("sold_at", start)
         .lt("sold_at", end),
       sumAccessorySales(supabase, storeId, start, end),
-    ]).then(([storeRes, salesRes, accessorySales]) => {
+      fetchServiceRevenue(supabase, storeId, start, new Date(new Date(end).getTime() - 1).toISOString()),
+    ]).then(([storeRes, salesRes, accessorySales, serviceSales]) => {
       if (cancelled) return;
       const storeGoal = Number(storeRes.data?.monthly_revenue_goal ?? 0);
       setGoal(storeGoal);
       reset({ monthly_revenue_goal: storeGoal });
-      setRevenue(buildDRE(salesRes.data ?? [], NO_COSTS, accessorySales).revenue);
+      setRevenue(buildDRE(salesRes.data ?? [], NO_COSTS, accessorySales, serviceSales).revenue);
     });
     return () => {
       cancelled = true;

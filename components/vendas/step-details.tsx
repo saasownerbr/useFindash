@@ -9,7 +9,7 @@ import { formatCurrencyBRL } from "@/lib/finance";
 import { MAX_INSTALLMENTS, PAYMENT_METHODS, findPaymentMethod } from "@/lib/payment-methods";
 import { accessoriesTotal, productPrice } from "@/lib/sale-total";
 import { createClient } from "@/lib/supabase/client";
-import { useSaleWizardStore } from "@/lib/sale-wizard-store";
+import { useSaleWizardStore, wizardServiceTotal } from "@/lib/sale-wizard-store";
 import { sellerDisplayName } from "@/lib/rankings";
 import { cn } from "@/lib/utils";
 import { SALE_CHANNELS } from "@/lib/validation/sale";
@@ -37,6 +37,7 @@ export function StepDetails({ storeId }: { storeId: string | null }) {
   const product = useSaleWizardStore((s) => s.product);
   const accessories = useSaleWizardStore((s) => s.accessories);
   const saleTotal = useSaleWizardStore((s) => s.saleTotal);
+  const service = useSaleWizardStore((s) => s.service);
   const setDetails = useSaleWizardStore((s) => s.setDetails);
   const setSaleTotal = useSaleWizardStore((s) => s.setSaleTotal);
 
@@ -59,10 +60,12 @@ export function StepDetails({ storeId }: { storeId: string | null }) {
   const details = { saleChannel, sellerId, paymentMethod, installments };
   const method = findPaymentMethod(paymentMethod);
 
-  // Product from step 2 plus accessories from step 3; the seller can still change it (discount, negotiation).
+  // Product from step 2, accessories from step 3 and the service from step 4; the seller can still change it
+  // (discount, negotiation).
   const devicePart = productPrice(product);
   const accessoriesPart = accessoriesTotal(accessories);
-  const autoTotal = devicePart + accessoriesPart;
+  const servicePart = wizardServiceTotal(service);
+  const autoTotal = devicePart + accessoriesPart + servicePart;
   const total = saleTotal ?? autoTotal;
 
   return (
@@ -156,10 +159,31 @@ export function StepDetails({ storeId }: { storeId: string | null }) {
           value={total}
           onChange={(e) => setSaleTotal(e.target.value === "" ? 0 : Number(e.target.value))}
         />
-        <p className="text-xs text-muted-foreground">
-          Produto: {formatCurrencyBRL(devicePart)} + Acessórios: {formatCurrencyBRL(accessoriesPart)} = Total:{" "}
-          {formatCurrencyBRL(autoTotal)}
-        </p>
+        <dl className="space-y-1 rounded-[10px] border border-[#242424] bg-[#161616] px-3 py-2 text-xs">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Produto</dt>
+            <dd className="tabular-nums text-foreground">{product ? formatCurrencyBRL(devicePart) : "Sem produto"}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Acessórios</dt>
+            <dd className="tabular-nums text-foreground">{formatCurrencyBRL(accessoriesPart)}</dd>
+          </div>
+          {service.enabled && (
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Assistência técnica</dt>
+              <dd className="tabular-nums text-foreground">{formatCurrencyBRL(servicePart)}</dd>
+            </div>
+          )}
+          <div className="flex justify-between gap-3 border-t border-[#242424] pt-1 text-sm font-semibold">
+            <dt className="text-foreground">Total</dt>
+            <dd className="tabular-nums" style={{ color: "#dae878" }}>
+              {formatCurrencyBRL(autoTotal)}
+            </dd>
+          </div>
+        </dl>
+        {product && productPrice(product) === 0 && (
+          <p className="text-xs text-warning">Este aparelho não tem preço de venda cadastrado: informe o valor acima.</p>
+        )}
         {saleTotal !== null && saleTotal !== autoTotal && (
           <p className="text-xs text-muted-foreground">
             {saleTotal < autoTotal

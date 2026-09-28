@@ -1,35 +1,24 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PAYMENT_BREAKDOWN_KEYS, type PaymentBreakdown } from "@/lib/payment-methods";
 
-interface PaymentMethodData {
-  pix: number;
-  debit: number;
-  credit: number;
-}
-
-interface PaymentMethodsChartProps {
-  data: PaymentMethodData;
-}
-
-// Brand ramp from the logo file: lime, olive, gray.
-const COLORS = {
-  pix: "#dae878",
-  debit: "#abb250",
-  credit: "#8b8b8b",
+// Brand ramp from the logo file: lime, olive and grays.
+const METHODS: Record<keyof PaymentBreakdown, { label: string; color: string }> = {
+  pix: { label: "PIX", color: "#dae878" },
+  cash: { label: "Dinheiro", color: "#c2cf5f" },
+  debit: { label: "Débito", color: "#abb250" },
+  credit: { label: "Crédito", color: "#8b8b8b" },
+  boleto: { label: "Boleto", color: "#5c5c5c" },
 };
 
-export function PaymentMethodsChart({ data }: PaymentMethodsChartProps) {
-  const total = data.pix + data.debit + data.credit;
-
-  const getPercentage = (value: number) => {
-    if (total === 0) return "0%";
-    return `${((value / total) * 100).toFixed(0)}%`;
-  };
-
-  const pixPercent = total === 0 ? 0 : (data.pix / total) * 100;
-  const debitPercent = total === 0 ? 0 : (data.debit / total) * 100;
-  const creditPercent = total === 0 ? 0 : (data.credit / total) * 100;
+export function PaymentMethodsChart({ data }: { data: PaymentBreakdown }) {
+  const total = PAYMENT_BREAKDOWN_KEYS.reduce((sum, key) => sum + data[key], 0);
+  const items = PAYMENT_BREAKDOWN_KEYS.map((key) => ({
+    key,
+    ...METHODS[key],
+    percent: total === 0 ? 0 : (data[key] / total) * 100,
+  }));
 
   return (
     <Card>
@@ -39,55 +28,30 @@ export function PaymentMethodsChart({ data }: PaymentMethodsChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Stacked bar */}
-        <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-[#242424]">
-          {pixPercent > 0 && (
-            <div
-              className="transition-all"
-              style={{
-                width: `${pixPercent}%`,
-                backgroundColor: COLORS.pix,
-                borderRadius: pixPercent === 100 ? "999px" : debitPercent === 0 && creditPercent === 0 ? "0 999px 999px 0" : "0",
-              }}
-            />
-          )}
-          {debitPercent > 0 && (
-            <div
-              className="transition-all"
-              style={{
-                width: `${debitPercent}%`,
-                backgroundColor: COLORS.debit,
-              }}
-            />
-          )}
-          {creditPercent > 0 && (
-            <div
-              className="transition-all"
-              style={{
-                width: `${creditPercent}%`,
-                backgroundColor: COLORS.credit,
-                borderRadius: creditPercent === 100 ? "999px" : "0 999px 999px 0",
-              }}
-            />
-          )}
+        {/* Stacked bar, 8px tall */}
+        <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-[#242424]">
+          {items
+            .filter((item) => item.percent > 0)
+            .map((item) => (
+              <div
+                key={item.key}
+                className="h-full transition-all"
+                style={{ width: `${item.percent}%`, backgroundColor: item.color }}
+              />
+            ))}
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center justify-start gap-4">
-          {[
-            { key: "pix", label: "PIX", value: data.pix, percent: pixPercent },
-            { key: "debit", label: "Débito", value: data.debit, percent: debitPercent },
-            { key: "credit", label: "Crédito", value: data.credit, percent: creditPercent },
-          ].map((item) => (
-            <div key={item.key} className="flex items-center gap-2">
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: COLORS[item.key as keyof typeof COLORS] }}
-              />
-              <span className="text-xs text-muted-foreground">{item.label}</span>
-              <span className="text-xs font-semibold text-foreground">{getPercentage(item.value)}</span>
-            </div>
-          ))}
+        {/* Legend: methods with sales in the period; all of them at 0% when there are none. */}
+        <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
+          {items
+            .filter((item) => total === 0 || item.percent > 0)
+            .map((item) => (
+              <div key={item.key} className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <span className="text-xs font-semibold text-foreground">{item.percent.toFixed(0)}%</span>
+              </div>
+            ))}
         </div>
       </CardContent>
     </Card>

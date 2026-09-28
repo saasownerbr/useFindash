@@ -47,11 +47,12 @@ export function KpiCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className={cn("relative rounded-xl bg-card p-4 shadow-card md:p-5", className)}>
+    <div className={cn("relative min-w-0 rounded-xl bg-card p-4 shadow-card md:p-5", className)}>
       {Icon && <Icon className="absolute right-4 top-4 h-4 w-4 text-[#808080] md:right-5 md:top-5" aria-hidden />}
       <p className="pr-6 text-[11px] font-medium uppercase tracking-[0.06em] text-[#808080]">{label}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <p className={cn("text-[28px] font-bold leading-none tabular-nums text-[#F0F0F0] md:text-[32px]", valueClassName)}>
+        {/* Two cards per row on phones: the figure shrinks with the screen so "R$ 123.456,78" stays inside the card. */}
+        <p className={cn("min-w-0 max-w-full break-words text-[clamp(18px,5.4vw,28px)] font-bold leading-none tabular-nums text-[#F0F0F0] md:text-[28px] xl:text-[32px]", valueClassName)}>
           {value}
         </p>
         {change && <ChangeBadge change={change} />}

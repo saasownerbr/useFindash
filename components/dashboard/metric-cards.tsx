@@ -14,12 +14,15 @@ export interface PaidTrafficMetrics {
 export function MetricCards({
   avgTicket,
   salesCount,
+  serviceCount = 0,
   paidTraffic,
   retentionRate,
   buyersCount,
 }: {
   avgTicket: number;
   salesCount: number;
+  /** Finished technical-assistance services in the period; their revenue is part of the ticket. */
+  serviceCount?: number;
   paidTraffic: PaidTrafficMetrics;
   retentionRate: number;
   buyersCount: number;
@@ -29,7 +32,13 @@ export function MetricCards({
       <KpiCard
         label="CAC Tráfego Pago"
         icon={Megaphone}
-        value={paidTraffic.investment > 0 && paidTraffic.salesCount > 0 ? formatCurrencyBRL(paidTraffic.cac) : "—"}
+        value={
+          paidTraffic.investment <= 0
+            ? "Sem dados"
+            : paidTraffic.salesCount > 0
+              ? formatCurrencyBRL(paidTraffic.cac)
+              : "Sem vendas"
+        }
         footer={
           paidTraffic.investment > 0 ? (
             `${paidTraffic.salesCount} ${paidTraffic.salesCount === 1 ? "venda" : "vendas"} de tráfego pago · ${formatCurrencyBRL(paidTraffic.investment)} investidos no mês`
@@ -43,8 +52,12 @@ export function MetricCards({
       <KpiCard
         label="Ticket médio"
         icon={Receipt}
-        value={salesCount > 0 ? formatCurrencyBRL(avgTicket) : "—"}
-        footer={`Receita do período dividida por ${salesCount} ${salesCount === 1 ? "venda" : "vendas"}`}
+        value={salesCount + serviceCount > 0 ? formatCurrencyBRL(avgTicket) : "Sem dados"}
+        footer={
+          serviceCount > 0
+            ? `Receita do período dividida por ${salesCount} ${salesCount === 1 ? "venda" : "vendas"} e ${serviceCount} ${serviceCount === 1 ? "serviço" : "serviços"}`
+            : `Receita do período dividida por ${salesCount} ${salesCount === 1 ? "venda" : "vendas"}`
+        }
       />
       <KpiCard
         label="Taxa de retenção"

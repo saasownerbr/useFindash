@@ -16,10 +16,12 @@ import { isBirthdayWithinDays, isInUpgradeWindow } from "@/lib/customer-alerts";
 import { fetchCostEntries } from "@/lib/cost-entries";
 import { buildDRE, NO_COSTS, periodCosts, type DRE } from "@/lib/dre";
 import { calculateAverageTicket, calculateCAC, calculateRetentionRate } from "@/lib/finance";
+import { paymentBreakdown, type PaymentBreakdown } from "@/lib/payment-methods";
 import { usePeriodFilterStore } from "@/lib/period-filter-store";
 import { firstOfMonth, previousCalendarMonth, previousRange } from "@/lib/period";
 import { createClient } from "@/lib/supabase/client";
 import { getClientStoreId } from "@/lib/supabase/client-store";
+import { fetchFinishedServices, fetchServiceRevenue } from "@/lib/service-revenue";
 import { stockDays } from "@/lib/urgent-actions";
 
 // Recharts is most of this page's JavaScript; loading it on demand lets the page open right away.
@@ -74,10 +76,11 @@ interface DashboardData {
   goal: number;
   monthRevenue: number;
   revenueByMonth: { month: string; revenue: number }[];
-  paymentMethods: { pix: number; debit: number; credit: number };
+  paymentMethods: PaymentBreakdown;
   salesByChannel: ChannelSales[];
   avgTicket: number;
   salesCount: number;
+  serviceCount: number;
   paidTraffic: PaidTrafficMetrics;
   retentionRate: number;
   buyersCount: number;
@@ -133,6 +136,10 @@ export default function DashboardPage() {
         accessoriesNow,
         accessoriesPrev,
         accessoriesMonth,
+        servicesNow,
+        servicesPrev,
+        servicesMonth,
+        finishedServices,
       ] = await Promise.all([
         supabase
           .from("stores")
@@ -158,6 +165,11 @@ export default function DashboardPage() {
         sumAccessorySales(supabase, storeId, periodStart.toISOString(), periodEnd.toISOString()),
         sumAccessorySales(supabase, storeId, prev.start.toISOString(), prev.end.toISOString()),
         sumAccessorySales(supabase, storeId, monthStartDate.toISOString(), nextMonthDate.toISOString()),
+        // Technical assistance counts once completed or delivered (0 when there is none).
+        fetchServiceRevenue(supabase, storeId, periodStart.toISOString(), periodEnd.toISOString()),
+        fetchServiceRevenue(supabase, storeId, prev.start.toISOString(), prev.end.toISOString()),
+        fetchServiceRevenue(supabase, storeId, monthStartDate.toISOString(), new Date(nextMonthDate.getTime() - 1).toISOString()),
+        fetchFinishedServices(supabase, storeId, sixMonthsAgo.toISOString()),
       ]);
 
       if (cancelled) return;
@@ -173,22 +185,23 @@ export default function DashboardPage() {
       const currentMonth = monthKey(now);
       const monthSales = sales.filter((s) => monthKey(new Date(s.sold_at)) === currentMonth);
 
+      // Same revenue as the DRE: device, accessories and finished services.
+      const saleRevenue = (s: Sale) =>
+        Number(s.sale_price) + (s.sale_accessories ?? []).reduce((sum, a) => sum + a.quantity * Number(a.unit_price), 0);
       const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
         const date = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
         const key = monthKey(date);
         return {
           month: MONTH_LABEL.format(date).replace(".", ""),
-          revenue: sales.filter((s) => monthKey(new Date(s.sold_at)) === key).reduce((sum, s) => sum + Number(s.sale_price), 0),
+          revenue:
+            sales.filter((s) => monthKey(new Date(s.sold_at)) === key).reduce((sum, s) => sum + saleRevenue(s), 0) +
+            finishedServices
+              .filter((service) => monthKey(new Date(service.completed_at)) === key)
+              .reduce((sum, service) => sum + service.total_cost, 0),
         };
       });
 
-      const paymentMethods = { pix: 0, debit: 0, credit: 0 };
-      for (const sale of periodSales) {
-        const method = sale.payment_method?.toLowerCase() || "pix";
-        if (method.includes("pix")) paymentMethods.pix += Number(sale.sale_price);
-        else if (method.includes("débito") || method.includes("debit")) paymentMethods.debit += Number(sale.sale_price);
-        else if (method.includes("crédito") || method.includes("credit")) paymentMethods.credit += Number(sale.sale_price);
-      }
+      const paymentMethods = paymentBreakdown(periodSales);
 
       const customers = customersRes.data ?? [];
       const salesByCustomer = new Map<string, number>();
@@ -203,27 +216,30 @@ export default function DashboardPage() {
         if (!lastDeviceSale.has(sale.customer_id)) lastDeviceSale.set(sale.customer_id, sale.sold_at);
       }
       const store = storeRes.data;
-      const monthDre = buildDRE(monthSales, NO_COSTS, accessoriesMonth);
+      const monthDre = buildDRE(monthSales, NO_COSTS, accessoriesMonth, servicesMonth);
       // Same functions and inputs as the DRE (Financeiro), so both agree for any period.
       const dre = buildDRE(
         periodSales,
         periodCosts(costsRes.entries, periodStart, periodEnd, { wholeMonths: periodType === "month" }),
-        accessoriesNow
+        accessoriesNow,
+        servicesNow
       );
 
       setError(null);
       setData({
         storeName: store.name,
         dre,
-        previousDre: buildDRE(previousSales, periodCosts(costsRes.entries, prev.start, prev.end), accessoriesPrev),
+        previousDre: buildDRE(previousSales, periodCosts(costsRes.entries, prev.start, prev.end), accessoriesPrev, servicesPrev),
         previousSalesCount: previousSales.length,
         goal: Number(store.monthly_revenue_goal ?? 0),
         monthRevenue: monthDre.revenue,
         revenueByMonth,
         paymentMethods,
-        salesByChannel: salesByChannel(periodSales),
-        avgTicket: calculateAverageTicket(dre.revenue, periodSales.length),
+        salesByChannel: salesByChannel(periodSales, servicesNow),
+        // Revenue includes finished services, so they count as transactions too.
+        avgTicket: calculateAverageTicket(dre.revenue, periodSales.length + servicesNow.count),
         salesCount: periodSales.length,
+        serviceCount: servicesNow.count,
         paidTraffic: {
           cac: calculateCAC(investment, paidTrafficSalesCount),
           salesCount: paidTrafficSalesCount,
@@ -290,6 +306,7 @@ export default function DashboardPage() {
             <MetricCards
               avgTicket={data.avgTicket}
               salesCount={data.salesCount}
+              serviceCount={data.serviceCount}
               paidTraffic={data.paidTraffic}
               retentionRate={data.retentionRate}
               buyersCount={data.buyersCount}

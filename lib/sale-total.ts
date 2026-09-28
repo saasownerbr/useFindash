@@ -13,15 +13,21 @@ const cents = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * Splits the sale total typed in step 4 back into what the database stores: `sales.sale_price` is the device leg
- * only, and accessories keep their own unit prices. Any discount (or markup) lands on the device; if the total is
- * below the accessories alone, the device goes to 0 and the accessory prices shrink in proportion.
+ * only, accessories keep their own unit prices and a technical-assistance service keeps its own total (it is
+ * revenue in `sale_services`, never inside `sale_price`). Any discount (or markup) lands on the device; if the total
+ * is below accessories + service, the device goes to 0 and both shrink in proportion.
  */
 export function splitSaleTotal<A extends Pick<WizardAccessory, "quantity" | "unitPrice">>(
   total: number,
-  accessories: A[]
-): { devicePrice: number; accessories: A[] } {
-  const extras = accessoriesTotal(accessories);
-  if (total >= extras) return { devicePrice: cents(total - extras), accessories };
+  accessories: A[],
+  service = 0
+): { devicePrice: number; accessories: A[]; service: number } {
+  const extras = accessoriesTotal(accessories) + service;
+  if (total >= extras) return { devicePrice: cents(total - extras), accessories, service };
   const ratio = extras > 0 ? Math.max(total, 0) / extras : 0;
-  return { devicePrice: 0, accessories: accessories.map((a) => ({ ...a, unitPrice: cents(a.unitPrice * ratio) })) };
+  return {
+    devicePrice: 0,
+    accessories: accessories.map((a) => ({ ...a, unitPrice: cents(a.unitPrice * ratio) })),
+    service: cents(service * ratio),
+  };
 }

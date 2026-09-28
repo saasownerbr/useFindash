@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipProps } from "recharts";
 
-import type { ChannelSales } from "@/lib/channels";
+import { SERVICE_CHANNEL, type ChannelSales } from "@/lib/channels";
 import { CHART_AXIS, CHART_GRID, CHART_TOOLTIP } from "@/lib/chart-theme";
 import { formatCurrencyBRL } from "@/lib/finance";
 
@@ -18,7 +18,8 @@ function ChannelTooltip({ active, payload }: TooltipProps<number, string>) {
     <div style={CHART_TOOLTIP.contentStyle} className="px-3 py-2">
       <p className="mb-1 font-semibold text-foreground">{row.label}</p>
       <p className="text-[#808080]">
-        Vendas: <span className="tabular-nums text-foreground">{row.count}</span>
+        {row.channel === SERVICE_CHANNEL ? "Serviços" : "Vendas"}:{" "}
+        <span className="tabular-nums text-foreground">{row.count}</span>
       </p>
       <p className="text-[#808080]">
         Receita: <span className="tabular-nums text-foreground">{formatCurrencyBRL(row.revenue)}</span>

@@ -39,3 +39,12 @@ describe("salesByChannel", () => {
     expect(salesByChannel([])).toEqual([]);
   });
 });
+
+describe("salesByChannel with technical assistance", () => {
+  it("adds Assistência as the last channel only when there are finished services", () => {
+    const sales = [{ sale_channel: "instagram", sale_price: 1000, sale_accessories: [] }];
+    expect(salesByChannel(sales).map((c) => c.channel)).toEqual(["instagram"]);
+    const withServices = salesByChannel(sales, { count: 2, revenue: 700 });
+    expect(withServices.at(-1)).toEqual({ channel: "service", label: "Assistência", count: 2, revenue: 700 });
+  });
+});

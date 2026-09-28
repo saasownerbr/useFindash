@@ -43,8 +43,8 @@ body {
   font-size: 14px;
 }
 
-/* Global form styles */
-input,
+/* Global form styles. Checkboxes, radios and ranges keep their own size (the signup terms box is 16px). */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 select,
 textarea {
   background-color: #111111 !important;
@@ -66,13 +66,13 @@ textarea::placeholder {
   color: #505050 !important;
 }
 
-input:hover,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
 select:hover,
 textarea:hover {
   border-color: #2E2E2E !important;
 }
 
-input:focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 select:focus,
 textarea:focus {
   border-color: #dae878 !important;
@@ -87,6 +87,15 @@ select {
   background-position: right 12px center !important;
   background-size: 20px !important;
   padding-right: 40px !important;
+}
+
+/* Phones: iOS zooms into any field under 16px on focus and leaves the page shifted after the keyboard closes. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Desktop/tablet sidebar width; the main content's left margin follows it.

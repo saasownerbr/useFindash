@@ -28,3 +28,10 @@ describe("NAV_ITEMS", () => {
     expect(hrefs[inputs + 1]).toBe("/rankings");
   });
 });
+
+describe("Assistência menu", () => {
+  it("sits right after Vendas", () => {
+    const hrefs = NAV_ITEMS.map((item) => item.href);
+    expect(hrefs[hrefs.indexOf("/vendas/nova") + 1]).toBe("/assistencia");
+  });
+});

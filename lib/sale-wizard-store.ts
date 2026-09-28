@@ -1,15 +1,21 @@
 import { create } from "zustand";
 
+import { newServicePart, serviceTotal, type ServicePart, type ServiceStatus } from "@/lib/services";
+
 export type WizardAccessory = {
   accessoryId: string;
   name: string;
   quantity: number;
   unitPrice: number;
+  /** What one unit cost the store, for the CMV shown in the summary. */
+  unitCost?: number;
   availableQuantity: number;
 };
 
 export type WizardProduct = {
   id: string;
+  /** "apple" or "xiaomi": both brands share the products table and sell the same way. */
+  brand: string;
   model: string;
   storage: string;
   color: string | null;
@@ -23,6 +29,38 @@ export type WizardProduct = {
 
 export type WizardCustomer = { id: string; name: string; whatsapp: string } | null;
 
+/** Optional technical-assistance step between accessories and details. */
+export type WizardService = {
+  enabled: boolean;
+  deviceDescription: string;
+  /** One of SERVICE_TYPES, or OTHER_SERVICE_TYPE with customServiceType typed in. */
+  serviceType: string;
+  customServiceType: string;
+  parts: ServicePart[];
+  laborCost: number;
+  notes: string;
+  status: ServiceStatus;
+};
+
+export function emptyService(): WizardService {
+  return {
+    enabled: false,
+    deviceDescription: "",
+    serviceType: "",
+    customServiceType: "",
+    parts: [newServicePart()],
+    laborCost: 0,
+    notes: "",
+    // Sold and paid in the sale: finished unless the seller says it is still in the bench.
+    status: "completed",
+  };
+}
+
+/** What the service adds to the sale total; 0 while the toggle is off. */
+export function wizardServiceTotal(service: WizardService): number {
+  return service.enabled ? serviceTotal(service.parts, service.laborCost) : 0;
+}
+
 type SaleWizardState = {
   customer: WizardCustomer;
   product: WizardProduct;
@@ -32,7 +70,8 @@ type SaleWizardState = {
   sellerId: string;
   paymentMethod: string;
   installments: number;
-  /** Total typed in step 4; null follows product + accessories automatically. */
+  service: WizardService;
+  /** Total typed in step 4; null follows product + accessories + service automatically. */
   saleTotal: number | null;
   setCustomer: (customer: WizardCustomer) => void;
   setProduct: (product: WizardProduct) => void;
@@ -42,6 +81,7 @@ type SaleWizardState = {
   removeAccessory: (accessoryId: string) => void;
   setDetails: (details: { saleChannel: string; sellerId: string; paymentMethod: string; installments: number }) => void;
   setSaleTotal: (saleTotal: number | null) => void;
+  setService: (service: Partial<WizardService>) => void;
   reset: () => void;
 };
 
@@ -55,6 +95,7 @@ const initialState = {
   paymentMethod: "",
   installments: 1,
   saleTotal: null as number | null,
+  service: emptyService(),
 };
 
 export const useSaleWizardStore = create<SaleWizardState>((set) => ({
@@ -82,5 +123,11 @@ export const useSaleWizardStore = create<SaleWizardState>((set) => ({
     set((state) => ({ accessories: state.accessories.filter((a) => a.accessoryId !== accessoryId), saleTotal: null })),
   setDetails: (details) => set(details),
   setSaleTotal: (saleTotal) => set({ saleTotal }),
-  reset: () => set(initialState),
+  // A change to what the service costs changes the sale value, so a typed total gives way to the new automatic one.
+  setService: (service) =>
+    set((state) => {
+      const changesValue = "enabled" in service || "parts" in service || "laborCost" in service;
+      return { service: { ...state.service, ...service }, ...(changesValue ? { saleTotal: null } : {}) };
+    }),
+  reset: () => set({ ...initialState, service: emptyService() }),
 }));

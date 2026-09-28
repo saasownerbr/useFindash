@@ -5,7 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sellerSchema } from "@/lib/validation/seller";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  }
   const { storeId, ...fields } = body;
   const parsed = sellerSchema.safeParse(fields);
   if (!parsed.success) {
