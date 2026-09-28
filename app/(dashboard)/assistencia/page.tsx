@@ -32,7 +32,7 @@ export default function AssistenciaPage() {
           <div>
             <h1 className="text-[22px] font-bold text-foreground">Assistência técnica</h1>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              Reparos avulsos e os feitos junto com uma venda. Concluídos e entregues entram no faturamento.
+              Reparos avulsos e os feitos junto com uma venda. Só assistências registradas em Nova Venda entram no faturamento.
             </p>
           </div>
           {!creating && (

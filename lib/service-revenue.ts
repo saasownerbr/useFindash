@@ -4,7 +4,13 @@ import { NO_SERVICE_REVENUE, REVENUE_STATUSES, sumServiceRevenue, type ServiceRe
 import type { Database } from "./supabase/types";
 
 /**
- * Revenue, parts cost (its CMV) and count of the services finished in [start, end], dated by completed_at.
+ * Only services charged through the sale wizard are revenue; one registered on its own in /assistencia is a bench
+ * record and never reaches the totals, so money is never counted twice.
+ */
+const BILLED_SOURCE = "sale";
+
+/**
+ * Revenue, parts cost (its CMV) and count of the services sold and finished in [start, end], dated by completed_at.
  * Any error reads as no services, so the dashboard and the DRE keep working if the table is unavailable.
  */
 export async function fetchServiceRevenue(
@@ -17,6 +23,7 @@ export async function fetchServiceRevenue(
     .from("sale_services")
     .select("status, total_cost, parts_cost")
     .eq("store_id", storeId)
+    .eq("source", BILLED_SOURCE)
     .in("status", REVENUE_STATUSES)
     .gte("completed_at", start)
     .lte("completed_at", end);
@@ -24,7 +31,7 @@ export async function fetchServiceRevenue(
   return sumServiceRevenue(data ?? []);
 }
 
-/** Finished services since `since`, for charts that bucket by month (completed_at, total_cost). */
+/** Sold and finished services since `since`, for charts that bucket by month (completed_at, total_cost). */
 export async function fetchFinishedServices(
   supabase: SupabaseClient<Database>,
   storeId: string,
@@ -34,6 +41,7 @@ export async function fetchFinishedServices(
     .from("sale_services")
     .select("completed_at, total_cost")
     .eq("store_id", storeId)
+    .eq("source", BILLED_SOURCE)
     .in("status", REVENUE_STATUSES)
     .gte("completed_at", since);
   if (error) return [];

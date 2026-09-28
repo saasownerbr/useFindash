@@ -82,6 +82,8 @@ export function NewServiceForm({
         labor_cost: Math.max(0, fields.laborCost),
         notes: fields.notes.trim() || null,
         status,
+        // A bench record: what the customer pays goes through a sale, so this never counts as revenue.
+        source: "assistance",
       });
     setSaving(false);
 
@@ -116,6 +118,11 @@ export function NewServiceForm({
       <ServiceFields value={fields} onChange={(change) => setFields((prev) => ({ ...prev, ...change }))} idPrefix="new-service" />
 
       <ServiceStatusPicker value={status} onChange={setStatus} />
+
+      <p className="text-xs text-muted-foreground">
+        Registro de controle da bancada: não entra no faturamento. Para cobrar o cliente, registre o serviço em Nova
+        Venda.
+      </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 

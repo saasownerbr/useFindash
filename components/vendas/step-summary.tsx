@@ -68,6 +68,8 @@ export function StepSummary({ storeId }: { storeId: string | null }) {
       labor_cost: labor,
       notes: state.service.notes.trim() || null,
       status: state.service.status,
+      // Charged in the sale: the only kind of service that counts as revenue.
+      source: "sale",
     };
   }
 

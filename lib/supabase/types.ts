@@ -468,6 +468,7 @@ export type Database = {
           sale_id: string | null
           seller_id: string | null
           service_type: string
+          source: string
           status: string
           store_id: string
           total_cost: number
@@ -486,6 +487,7 @@ export type Database = {
           sale_id?: string | null
           seller_id?: string | null
           service_type: string
+          source?: string
           status?: string
           store_id: string
           total_cost?: number
@@ -504,6 +506,7 @@ export type Database = {
           sale_id?: string | null
           seller_id?: string | null
           service_type?: string
+          source?: string
           status?: string
           store_id?: string
           total_cost?: number
