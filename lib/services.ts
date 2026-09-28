@@ -76,7 +76,30 @@ export function partsFromStorage(value: unknown): { name: string; value: number 
   }));
 }
 
-export type ServiceRevenue = { revenue: number; cost: number; count: number };
+/**
+ * A saved service turned back into form fields, to start a new one from it: a service type outside the list goes
+ * under "Outro", and the parts get fresh ids.
+ */
+export function serviceFieldsFromRecord(record: {
+  device_description: string;
+  service_type: string;
+  parts_replaced: unknown;
+  labor_cost: number | null;
+  notes: string | null;
+}) {
+  const known = (SERVICE_TYPES as readonly string[]).includes(record.service_type);
+  const parts = partsFromStorage(record.parts_replaced).map((part) => ({ ...newServicePart(), ...part }));
+  return {
+    deviceDescription: record.device_description,
+    serviceType: known ? record.service_type : OTHER_SERVICE_TYPE,
+    customServiceType: known ? "" : record.service_type,
+    parts: parts.length > 0 ? parts : [newServicePart()],
+    laborCost: Math.max(0, Number(record.labor_cost) || 0),
+    notes: record.notes ?? "",
+  };
+}
+
+export type ServiceRevenue ={ revenue: number; cost: number; count: number };
 export const NO_SERVICE_REVENUE: ServiceRevenue = { revenue: 0, cost: 0, count: 0 };
 
 /** Revenue (total), CMV (parts) and count of the finished services in a list. */

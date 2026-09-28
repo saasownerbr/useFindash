@@ -116,7 +116,7 @@ export function SaleWizard() {
           />
         )}
         {step === 3 && <StepAccessories storeId={storeId} />}
-        {step === 4 && <StepService />}
+        {step === 4 && <StepService storeId={storeId} />}
         {step === 5 && <StepDetails storeId={storeId} />}
         {step === 6 && <StepSummary storeId={storeId} />}
       </div>

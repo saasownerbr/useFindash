@@ -1,16 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { Wrench } from "lucide-react";
 
 import { ServiceFields, ServiceStatusPicker } from "@/components/assistencia/service-fields";
-import { useSaleWizardStore } from "@/lib/sale-wizard-store";
+import { ServiceHistory, useServiceHistory, type ServiceHistoryRecord } from "@/components/assistencia/service-history";
+import { emptyService, useSaleWizardStore } from "@/lib/sale-wizard-store";
+import { serviceFieldsFromRecord } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
-/** Optional step: the sale also includes a repair (parts + labor). Off by default; the user can just move on. */
-export function StepService() {
+/**
+ * Optional step: the sale also includes a repair (parts + labor). Off by default; the user can just move on.
+ * The customer's past services show above the form, and picking one fills it as an editable starting point.
+ */
+export function StepService({ storeId }: { storeId: string | null }) {
   const product = useSaleWizardStore((s) => s.product);
+  const customer = useSaleWizardStore((s) => s.customer);
   const service = useSaleWizardStore((s) => s.service);
   const setService = useSaleWizardStore((s) => s.setService);
+  // Fetched even while the toggle is off, so the history is there as soon as it is turned on.
+  const history = useServiceHistory(storeId, customer?.id ?? null);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+
+  function pick(record: ServiceHistoryRecord) {
+    setPickedId(record.id);
+    setService(serviceFieldsFromRecord(record));
+  }
+
+  function clear() {
+    setPickedId(null);
+    setService({ ...emptyService(), enabled: true, status: service.status });
+  }
 
   function toggle() {
     const enabled = !service.enabled;
@@ -60,6 +80,17 @@ export function StepService() {
 
       {service.enabled && (
         <>
+          <ServiceHistory records={history} selectedId={pickedId} onPick={pick} />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-foreground">Dados do serviço</p>
+            <button
+              type="button"
+              onClick={clear}
+              className="rounded-[10px] px-2 py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Limpar
+            </button>
+          </div>
           <ServiceFields value={service} onChange={setService} idPrefix="sale-service" />
           <ServiceStatusPicker value={service.status} onChange={(status) => setService({ status })} />
           <p className="text-xs text-muted-foreground">
