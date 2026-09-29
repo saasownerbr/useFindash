@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: vi.fn() }));
 
-import { subscriptionUpdateForEvent } from "@/lib/subscription";
+import { isFirstMonthlyPayment, subscriptionUpdateForEvent } from "@/lib/subscription";
 
 const NOW = new Date("2026-09-25T12:00:00Z");
 const base = { status: "pending", asaas_payment_id: null, asaas_subscription_id: "sub_1", trial_end: null };
@@ -28,6 +28,19 @@ describe("subscriptionUpdateForEvent", () => {
     expect(subscriptionUpdateForEvent({ event: "PAYMENT_RECEIVED", payment: { id: "pay_1" } }, active, "monthly", NOW)).toBeNull();
     expect(subscriptionUpdateForEvent({ event: "PAYMENT_RECEIVED", payment: { id: "pay_2" } }, active, "monthly", NOW)).toMatchObject({
       status: "active",
+    });
+  });
+
+  it("renews a monthly plan from the end of the period already paid", () => {
+    const active = { ...base, status: "active", asaas_payment_id: "pay_1", current_period_end: "2026-09-30T12:00:00Z" };
+    expect(subscriptionUpdateForEvent({ event: "PAYMENT_RECEIVED", payment: { id: "pay_2" } }, active, "monthly", NOW)).toMatchObject({
+      current_period_end: "2026-10-30T12:00:00.000Z",
+    });
+    // Paid after the period ran out: 30 days from today.
+    const late = { ...active, status: "overdue", current_period_end: "2026-09-20T12:00:00Z" };
+    expect(subscriptionUpdateForEvent({ event: "PAYMENT_RECEIVED", payment: { id: "pay_2" } }, late, "monthly", NOW)).toMatchObject({
+      status: "active",
+      current_period_end: "2026-10-25T12:00:00.000Z",
     });
   });
 
@@ -59,6 +72,24 @@ describe("subscriptionUpdateForEvent", () => {
 
   it("ignores other events", () => {
     expect(subscriptionUpdateForEvent({ event: "PAYMENT_CREATED", payment: { id: "p" } }, base, "monthly", NOW)).toBeNull();
+  });
+});
+
+describe("isFirstMonthlyPayment", () => {
+  const firstCharge = { status: "pending", asaas_payment_id: "pay_1", asaas_subscription_id: null };
+  const paid = (event: string, id = "pay_1") => ({ event, payment: { id } });
+
+  it("is the paid first charge of a pending monthly plan", () => {
+    expect(isFirstMonthlyPayment(paid("PAYMENT_CONFIRMED"), firstCharge, "monthly")).toBe(true);
+    expect(isFirstMonthlyPayment(paid("PAYMENT_RECEIVED"), firstCharge, "monthly")).toBe(true);
+  });
+
+  it("is not a later charge, another plan, a recurrence that exists, or an unpaid event", () => {
+    expect(isFirstMonthlyPayment(paid("PAYMENT_RECEIVED", "pay_2"), firstCharge, "monthly")).toBe(false);
+    expect(isFirstMonthlyPayment(paid("PAYMENT_RECEIVED"), firstCharge, "annual")).toBe(false);
+    expect(isFirstMonthlyPayment(paid("PAYMENT_RECEIVED"), { ...firstCharge, asaas_subscription_id: "sub_1" }, "monthly")).toBe(false);
+    expect(isFirstMonthlyPayment(paid("PAYMENT_RECEIVED"), { ...firstCharge, status: "active" }, "monthly")).toBe(false);
+    expect(isFirstMonthlyPayment(paid("PAYMENT_OVERDUE"), firstCharge, "monthly")).toBe(false);
   });
 });
 

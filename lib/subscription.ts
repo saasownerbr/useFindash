@@ -99,46 +99,37 @@ export async function startCheckout(
     cpfCnpj: store.cnpj,
   });
 
-  // A checkout started earlier and abandoned would keep charging (monthly) or stay open (annual): drop it first.
+  // A checkout started earlier and abandoned would stay open: drop it first.
   await cancelOpenCharges(existing);
 
-  let invoiceUrl: string;
-  let fields: Partial<Subscription>;
-  if (interval === "monthly") {
-    const created = await asaasFetch<{ id: string }>("/subscriptions", {
-      method: "POST",
-      body: JSON.stringify({
-        customer: customerId,
-        billingType: "CREDIT_CARD",
-        value: Number(plan.price),
-        nextDueDate: brazilDate(),
-        cycle: "MONTHLY",
-        description: "Plano Mensal useFindash",
-        externalReference: membership.store_id,
-      }),
-    });
-    const payment = await currentSubscriptionPayment(created.id);
-    if (!payment) throw new CheckoutError("Não foi possível gerar a cobrança", 502);
-    invoiceUrl = payment.invoiceUrl;
-    fields = { asaas_subscription_id: created.id, asaas_payment_id: null };
-  } else {
-    const payment = await asaasFetch<AsaasPayment>("/payments", {
-      method: "POST",
-      body: JSON.stringify({
-        customer: customerId,
-        billingType: "UNDEFINED",
-        value: Number(plan.price),
-        dueDate: brazilDate(3),
-        description: "Plano Anual useFindash - 12 meses",
-        externalReference: membership.store_id,
-      }),
-    });
-    invoiceUrl = payment.invoiceUrl;
-    fields = { asaas_payment_id: payment.id, asaas_subscription_id: null };
-  }
+  // Both plans start with a one-off charge. The monthly recurrence is only created by the webhook once this first
+  // charge is paid (startMonthlyRecurrence), so an unpaid checkout never schedules future charges.
+  const payment = await asaasFetch<AsaasPayment>("/payments", {
+    method: "POST",
+    body: JSON.stringify(
+      interval === "monthly"
+        ? {
+            customer: customerId,
+            billingType: "UNDEFINED",
+            value: Number(plan.price),
+            dueDate: brazilDate(3),
+            description: "Plano Mensal useFindash — Primeiro mês",
+            externalReference: user.id,
+          }
+        : {
+            customer: customerId,
+            billingType: "UNDEFINED",
+            value: Number(plan.price),
+            dueDate: brazilDate(3),
+            description: "Plano Anual useFindash - 12 meses",
+            externalReference: membership.store_id,
+          }
+    ),
+  });
 
   const row = {
-    ...fields,
+    asaas_payment_id: payment.id,
+    asaas_subscription_id: null,
     store_id: membership.store_id,
     user_id: existing?.user_id ?? user.id,
     plan_id: plan.id,
@@ -149,7 +140,45 @@ export async function startCheckout(
   const { error } = await admin.from("subscriptions").upsert(row, { onConflict: "store_id" });
   if (error) throw new CheckoutError("Cobrança criada, mas falhou ao salvar a assinatura", 500);
 
-  return invoiceUrl;
+  return payment.invoiceUrl;
+}
+
+/** The monthly recurrence, created once the first month is paid: its first charge is due 30 days from today. */
+export async function startMonthlyRecurrence(input: {
+  customerId: string;
+  userId: string | null;
+  price: number;
+}): Promise<string> {
+  const created = await asaasFetch<{ id: string }>("/subscriptions", {
+    method: "POST",
+    body: JSON.stringify({
+      customer: input.customerId,
+      billingType: "UNDEFINED",
+      value: input.price,
+      nextDueDate: brazilDate(30),
+      cycle: "MONTHLY",
+      description: "Plano Mensal useFindash — Recorrência",
+      externalReference: input.userId ?? undefined,
+    }),
+  });
+  return created.id;
+}
+
+/** A paid event for the monthly plan's first one-off charge, before the recurrence exists. */
+export function isFirstMonthlyPayment(
+  event: AsaasWebhookEvent,
+  sub: Pick<Subscription, "status" | "asaas_payment_id" | "asaas_subscription_id">,
+  planInterval: string | null
+): boolean {
+  const paid = event.event === "PAYMENT_RECEIVED" || event.event === "PAYMENT_CONFIRMED";
+  return (
+    paid &&
+    planInterval === "monthly" &&
+    sub.status === "pending" &&
+    !sub.asaas_subscription_id &&
+    !!event.payment?.id &&
+    sub.asaas_payment_id === event.payment.id
+  );
 }
 
 async function cancelOpenCharges(existing: Subscription | null) {
@@ -190,7 +219,8 @@ export interface AsaasWebhookEvent {
 /** Row fields to write for an event on this subscription, or null when the event changes nothing. */
 export function subscriptionUpdateForEvent(
   event: AsaasWebhookEvent,
-  sub: Pick<Subscription, "status" | "asaas_payment_id" | "asaas_subscription_id" | "trial_end">,
+  sub: Pick<Subscription, "status" | "asaas_payment_id" | "asaas_subscription_id" | "trial_end"> &
+    Partial<Pick<Subscription, "current_period_end">>,
   planInterval: string | null,
   now: Date = new Date()
 ): Partial<Subscription> | null {
@@ -203,11 +233,16 @@ export function subscriptionUpdateForEvent(
       // Card charges send CONFIRMED and later RECEIVED for the same payment: only the first one extends access.
       if (sub.status === "active" && paymentId && sub.asaas_payment_id === paymentId) return null;
       const days = planInterval === "annual" ? 365 : 30;
+      // A renewal adds to the period already paid, so paying before the due date does not shorten it; a first
+      // payment, or one after the period ran out, counts from today.
+      const paidUntil = sub.current_period_end ? new Date(sub.current_period_end).getTime() : 0;
+      const renewing = (sub.status === "active" || sub.status === "overdue") && paidUntil > now.getTime();
+      const from = renewing ? paidUntil : now.getTime();
       return {
         status: "active",
         asaas_payment_id: paymentId ?? sub.asaas_payment_id,
         current_period_start: stamp,
-        current_period_end: new Date(now.getTime() + days * DAY_MS).toISOString(),
+        current_period_end: new Date(from + days * DAY_MS).toISOString(),
         updated_at: stamp,
       };
     }
@@ -223,7 +258,7 @@ export function subscriptionUpdateForEvent(
       return { status: "cancelled", updated_at: stamp };
 
     case "PAYMENT_DELETED":
-      // Only the annual one-off charge, while still unpaid. A trial that has not ended yet keeps running.
+      // Only the first one-off charge (either plan), while still unpaid. A trial that has not ended yet keeps running.
       if (sub.status !== "pending" || !sub.asaas_payment_id || sub.asaas_payment_id !== event.payment?.id) return null;
       if (sub.trial_end && new Date(sub.trial_end) > now) return { status: "trial", updated_at: stamp };
       return { status: "cancelled", updated_at: stamp };

@@ -1,9 +1,15 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { asaasFetch } from "@/lib/asaas";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Json } from "@/lib/supabase/types";
-import { subscriptionUpdateForEvent, type AsaasWebhookEvent } from "@/lib/subscription";
+import type { Json, Tables } from "@/lib/supabase/types";
+import {
+  isFirstMonthlyPayment,
+  startMonthlyRecurrence,
+  subscriptionUpdateForEvent,
+  type AsaasWebhookEvent,
+} from "@/lib/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +21,8 @@ function validToken(received: string | null): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-const SUBSCRIPTION_COLUMNS = "id, status, asaas_payment_id, asaas_subscription_id, trial_end, plans(interval)";
+const SUBSCRIPTION_COLUMNS =
+  "id, status, user_id, asaas_customer_id, asaas_payment_id, asaas_subscription_id, trial_end, current_period_end, plans(interval, price)";
 
 export async function POST(request: NextRequest) {
   if (!validToken(request.headers.get("asaas-access-token"))) {
@@ -62,13 +69,54 @@ export async function POST(request: NextRequest) {
     if (logError?.code === "23505") return NextResponse.json({ received: true, duplicate: true });
 
     if (sub) {
-      const plan = sub.plans as { interval: string | null } | null;
-      const update = subscriptionUpdateForEvent(event, sub, plan?.interval ?? null);
-      if (update) await admin.from("subscriptions").update(update).eq("id", sub.id);
+      const plan = sub.plans as { interval: string | null; price: number } | null;
+      const interval = plan?.interval ?? null;
+      const update = subscriptionUpdateForEvent(event, sub, interval);
+      if (update && isFirstMonthlyPayment(event, sub, interval)) {
+        await activateMonthly(admin, sub, update, Number(plan?.price));
+      } else if (update) {
+        await admin.from("subscriptions").update(update).eq("id", sub.id);
+      }
     }
   } catch (error) {
     console.error("[asaas] webhook processing failed", event.event, error);
   }
 
   return NextResponse.json({ received: true });
+}
+
+/**
+ * First month paid: only now create the Asaas recurrence, then activate. Card payments send CONFIRMED and RECEIVED
+ * close together, so the row is only claimed while it has no recurrence yet; a request that loses that race removes
+ * the recurrence it just created. If Asaas refuses, the month is still paid: activate anyway and log it.
+ */
+async function activateMonthly(
+  admin: ReturnType<typeof createAdminClient>,
+  sub: { id: string; user_id: string | null; asaas_customer_id: string | null },
+  update: Partial<Tables<"subscriptions">>,
+  price: number
+) {
+  let recurrenceId: string | null = null;
+  if (sub.asaas_customer_id && price > 0) {
+    try {
+      recurrenceId = await startMonthlyRecurrence({ customerId: sub.asaas_customer_id, userId: sub.user_id, price });
+    } catch (error) {
+      console.error("[asaas] first month paid but the recurrence was not created", sub.id, error);
+    }
+  } else {
+    console.error("[asaas] first month paid without customer or price, recurrence not created", sub.id);
+  }
+
+  const { data: claimed } = await admin
+    .from("subscriptions")
+    .update({ ...update, ...(recurrenceId ? { asaas_subscription_id: recurrenceId } : {}) })
+    .eq("id", sub.id)
+    .is("asaas_subscription_id", null)
+    .select("id");
+
+  if (recurrenceId && (claimed ?? []).length === 0) {
+    await asaasFetch(`/subscriptions/${recurrenceId}`, { method: "DELETE" }).catch((error) =>
+      console.error("[asaas] duplicate recurrence could not be removed", recurrenceId, error)
+    );
+  }
 }
