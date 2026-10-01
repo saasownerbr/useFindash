@@ -1,9 +1,10 @@
-import { APPLE_CATALOG, findCatalogModel, normalizeKey } from "@/lib/apple-catalog";
+import { APPLE_CATALOG, findCatalogModel, normalizeKey, type CatalogModel } from "@/lib/apple-catalog";
 
 export { normalizeKey };
 
-// Storage options as sold by Apple for each model (see lib/apple-catalog.ts).
-export const IPHONE_MODELS: { model: string; storage: string[] }[] = APPLE_CATALOG;
+// The iPhones of the catalog (see lib/apple-catalog.ts). The calculator, the price reference and the repair costs
+// are about phones, so Watch and Mac models stay out of them.
+export const IPHONE_MODELS: CatalogModel[] = APPLE_CATALOG.filter((m) => (m.type ?? "iphone") === "iphone");
 
 /** Catalog models plus any extra models the store already priced. */
 export function modelOptions(extraModels: string[]) {

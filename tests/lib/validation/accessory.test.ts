@@ -35,7 +35,8 @@ describe("ACCESSORY_CATEGORIES", () => {
   it("covers the iPhone accessory niche with no duplicates", () => {
     expect(ACCESSORY_CATEGORIES).toContain("Capinha");
     expect(ACCESSORY_CATEGORIES).toContain("Capa MagSafe");
-    expect(ACCESSORY_CATEGORIES).toHaveLength(17);
+    expect(ACCESSORY_CATEGORIES).toContain("AirPods 5 com Estojo Sem Fio");
+    expect(ACCESSORY_CATEGORIES).toHaveLength(19);
     expect(ACCESSORY_CATEGORIES.at(-1)).toBe("Outro");
     expect(new Set(ACCESSORY_CATEGORIES).size).toBe(ACCESSORY_CATEGORIES.length);
   });

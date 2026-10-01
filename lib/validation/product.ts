@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { catalogType } from "@/lib/apple-catalog";
+
 export const productStatusValues = ["available", "reserved", "sold"] as const;
 export const productTypeValues = ["new", "semi_novo"] as const;
 
@@ -32,6 +34,8 @@ export const productFormSchema = z
     imei: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
+    // A Watch or a Mac has no IMEI: the field holds its serial number, always optional and free-form.
+    if (catalogType(data.model) !== "iphone") return;
     // Seminovos always need the IMEI; a new batch may register it later.
     const imei = data.imei ?? "";
     const required = data.type === "semi_novo";

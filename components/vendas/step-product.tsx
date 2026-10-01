@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { catalogType } from "@/lib/apple-catalog";
 import { formatCurrencyBRL } from "@/lib/finance";
 import { createClient } from "@/lib/supabase/client";
 import { useSaleWizardStore } from "@/lib/sale-wizard-store";
@@ -12,13 +13,18 @@ import type { Tables } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 type Product = Tables<"products">;
-type BrandFilter = "all" | "apple" | "xiaomi";
+type BrandFilter = "all" | "iphone" | "xiaomi";
 
 const BRAND_FILTERS: { key: BrandFilter; label: string }[] = [
   { key: "all", label: "Todos" },
-  { key: "apple", label: "iPhone" },
+  { key: "iphone", label: "iPhone" },
   { key: "xiaomi", label: "Xiaomi" },
 ];
+
+/** Watch and Mac are brand apple too: an iPhone is an apple device the catalog does not list as another type. */
+const isIphone = (product: Product) => product.brand === "apple" && catalogType(product.model) === "iphone";
+const inFilter = (product: Product, filter: BrandFilter) =>
+  filter === "all" || (filter === "iphone" ? isIphone(product) : product.brand === filter);
 
 const FILTER_BUTTON =
   "rounded-[10px] border border-[#242424] bg-[#111111] px-3 py-1.5 text-xs font-medium text-[#D0D0D0] transition-colors hover:border-[#2E2E2E]";
@@ -40,7 +46,7 @@ function matches(product: Product, term: string) {
   const digits = term.replace(/\D/g, "");
   // 5+ digits reads as an IMEI search.
   if (digits.length >= 5 && digits === term.replace(/\s/g, "")) return (product.imei ?? "").includes(digits);
-  const haystack = `${product.model} ${product.storage} ${product.color ?? ""} ${product.brand === "xiaomi" ? "xiaomi" : "iphone"}`.toLowerCase();
+  const haystack = `${product.model} ${product.storage} ${product.color ?? ""} ${product.brand === "xiaomi" ? "xiaomi" : isIphone(product) ? "iphone" : ""}`.toLowerCase();
   return term
     .toLowerCase()
     .split(/\s+/)
@@ -84,7 +90,7 @@ export function StepProduct({ storeId, onSkip }: { storeId: string | null; onSki
   }, [storeId]);
 
   const results = useMemo(
-    () => (stock ?? []).filter((p) => (brand === "all" || p.brand === brand) && matches(p, term.trim())),
+    () => (stock ?? []).filter((p) => inFilter(p, brand) && matches(p, term.trim())),
     [stock, brand, term]
   );
   const xiaomiCount = (stock ?? []).filter((p) => p.brand === "xiaomi").length;

@@ -250,7 +250,7 @@ export function ProductList() {
               <tr>
                 <th className="px-4 py-3">Modelo</th>
                 <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">IMEI</th>
+                <th className="px-4 py-3">IMEI / Série</th>
                 <th className="px-4 py-3">Custo</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Dias em estoque</th>
@@ -278,7 +278,7 @@ export function ProductList() {
                     )}
                   </td>
                   <td data-label="Tipo" className="px-4 py-3">{TYPE_LABELS[product.type] ?? product.type}</td>
-                  <td data-label="IMEI" className="px-4 py-3">{product.imei ?? "—"}</td>
+                  <td data-label="IMEI / Série" className="px-4 py-3">{product.imei ?? "—"}</td>
                   <td data-label="Custo" className="px-4 py-3">
                     {(product.acquisition_cost + product.repair_cost).toLocaleString("pt-BR", {
                       style: "currency",

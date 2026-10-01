@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { APPLE_CATALOG, findCatalogModel, searchModels } from "@/lib/apple-catalog";
+import { APPLE_CATALOG, catalogType, findCatalogModel, searchModels } from "@/lib/apple-catalog";
 
 describe("searchModels", () => {
   it("returns the whole catalog for an empty query", () => {
@@ -22,6 +22,29 @@ describe("searchModels", () => {
 
   it("searches extra models the store priced", () => {
     expect(searchModels("galaxy", ["Galaxy S24", "iPhone 15"])).toEqual(["Galaxy S24"]);
+  });
+
+  it("ignores the word iPhone for iPhones only, so it never lists a Watch or a Mac", () => {
+    const iphones = APPLE_CATALOG.filter((m) => m.type === "iphone").map((m) => m.model);
+    expect(searchModels("iphone")).toEqual(iphones);
+    expect(searchModels("iphone ultra")).toEqual([]);
+  });
+
+  it("finds Watch and Mac models by their own names", () => {
+    expect(searchModels("watch")).toEqual(["Apple Watch Ultra 4", "Apple Watch Series 12"]);
+    expect(searchModels("mac mini")).toEqual(["Mac mini M5 Pro", "Mac mini M6"]);
+  });
+});
+
+describe("APPLE_CATALOG", () => {
+  it("lists the newest line first and gives every entry a type", () => {
+    expect(APPLE_CATALOG[0].model).toBe("iPhone 18 Pro Max");
+    expect(APPLE_CATALOG.every((m) => m.type)).toBe(true);
+    expect(catalogType("Apple Watch Series 12")).toBe("watch");
+    expect(catalogType("Mac Studio M5 Ultra")).toBe("mac");
+    expect(catalogType("iPhone 13")).toBe("iphone");
+    // Outside the catalog (older records, other brands): treated as an iPhone, as before.
+    expect(catalogType("Galaxy S24")).toBe("iphone");
   });
 });
 

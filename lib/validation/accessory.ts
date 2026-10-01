@@ -11,6 +11,8 @@ export const ACCESSORY_CATEGORIES = [
   "Cabo Lightning",
   "Adaptador",
   "AirPods",
+  "AirPods 5",
+  "AirPods 5 com Estojo Sem Fio",
   "Fone com fio",
   "Suporte veicular",
   "Suporte de mesa",

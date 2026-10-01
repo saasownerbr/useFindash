@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ModelCombobox } from "@/components/ui/model-combobox";
 import { Select } from "@/components/ui/select";
 import { findCatalogModel } from "@/lib/apple-catalog";
+import { IPHONE_MODELS } from "@/lib/iphone-models";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
@@ -38,6 +39,8 @@ const NEW_ROW: Draft & { model: string; storage: string } = {
 };
 
 // Columns are wide enough that no header or value wraps; the table scrolls sideways instead.
+const IPHONE_MODEL_NAMES = IPHONE_MODELS.map((m) => m.model);
+
 const GRID =
   "grid grid-cols-[minmax(160px,1.6fr)_minmax(120px,0.9fr)_minmax(120px,1fr)_repeat(4,minmax(96px,1fr))_auto] items-center gap-2 whitespace-nowrap";
 
@@ -192,6 +195,7 @@ export function PriceReferenceList({ storeId }: { storeId: string | null }) {
           {newRow && (
             <div className={`${GRID} border-b border-[#242424] bg-primary/5 py-2`}>
               <ModelCombobox
+                models={IPHONE_MODEL_NAMES}
                 value={newRow.model}
                 onChange={(model) => setNewRow((r) => r && { ...r, model })}
                 placeholder="Modelo"

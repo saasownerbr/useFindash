@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModelCombobox } from "@/components/ui/model-combobox";
 import { Select } from "@/components/ui/select";
-import { findCatalogModel, normalizeKey } from "@/lib/apple-catalog";
+import { catalogType, findCatalogModel, normalizeKey } from "@/lib/apple-catalog";
 import { lookupImei } from "@/lib/imei-lookup";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/supabase/types";
@@ -39,6 +39,8 @@ const DEFAULT_VALUES: ProductFormInput = {
   quantity: 1,
   imei: "",
 };
+
+const SERIAL_MAX_LENGTH = 20;
 
 /** Catalog options for a model, keeping a value that isn't in the catalog (older records) selectable. */
 function withCurrent(options: string[], current: string | undefined) {
@@ -75,6 +77,8 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
   const catalogModel = findCatalogModel(model ?? "");
   // Storage and color come from the catalog; free text only for models outside it.
   const pickFromCatalog = !!catalogModel || !model?.trim();
+  // A Watch or a Mac is identified by a serial number (letters and digits, always optional), not an IMEI.
+  const usesSerial = catalogType(model ?? "") !== "iphone";
 
   useEffect(() => {
     if (!open) return;
@@ -118,6 +122,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
   // A new model invalidates storage/color picked for the previous one.
   function handleModelChange(next: string) {
     setValue("model", next, { shouldValidate: !!errors.model });
+    if (catalogType(next) !== "iphone") setImeiNote(null);
     const entry = findCatalogModel(next);
     if (!entry) return;
     if (storage && !entry.storage.some((s) => normalizeKey(s) === normalizeKey(storage))) setValue("storage", "");
@@ -125,6 +130,12 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
   }
 
   async function handleImeiChange(raw: string) {
+    if (usesSerial) {
+      const serial = raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, SERIAL_MAX_LENGTH);
+      setValue("imei", serial, { shouldValidate: !!errors.imei });
+      setImeiNote(null);
+      return;
+    }
     const digits = raw.replace(/\D/g, "").slice(0, 15);
     setValue("imei", digits, { shouldValidate: !!errors.imei });
     setImeiNote(null);
@@ -164,7 +175,9 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
       purchase_date: data.purchaseDate || null,
     };
     const duplicateImei = (message: string) =>
-      message.includes("duplicate") ? "Já existe um aparelho cadastrado com esse IMEI." : null;
+      message.includes("duplicate")
+        ? `Já existe um aparelho cadastrado com esse ${usesSerial ? "número de série" : "IMEI"}.`
+        : null;
 
     if (product) {
       const { error } = await supabase
@@ -179,7 +192,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
     } else if (data.type === "semi_novo") {
       const { error } = await supabase
         .from("products")
-        .insert({ ...shared, store_id: storeId, type: "semi_novo", imei: data.imei });
+        .insert({ ...shared, store_id: storeId, type: "semi_novo", imei: data.imei || null });
 
       if (error) {
         setError("root", { message: duplicateImei(error.message) ?? "Não foi possível salvar o aparelho. Tente novamente." });
@@ -243,13 +256,19 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
           <input type="hidden" {...register("type")} />
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="imei">IMEI</Label>
+            <Label htmlFor="imei">{usesSerial ? "Número de série (opcional)" : "IMEI"}</Label>
             <Input
               id="imei"
-              inputMode="numeric"
+              inputMode={usesSerial ? "text" : "numeric"}
               autoComplete="off"
-              maxLength={15}
-              placeholder={type === "new" ? "Digite o IMEI (opcional)" : "15 dígitos — disque *#06# no aparelho"}
+              maxLength={usesSerial ? SERIAL_MAX_LENGTH : 15}
+              placeholder={
+                usesSerial
+                  ? "Digite o número de série"
+                  : type === "new"
+                    ? "Digite o IMEI (opcional)"
+                    : "15 dígitos — disque *#06# no aparelho"
+              }
               value={watch("imei") ?? ""}
               onChange={(e) => handleImeiChange(e.target.value)}
             />
@@ -261,8 +280,10 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
             )}
             {type === "new" && !product && (
               <span className="text-xs text-muted-foreground">
-                Adicione o IMEI agora ou registre depois ao separar cada unidade do lote para venda.
-                {quantity > 1 && " O IMEI informado fica na primeira unidade."}
+                {usesSerial
+                  ? "Adicione o número de série agora ou registre depois ao separar cada unidade do lote para venda."
+                  : "Adicione o IMEI agora ou registre depois ao separar cada unidade do lote para venda."}
+                {quantity > 1 && (usesSerial ? " O número informado fica na primeira unidade." : " O IMEI informado fica na primeira unidade.")}
               </span>
             )}
           </div>
@@ -279,7 +300,7 @@ export function ProductFormDialog({ open, onOpenChange, storeId, product, onSave
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="storage">Armazenamento</Label>
+              <Label htmlFor="storage">{catalogModel?.type === "watch" ? "Tamanho" : "Armazenamento"}</Label>
               {pickFromCatalog ? (
                 <Select id="storage" disabled={!catalogModel} {...register("storage")}>
                   <option value="">{catalogModel ? "Selecione" : "Escolha o modelo"}</option>

@@ -47,6 +47,13 @@ describe("productFormSchema", () => {
     expect(productFormSchema.safeParse({ ...baseNew, imei: "12345" }).success).toBe(false);
   });
 
+  it("takes an optional serial number, not an IMEI, for a Watch or a Mac", () => {
+    const watch = { ...baseSemiNovo, model: "Apple Watch Ultra 4", storage: "49mm" };
+    expect(productFormSchema.safeParse({ ...watch, imei: "" }).success).toBe(true);
+    expect(productFormSchema.safeParse({ ...watch, imei: "FH7XK2ABC9" }).success).toBe(true);
+    expect(productFormSchema.safeParse({ ...baseNew, model: "Mac mini M6", storage: "256GB", imei: "C02XY1Z" }).success).toBe(true);
+  });
+
   it("accepts a known origin and rejects an unknown one", () => {
     expect(productFormSchema.safeParse({ ...baseNew, origin: "trade_in" }).success).toBe(true);
     expect(productFormSchema.safeParse({ ...baseNew, origin: "fornecedor x" }).success).toBe(false);
